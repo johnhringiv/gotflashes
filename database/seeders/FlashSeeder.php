@@ -61,12 +61,13 @@ class FlashSeeder extends Seeder
             $dates[] = $date->format('Y-m-d');
 
             $activityType = $activityTypes[array_rand($activityTypes)];
+            $isSailing = $activityType === 'sailing';
 
             Flash::create([
                 'user_id' => $user->id,
                 'date' => $date,
                 'activity_type' => $activityType,
-                'event_type' => $activityType === 'sailing' ? $eventTypes[array_rand($eventTypes)] : null,
+                'event_type' => $isSailing ? $eventTypes[array_rand($eventTypes)] : null,
                 'yacht_club' => rand(0, 1) ? $yachtClubs[array_rand($yachtClubs)] : null,
                 'fleet_number' => rand(0, 1) ? rand(1, 50) : null,
                 'location' => rand(0, 1) ? $locations[array_rand($locations)] : null,

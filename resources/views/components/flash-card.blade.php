@@ -28,9 +28,10 @@
                     <span class="text-sm text-base-content/60">{{ $flash->date->format('M j, Y') }}</span>
                     <span class="text-base-content/60">·</span>
                     <span class="text-sm text-base-content/60">{{ $flash->created_at->diffForHumans() }}</span>
-                    <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $flash->activity_type)) }}</span>
-                    @if($flash->event_type)
-                        <span class="badge badge-secondary badge-sm">{{ ucfirst(str_replace('_', ' ', $flash->event_type)) }}</span>
+                    @if($flash->activity_type === 'sailing' && $flash->event_type)
+                        <span class="badge badge-primary badge-sm">Sailing - {{ ucfirst(str_replace('_', ' ', $flash->event_type)) }}</span>
+                    @else
+                        <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $flash->activity_type)) }}</span>
                     @endif
                 </div>
 

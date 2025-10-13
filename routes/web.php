@@ -7,5 +7,5 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::get('/flashes', [FlashController::class, 'index'])->name('flashes.index');
+Route::resource('flashes', FlashController::class);
 
