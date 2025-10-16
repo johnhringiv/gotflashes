@@ -66,7 +66,7 @@
                     @endif
 
                     @if($flash->notes)
-                        <p class="mt-2">{{ $flash->notes }}</p>
+                        <p class="mt-2 break-words whitespace-pre-wrap">{{ $flash->notes }}</p>
                     @endif
                 </div>
             </div>

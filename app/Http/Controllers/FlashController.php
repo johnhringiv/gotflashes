@@ -14,8 +14,7 @@ class FlashController extends Controller
     {
         $flashes = Flash::with('user')
             ->latest()
-            ->limit(50)
-            ->get();
+            ->paginate(15);
 
         return view('flashes.index', ['flashes' => $flashes]);
 

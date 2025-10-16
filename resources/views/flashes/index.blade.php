@@ -36,5 +36,12 @@
                 </div>
             @endforelse
         </div>
+
+        <!-- Pagination -->
+        @if($flashes->hasPages())
+            <div class="mt-6">
+                {{ $flashes->links() }}
+            </div>
+        @endif
     </div>
 </x-layout>
