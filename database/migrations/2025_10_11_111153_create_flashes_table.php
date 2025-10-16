@@ -17,8 +17,6 @@ return new class extends Migration
             $table->date('date');
             $table->enum('activity_type', ['sailing', 'maintenance', 'race_committee']);
             $table->enum('event_type', ['regatta', 'club_race', 'practice', 'leisure'])->nullable();
-            $table->string('yacht_club', 100)->nullable();
-            $table->integer('fleet_number')->nullable();
             $table->string('location', 255)->nullable();
             $table->integer('sail_number')->nullable();
             $table->text('notes')->nullable();

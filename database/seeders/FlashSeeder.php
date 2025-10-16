@@ -45,7 +45,6 @@ class FlashSeeder extends Seeder
     {
         $activityTypes = ['sailing', 'sailing', 'sailing', 'sailing', 'maintenance', 'race_committee'];
         $eventTypes = ['regatta', 'club_race', 'practice', 'leisure'];
-        $yachtClubs = ['San Diego Yacht Club', 'Chicago Yacht Club', 'Fishing Bay Yacht Club', 'Lake Norman Yacht Club'];
         $locations = ['Lake Norman, NC', 'San Diego Bay, CA', 'Lake Michigan, IL', 'Fishing Bay, VA'];
 
         // Create 15-20 activities for current year
@@ -68,8 +67,6 @@ class FlashSeeder extends Seeder
                 'date' => $date,
                 'activity_type' => $activityType,
                 'event_type' => $isSailing ? $eventTypes[array_rand($eventTypes)] : null,
-                'yacht_club' => rand(0, 1) ? $yachtClubs[array_rand($yachtClubs)] : null,
-                'fleet_number' => rand(0, 1) ? rand(1, 50) : null,
                 'location' => rand(0, 1) ? $locations[array_rand($locations)] : null,
                 'sail_number' => rand(0, 1) ? rand(10000, 15999) : null,
                 'notes' => rand(0, 2) ? null : 'Great day on the water with ' . rand(10, 20) . ' knot winds.',

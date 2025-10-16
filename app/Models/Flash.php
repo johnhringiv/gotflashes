@@ -12,8 +12,6 @@ class Flash extends Model
         'date',
         'activity_type',
         'event_type',
-        'yacht_club',
-        'fleet_number',
         'location',
         'sail_number',
         'notes',
@@ -21,7 +19,6 @@ class Flash extends Model
 
     protected $casts = [
         'date' => 'date',
-        'fleet_number' => 'integer',
         'sail_number' => 'integer',
     ];
 

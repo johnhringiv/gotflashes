@@ -15,9 +15,11 @@ New users can create accounts with the following information:
 - First Name
 - Last Name
 - Date of Birth (for demographics and membership growth analytics, particularly tracking participation of sailors under 32)
+- Gender (optional - options: Male, Female, Non-binary, Prefer not to say)
 - Physical mailing address
 - District (optional)
 - Yacht Club (optional)
+- Fleet Number (optional)
 
 **Note**: Users do not need to be Lightning owners - crews and anyone who sails on Lightnings can participate.
 
@@ -29,7 +31,7 @@ New users can create accounts with the following information:
 
 ### 1.3 Profile Management
 - Users can view their profile information
-- Users can update their address, district, yacht club, and date of birth
+- Users can update their address, district, yacht club, fleet number, gender, and date of birth
 - Email address should remain fixed after registration (serves as permanent identifier)
 
 ### 1.4 User Roles
@@ -50,7 +52,7 @@ The following activities count toward GOT-FLASHES awards:
 - Goal: Get the boat off the dock!
 
 **Boat Work Days (Freebies):**
-After reaching the first 10-day tier, the following activities may count:
+The following activities may count toward your annual total:
 - Lightning boat maintenance
 - Lightning trailer maintenance
 - On-the-water Race Committee work on days where Lightnings are racing
@@ -59,53 +61,54 @@ After reaching the first 10-day tier, the following activities may count:
 ### 2.2 Activity Entry
 Users log activities using a simple form for each day:
 - Date of activity (cannot duplicate an existing entry date)
-- Activity type (dynamically shown based on eligibility):
-    - **Sailing on a Lightning** - Always available
-    - **Boat/Trailer Maintenance (freebie)** - Only available when conditions are met
-    - **Race Committee Work (freebie)** - Only available when conditions are met
+- Activity type (always available options):
+    - **Sailing on a Lightning**
+    - **Boat/Trailer Maintenance (freebie)** - Available until 5 freebies used
+    - **Race Committee Work (freebie)** - Available until 5 freebies used
 - **Optional fields** (enhance tracking and create richer records):
-    - Yacht Club
-    - Fleet Number
-    - Regatta Name
     - Location (city, lake, venue)
     - Sail Number
     - Notes (free-form text)
 
 **Freebie Entry Restrictions:**
-The system will only allow users to log freebie activities when they are eligible to count:
-- Freebie options are hidden/disabled until user reaches 10 sailing days
-- Once 10 sailing days reached, freebies become available
+The system will only allow users to log freebie activities when they have freebies remaining:
+- All users have 5 freebie slots per calendar year
 - System displays remaining freebies (e.g., "3 of 5 freebies remaining")
-- After 5 freebies are used, freebie options are hidden/disabled again
-- Clear messaging explains why freebies are unavailable
+- After 5 freebies are used, freebie options are hidden/disabled
+- Clear messaging explains when all freebies have been used
 
 **Benefits of this approach:**
-- Users never log activities that don't count
-- Eliminates confusion about "logged but didn't count" scenarios
-- Simpler logic and fewer edge cases
-- Better user experience with clear eligibility status
+- Simple, straightforward rules - just a maximum of 5 freebies per year
+- Users can log maintenance and race committee work immediately
+- Eliminates confusion about eligibility requirements
+- Better user experience with clear remaining freebie count
 
 **Edit Restrictions:**
 - Users can edit or delete activities from the current calendar year only
 - Activities from previous years are view-only and cannot be modified
 - Users cannot create multiple activities for the same date
-- All activities must be logged by December 31st of the year in which they occurred
-- Deleting sailing days may cause total to drop below 10, which could affect freebie eligibility
+- All activities must be logged by January 31st of the following year (grace period for logging previous year's activities)
+
+**Date Entry Restrictions:**
+- Users cannot log activities with future dates
+- System allows dates up to +1 day from server time to accommodate timezone differences
+- This ensures users in any timezone can log today's activities without restriction
+- Browser date picker enforces maximum date before submission
+- Server-side validation prevents circumventing browser restrictions
 
 ### 2.3 Freebie Day Rules
 Boat Work and Race Committee days count toward awards with these limitations:
 
 **Eligibility Requirements:**
-- User must have at least 10 sailing days in the current year
 - Maximum 5 freebie days per calendar year
 - These 5 freebie slots reset annually on January 1st
+- No minimum sailing days required to use freebies
 
 **System Behavior:**
-- System prevents logging freebies when ineligible (rather than logging them as "didn't count")
-- If user has fewer than 10 sailing days, freebie options are not available
-- If user has used all 5 freebies, freebie options are not available
-- System displays clear messaging about eligibility status and remaining freebies
-- If user deletes sailing days and drops below 10 total, existing freebies remain valid but new ones cannot be added until 10 sailing days are reached again
+- Freebie options are available to all users from the start of the year
+- System displays clear messaging about remaining freebies (e.g., "3 of 5 freebies remaining")
+- After 5 freebies are used, freebie options are hidden/disabled until next year
+- Users can delete freebie entries if needed, freeing up slots for new entries
 
 ### 2.4 Activity History
 - Users can view all their previously entered activities
@@ -116,7 +119,7 @@ Boat Work and Race Committee days count toward awards with these limitations:
 - Activity history shows:
     - Date
     - Activity type (sailing, maintenance, or race committee)
-    - Optional details when provided (yacht club, fleet, regatta, location, sail number, notes)
+    - Optional details when provided (location, sail number, notes)
 - Ability to filter or search activities by optional fields (future enhancement)
 
 ---
@@ -131,24 +134,22 @@ Participants earn recognition at the following annual milestones:
 
 ### 3.2 Award Counting Rules
 - Qualifying days = Sailing Days + Logged Freebie Days
-- All logged activities count toward awards (system prevents logging ineligible freebies)
-- Freebies only become available after reaching 10 sailing days
+- All logged activities count toward awards
 - Maximum 5 freebie days per calendar year
 - Awards are based on calendar year (January 1 - December 31)
-- All activities must be logged by December 31st to count for that year
+- All activities must be logged by January 31st of the following year (one-month grace period)
 
 ### 3.3 Progress Tracking
 Users should see their current annual progress:
 - Total sailing days (current year)
 - Total freebie days logged
-- Freebies remaining (X of 5 available) - only shown when at least 10 sailing days
+- Freebies remaining (X of 5 available)
 - Total qualifying days (toward awards)
 - Visual progress indicators toward each award tier (10, 25, 50)
 - Awards earned in current year
 - Which award tier they've achieved
-- Clear messaging about freebie eligibility:
-    - If below 10 sailing days: "Freebies available after reaching 10 sailing days"
-    - If at/above 10 with freebies left: "3 of 5 freebies remaining"
+- Clear messaging about freebie status:
+    - If freebies remaining: "X of 5 freebies remaining"
     - If all 5 used: "All 5 freebies used this year"
 
 **Historical View:**
@@ -176,23 +177,20 @@ Display key metrics for current calendar year:
 - Total qualifying days (toward awards)
 - Number of sailing days
 - Number of freebie days logged
-- Freebies remaining (if eligible) or eligibility status message
+- Freebies remaining (X of 5 available)
 - Progress bars showing advancement toward each tier (10, 25, 50 days)
 - Awards earned this year
 - Recent activity history with optional details displayed
-- Reminder: "You must log your days by December 31"
+- Reminder: "You must log your days by January 31st of the following year"
 
 **Activity Entry Form:**
 - Date picker (with duplicate date prevention)
-- Activity type dropdown that dynamically shows:
+- Activity type dropdown:
     - "Sailing on a Lightning" (always available)
-    - "Boat/Trailer Maintenance - X of 5 remaining" (only when eligible)
-    - "Race Committee Work - X of 5 remaining" (only when eligible)
-- Helper text explaining freebie eligibility when not available
+    - "Boat/Trailer Maintenance - X of 5 remaining" (available while freebies remain)
+    - "Race Committee Work - X of 5 remaining" (available while freebies remain)
+- Helper text explaining when all freebies have been used
 - Optional fields section (collapsed/expandable for cleaner UX):
-    - Yacht Club
-    - Fleet Number
-    - Regatta Name
     - Location
     - Sail Number
     - Notes (free-form text area)
@@ -202,7 +200,32 @@ Display key metrics for current calendar year:
 - Annual summary for each past year (total days, awards earned)
 - Complete activity log from prior years (cannot be edited or deleted)
 
-### 4.2 Award Administrator Dashboard
+### 4.2 Leaderboards
+Public leaderboards to encourage friendly competition and community engagement:
+
+**Individual Leaderboard:**
+- Rank sailors by total qualifying days for the current year
+- Display: Rank, Name (or username), Days Logged, Fleet (optional), District (optional)
+- Filterable by: All participants, specific district, specific fleet
+- Top performers highlighted (e.g., Top 10, Top 25)
+
+**Fleet Leaderboard:**
+- Rank fleets by average days per member or total days logged by fleet
+- Display: Rank, Fleet Number, Yacht Club, Total Days, Average Days/Member, Member Count
+- Shows which fleets are most active
+- Encourages fleet-level friendly competition
+
+**District Leaderboard:**
+- Rank districts by average days per member or total days logged by district
+- Display: Rank, District Name, Total Days, Average Days/Member, Member Count
+- Shows which geographic regions are most active
+- Encourages district-level participation
+
+**Leaderboard Updates:**
+- Up-to-date leaderboards calculated on page load (low expected traffic volume)
+- Historical view: See previous years' final standings
+
+### 4.3 Award Administrator Dashboard
 The award administrator view is specifically designed for award fulfillment purposes:
 - List of users who have reached award thresholds (10, 25, or 50 days)
 - For each award-eligible user, display:
@@ -271,16 +294,15 @@ The award administrator view is specifically designed for award fulfillment purp
     - Prevent creation of a duplicate entry
 
 **Freebie Eligibility Enforcement:**
-- System calculates in real-time whether user is eligible to log freebies
-- Freebie options are only shown/enabled when:
-    - User has at least 10 sailing days in current year, AND
-    - User has not used all 5 freebie slots for current year
-- If conditions not met, freebie options are hidden or disabled with clear explanation
+- System calculates in real-time whether user has freebies remaining
+- Freebie options are only shown/enabled when user has not used all 5 freebie slots for current year
+- If all 5 freebies are used, freebie options are hidden or disabled with clear explanation
 
 ### 5.5 Year-End Rollover
 - Activity counts automatically reset to zero on January 1st
-- Prior year data becomes read-only (view only, no edits)
-- Users can view historical data from previous years but cannot modify it
+- Prior year data becomes read-only on February 1st (one-month grace period for late entries)
+- Users can view and edit the previous year's activities until January 31st
+- After January 31st, previous year data becomes view-only
 - System maintains complete activity history across all years
 
 ### 5.6 Security
@@ -301,8 +323,6 @@ The award administrator view is specifically designed for award fulfillment purp
 - Email notifications to users when they earn awards
 - Award fulfillment tracking (marked as mailed/received)
 - Export activity reports to PDF or CSV
-- Social features (leaderboards, community activity feed)
-
 ---
 
 ## 7. Success Metrics
@@ -333,11 +353,8 @@ The award administrator view is specifically designed for award fulfillment purp
 
 1. **Name of Awards**: What are the specific names/types of awards for each tier (10, 25, 50 days)?
 2. **Award Fulfillment Workflow**: Should award administrators be able to mark awards as "mailed" or "fulfilled" in the system to track completion?
-3. **District and Yacht Club**: Should we provide a predefined list of districts and yacht clubs, or allow free-form text entry?
-4. **Year-End Timing**: Should the system lock prior year data at midnight January 1st, or allow a grace period for late entries from December?
-5. **Deleting Sailing Days**: If a user deletes sailing days and drops below 10 total, should their existing freebies remain valid or be removed?
-6. **Branding**: What are the color scheme, logo, and branding requirements for the Lightning Class?
-7. **Launch Timeline**: What is the target go-live date?
+3. **Branding**: What are the color scheme, logo, and branding requirements for the Lightning Class?
+4. **Fleet and District Data**: Can the Lightning Class provide a list of fleets with their corresponding district mappings? This would enable dropdown selection and automatic district assignment based on fleet.
 ---
 
 ## Document Control

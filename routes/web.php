@@ -7,5 +7,6 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::resource('flashes', FlashController::class);
+Route::resource('flashes', FlashController::class)
+    ->only(['index', 'store', 'edit', 'update', 'destroy']);
 

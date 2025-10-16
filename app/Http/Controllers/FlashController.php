@@ -14,9 +14,10 @@ class FlashController extends Controller
     {
         $flashes = Flash::with('user')
             ->latest()
+            ->limit(50)
             ->get();
 
-        return view('flashes', ['flashes' => $flashes]);
+        return view('flashes.index', ['flashes' => $flashes]);
 
     }
 
@@ -37,7 +38,11 @@ class FlashController extends Controller
         $userId = 1; // Temporary: using first user
 
         $request->validate([
-            'date' => 'required|date',
+            'date' => [
+                'required',
+                'date',
+                'before_or_equal:' . now()->addDay()->format('Y-m-d'),
+            ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
                 'required_if:activity_type,sailing',
@@ -50,8 +55,6 @@ class FlashController extends Controller
                     }
                 },
             ],
-            'yacht_club' => 'nullable|string|max:100',
-            'fleet_number' => 'nullable|integer',
             'location' => 'nullable|string|max:255',
             'sail_number' => 'nullable|integer',
             'notes' => 'nullable|string',
@@ -72,8 +75,6 @@ class FlashController extends Controller
             'date',
             'activity_type',
             'event_type',
-            'yacht_club',
-            'fleet_number',
             'location',
             'sail_number',
             'notes',
@@ -83,7 +84,7 @@ class FlashController extends Controller
 
         Flash::create($validated);
 
-        return redirect()->route('flashes.index')->with('success', 'Activity logged successfully!');
+        return redirect()->route('flashes.index')->with('success', 'Flash logged successfully!');
     }
 
     /**
@@ -99,7 +100,8 @@ class FlashController extends Controller
      */
     public function edit(Flash $flash)
     {
-        //
+        // todo add auth
+        return view('flashes.edit', compact('flash'));
     }
 
     /**
@@ -107,7 +109,56 @@ class FlashController extends Controller
      */
     public function update(Request $request, Flash $flash)
     {
-        //
+        // TODO: Replace with auth check when authentication is implemented
+        $userId = 1; // Temporary: using first user
+
+        $request->validate([
+            'date' => [
+                'required',
+                'date',
+                'before_or_equal:' . now()->addDay()->format('Y-m-d'),
+            ],
+            'activity_type' => 'required|in:sailing,maintenance,race_committee',
+            'event_type' => [
+                'required_if:activity_type,sailing',
+                'nullable',
+                'in:regatta,club_race,practice,leisure',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Enforce null for non-sailing activities
+                    if ($request->activity_type !== 'sailing' && $value !== null) {
+                        $fail('Sailing type must be empty for non-sailing activities.');
+                    }
+                },
+            ],
+            'location' => 'nullable|string|max:255',
+            'sail_number' => 'nullable|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Check for duplicate date (excluding current flash)
+        $exists = Flash::where('user_id', $userId)
+            ->whereDate('date', $request->date)
+            ->where('id', '!=', $flash->id)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['date' => 'You already have an activity logged for this date. Please choose a different date.']);
+        }
+
+        $validated = $request->only([
+            'date',
+            'activity_type',
+            'event_type',
+            'location',
+            'sail_number',
+            'notes',
+        ]);
+
+        $flash->update($validated);
+
+        return redirect()->route('flashes.index')->with('success', 'Flash updated successfully!');
     }
 
     /**
@@ -115,6 +166,7 @@ class FlashController extends Controller
      */
     public function destroy(Flash $flash)
     {
-        //
+        $flash->delete();
+        return redirect()->route('flashes.index')->with('success', 'Flash deleted!');
     }
 }
