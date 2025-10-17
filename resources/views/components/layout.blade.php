@@ -23,6 +23,7 @@
             @auth
                 <li><a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">Activities</a></li>
             @endauth
+            <li><a href="{{ route('leaderboard') }}" class="btn btn-ghost btn-sm">Leaderboard</a></li>
         </ul>
     </div>
     <div class="navbar-end gap-2">

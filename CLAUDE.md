@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **GOT-FLASHES Challenge Tracker** - A Laravel 12 web application for tracking Lightning Class sailing activity. The goal is to encourage sailors to get on the water by recognizing annual sailing days through awards at 10, 25, and 50+ day milestones.
 
-**Key Concept**: "Get Out There - FLASHES" encourages Lightning sailors to get their boats off the dock. Users log sailing days and optional "freebie" days (boat maintenance, race committee work) toward annual awards.
+**Key Concept**: "Get Out There - FLASHES" encourages Lightning sailors to get their boats off the dock. Users log sailing days and optional non-sailing days (boat maintenance, race committee work) toward annual awards. Up to 5 non-sailing days count toward award totals per year.
 
 ## Essential Commands
 
@@ -24,8 +24,12 @@ composer check                    # Runs: Pint, PHPStan, ESLint, Stylelint
 composer fix                      # Auto-fixes: Pint, ESLint, Stylelint
 
 # Testing
-composer test                     # Runs PHPUnit test suite
+composer test                     # Runs PHPUnit test suite (with APP_ENV=testing)
 php artisan test --filter=TestName  # Run specific test
+
+# IMPORTANT: When running tests manually, always use:
+APP_ENV=testing php artisan config:clear --ansi && APP_ENV=testing php artisan test
+# This ensures proper test environment configuration and avoids CSRF/session issues
 ```
 
 ### Database
@@ -62,15 +66,16 @@ php artisan tinker
 ### Business Rules
 
 **Activity Types:**
-- `sailing` - Always available, counts toward awards
-- `maintenance` - Boat/trailer work (freebie)
-- `race_committee` - Race committee work (freebie)
+- `sailing` - Always available, counts toward awards (unlimited)
+- `maintenance` - Boat/trailer work (non-sailing day)
+- `race_committee` - Race committee work (non-sailing day)
 
-**Freebie Rules:**
-- Maximum 5 freebie days per calendar year per user
-- No minimum sailing days required to use freebies
-- Freebies reset annually on January 1st
-- UI should hide freebie options when 5 freebies used
+**Non-Sailing Day Rules:**
+- Maximum 5 non-sailing days (maintenance + race committee) count toward awards per calendar year per user
+- Users can log more than 5 non-sailing days, but only 5 count toward totals
+- No minimum sailing days required to log non-sailing days
+- Non-sailing day limit resets annually on January 1st
+- UI should indicate when 5 counting non-sailing days have been used
 
 **Date Restrictions:**
 - Users cannot log future dates (max: today +1 day for timezone handling)
@@ -82,7 +87,7 @@ php artisan tinker
 - 10 days = First tier
 - 25 days = Second tier
 - 50+ days = Third tier (includes Burgee)
-- Qualifying days = sailing days + freebie days
+- Qualifying days = sailing days + up to 5 non-sailing days
 
 ### Authentication Flow
 
@@ -108,6 +113,7 @@ Routes in `routes/web.php`:
 - `/login` - Login form and handler
 - `/logout` - Logout (POST only)
 - `/flashes` - Resource routes (index, store, edit, update, destroy) - auth required
+- `/leaderboard` - Public leaderboard with three tabs: sailor, fleet, district
 
 ### Frontend Architecture
 
@@ -188,22 +194,34 @@ Routes in `routes/web.php`:
 
 **Completed:**
 - ✅ User registration and authentication
-- ✅ Basic Flash CRUD (create, read, update, delete)
+- ✅ Flash CRUD (create, read, update, delete)
 - ✅ Flash authorization policies
 - ✅ Date validation and duplicate prevention
-- ✅ Basic UI with Tailwind CSS
+- ✅ Activity ordering by date (newest first)
+- ✅ "Just logged" badge for entries created today
+- ✅ UI with Tailwind CSS and DaisyUI components
+- ✅ Award tier calculations (10, 25, 50 days)
+- ✅ Progress tracking with visual progress bars
+- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons SVG
+- ✅ Non-sailing day cap enforcement (5 per year) in all queries
+- ✅ Three leaderboards with tabs:
+  - Sailor leaderboard (individual rankings)
+  - Fleet leaderboard (aggregated by fleet_number)
+  - District leaderboard (aggregated by district)
+- ✅ User highlighting on leaderboards
+- ✅ Leaderboard pagination (15 per page)
+- ✅ Dashboard with current year progress and earned awards
 
 **In Progress:**
-- 🔄 Award tier calculations and progress tracking
-- 🔄 Freebie day limits enforcement (5 per year)
-- 🔄 Dashboard with metrics
 - 🔄 Year-end rollover logic (grace period until Jan 31)
+- 🔄 Non-sailing day limits UI enforcement (show when 5 used)
 
 **Planned:**
-- 📋 Leaderboards (individual, fleet, district)
 - 📋 Award administrator dashboard
 - 📋 Historical year views (read-only previous years)
 - 📋 CSV export for award fulfillment
+- 📋 Award certificates (downloadable PDFs)
+- 📋 Social sharing features
 
 ## Key Files
 
@@ -218,11 +236,11 @@ Routes in `routes/web.php`:
 ## Development Notes
 
 ### Year Calculation Logic
-When implementing year-based features (award tracking, freebie limits):
+When implementing year-based features (award tracking, non-sailing day limits):
 - Use calendar year (Jan 1 - Dec 31) for activity counting
 - Grace period: Users can log previous year until January 31st
 - After Jan 31, previous year becomes read-only
-- Freebie counter resets January 1st
+- Non-sailing day counter resets January 1st
 
 ### Testing Strategy
 
@@ -235,8 +253,11 @@ When implementing year-based features (award tracking, freebie limits):
 - **Feature Tests** (`tests/Feature/`): Full HTTP request/response workflows
   - Authentication (registration, login, logout)
   - Flash CRUD operations
+  - Flash ordering and "Just logged" badge
+  - Flash progress tracking and award calculations
   - Authorization checks
   - Validation rules
+  - Leaderboard (sailor, fleet, district tabs)
 - **Unit Tests** (`tests/Unit/`): Individual methods/classes
   - Model relationships and attributes
   - Policy authorization logic
@@ -245,14 +266,14 @@ When implementing year-based features (award tracking, freebie limits):
 **Testing Best Practices:**
 - Use `RefreshDatabase` trait for clean database state per test
 - Test database: In-memory SQLite (faster than disk)
-- Factory pattern: `UserFactory` for test data generation
+- Factory pattern: `UserFactory`, `FlashFactory` for test data generation
 - Descriptive test names: `test_users_can_create_flash_with_minimal_data()`
 - Arrange-Act-Assert pattern in all tests
 
 **Current Coverage:**
-- 70 tests with 196 assertions
+- 95 tests with 275+ assertions
 - 100% coverage of existing features
-- Authentication, authorization, CRUD, validation all tested
+- Authentication, authorization, CRUD, validation, leaderboards, progress tracking all tested
 
 **Running Tests:**
 ```bash
@@ -262,7 +283,7 @@ composer check     # Run tests + all quality checks
 
 ### Common Pitfalls
 - Don't forget the unique constraint on (user_id, date) for flashes
-- Freebie counting must be year-specific, not all-time
+- Non-sailing day counting must be year-specific, not all-time, and capped at 5 per year
 - Date validation needs timezone tolerance (+1 day max)
 - Authorization policies must check user ownership
 - Previous year data becomes read-only after grace period

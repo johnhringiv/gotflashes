@@ -15,11 +15,48 @@ class FlashController extends Controller
      */
     public function index()
     {
-        $flashes = auth()->user()->flashes()
-            ->latest()
+        $user = auth()->user();
+        $currentYear = now()->year;
+
+        $flashes = $user->flashes()
+            ->orderBy('date', 'desc')
             ->paginate(15);
 
-        return view('flashes.index', ['flashes' => $flashes]);
+        // Calculate current year progress: sailing days + non-sailing days (capped at 5)
+        $sailingCount = $user->flashes()
+            ->whereYear('date', $currentYear)
+            ->where('activity_type', 'sailing')
+            ->count();
+
+        $nonSailingCount = $user->flashes()
+            ->whereYear('date', $currentYear)
+            ->whereIn('activity_type', ['maintenance', 'race_committee'])
+            ->count();
+
+        $totalFlashes = $sailingCount + min($nonSailingCount, 5);
+
+        // Award tier milestones
+        $milestones = [10, 25, 50];
+        $nextMilestone = null;
+        $earnedAwards = [];
+
+        foreach ($milestones as $milestone) {
+            if ($totalFlashes >= $milestone) {
+                $earnedAwards[] = $milestone;
+            } elseif ($nextMilestone === null) {
+                $nextMilestone = $milestone;
+            }
+        }
+
+        return view('flashes.index', [
+            'flashes' => $flashes,
+            'totalFlashes' => $totalFlashes,
+            'sailingCount' => $sailingCount,
+            'nonSailingCount' => min($nonSailingCount, 5),
+            'nextMilestone' => $nextMilestone,
+            'earnedAwards' => $earnedAwards,
+            'currentYear' => $currentYear,
+        ]);
 
     }
 

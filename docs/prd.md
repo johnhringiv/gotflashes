@@ -51,37 +51,37 @@ The following activities count toward GOT-FLASHES awards:
 - Even one hour on a Lightning counts as a full "day"
 - Goal: Get the boat off the dock!
 
-**Boat Work Days (Freebies):**
+**Boat Work Days (Non-sailing days):**
 The following activities may count toward your annual total:
 - Lightning boat maintenance
 - Lightning trailer maintenance
 - On-the-water Race Committee work on days where Lightnings are racing
-- **Limitation**: Maximum 5 "freebie" days total per calendar year
+- **Limitation**: Maximum 5 "non-sailing day" days total per calendar year
 
 ### 2.2 Activity Entry
 Users log activities using a simple form for each day:
 - Date of activity (cannot duplicate an existing entry date)
 - Activity type (always available options):
     - **Sailing on a Lightning**
-    - **Boat/Trailer Maintenance (freebie)** - Available until 5 freebies used
-    - **Race Committee Work (freebie)** - Available until 5 freebies used
+    - **Boat/Trailer Maintenance (non-sailing day)** - Available until 5 non-sailing days used
+    - **Race Committee Work (non-sailing day)** - Available until 5 non-sailing days used
 - **Optional fields** (enhance tracking and create richer records):
     - Location (city, lake, venue)
     - Sail Number
     - Notes (free-form text)
 
-**Freebie Entry Restrictions:**
-The system will only allow users to log freebie activities when they have freebies remaining:
-- All users have 5 freebie slots per calendar year
-- System displays remaining freebies (e.g., "3 of 5 freebies remaining")
-- After 5 freebies are used, freebie options are hidden/disabled
-- Clear messaging explains when all freebies have been used
+**Non-sailing day Entry Restrictions:**
+The system will only allow users to log non-sailing day activities when they have non-sailing days remaining:
+- All users have 5 non-sailing day slots per calendar year
+- System displays remaining non-sailing days (e.g., "3 of 5 non-sailing days remaining")
+- After 5 non-sailing days are used, non-sailing day options are hidden/disabled
+- Clear messaging explains when all non-sailing days have been used
 
 **Benefits of this approach:**
-- Simple, straightforward rules - just a maximum of 5 freebies per year
+- Simple, straightforward rules - just a maximum of 5 non-sailing days per year
 - Users can log maintenance and race committee work immediately
 - Eliminates confusion about eligibility requirements
-- Better user experience with clear remaining freebie count
+- Better user experience with clear remaining non-sailing day count
 
 **Edit Restrictions:**
 - Users can edit or delete activities from the current calendar year only
@@ -96,19 +96,19 @@ The system will only allow users to log freebie activities when they have freebi
 - Browser date picker enforces maximum date before submission
 - Server-side validation prevents circumventing browser restrictions
 
-### 2.3 Freebie Day Rules
+### 2.3 Non-sailing Day Rules
 Boat Work and Race Committee days count toward awards with these limitations:
 
 **Eligibility Requirements:**
-- Maximum 5 freebie days per calendar year
-- These 5 freebie slots reset annually on January 1st
-- No minimum sailing days required to use freebies
+- Maximum 5 non-sailing days per calendar year
+- These 5 non-sailing day slots reset annually on January 1st
+- No minimum sailing days required to use non-sailing days
 
 **System Behavior:**
-- Freebie options are available to all users from the start of the year
-- System displays clear messaging about remaining freebies (e.g., "3 of 5 freebies remaining")
-- After 5 freebies are used, freebie options are hidden/disabled until next year
-- Users can delete freebie entries if needed, freeing up slots for new entries
+- Non-sailing day options are available to all users from the start of the year
+- System displays clear messaging about remaining non-sailing days (e.g., "3 of 5 non-sailing days remaining")
+- After 5 non-sailing days are used, non-sailing day options are hidden/disabled until next year
+- Users can delete non-sailing day entries if needed, freeing up slots for new entries
 
 ### 2.4 Activity History
 - Users can view all their previously entered activities
@@ -133,24 +133,24 @@ Participants earn recognition at the following annual milestones:
 - **50+ days**: Third tier award (including Burgee eligibility)
 
 ### 3.2 Award Counting Rules
-- Qualifying days = Sailing Days + Logged Freebie Days
+- Qualifying days = Sailing Days + Logged Non-sailing Days
 - All logged activities count toward awards
-- Maximum 5 freebie days per calendar year
+- Maximum 5 non-sailing days per calendar year
 - Awards are based on calendar year (January 1 - December 31)
 - All activities must be logged by January 31st of the following year (one-month grace period)
 
 ### 3.3 Progress Tracking
 Users should see their current annual progress:
 - Total sailing days (current year)
-- Total freebie days logged
-- Freebies remaining (X of 5 available)
+- Total non-sailing days logged
+- Non-sailing days remaining (X of 5 available)
 - Total qualifying days (toward awards)
 - Visual progress indicators toward each award tier (10, 25, 50)
 - Awards earned in current year
 - Which award tier they've achieved
-- Clear messaging about freebie status:
-    - If freebies remaining: "X of 5 freebies remaining"
-    - If all 5 used: "All 5 freebies used this year"
+- Clear messaging about non-sailing day status:
+    - If non-sailing days remaining: "X of 5 non-sailing days remaining"
+    - If all 5 used: "All 5 non-sailing days used this year"
 
 **Historical View:**
 - Summary of each previous year's achievements
@@ -176,8 +176,8 @@ Award Administrators need to know when users reach award thresholds to send reco
 Display key metrics for current calendar year:
 - Total qualifying days (toward awards)
 - Number of sailing days
-- Number of freebie days logged
-- Freebies remaining (X of 5 available)
+- Number of non-sailing days logged
+- Non-sailing days remaining (X of 5 available)
 - Progress bars showing advancement toward each tier (10, 25, 50 days)
 - Awards earned this year
 - Recent activity history with optional details displayed
@@ -187,9 +187,9 @@ Display key metrics for current calendar year:
 - Date picker (with duplicate date prevention)
 - Activity type dropdown:
     - "Sailing on a Lightning" (always available)
-    - "Boat/Trailer Maintenance - X of 5 remaining" (available while freebies remain)
-    - "Race Committee Work - X of 5 remaining" (available while freebies remain)
-- Helper text explaining when all freebies have been used
+    - "Boat/Trailer Maintenance - X of 5 remaining" (available while non-sailing days remain)
+    - "Race Committee Work - X of 5 remaining" (available while non-sailing days remain)
+- Helper text explaining when all non-sailing days have been used
 - Optional fields section (collapsed/expandable for cleaner UX):
     - Location
     - Sail Number
@@ -265,10 +265,10 @@ The award administrator view is specifically designed for award fulfillment purp
     - Allow user to view or edit the existing entry
     - Prevent creation of a duplicate entry
 
-**Freebie Eligibility Enforcement:**
-- System calculates in real-time whether user has freebies remaining
-- Freebie options are only shown/enabled when user has not used all 5 freebie slots for current year
-- If all 5 freebies are used, freebie options are hidden or disabled with clear explanation
+**Non-sailing day Eligibility Enforcement:**
+- System calculates in real-time whether user has non-sailing days remaining
+- Non-sailing day options are only shown/enabled when user has not used all 5 non-sailing day slots for current year
+- If all 5 non-sailing days are used, non-sailing day options are hidden or disabled with clear explanation
 
 ### 5.4 Year-End Rollover
 - Activity counts automatically reset to zero on January 1st

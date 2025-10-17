@@ -9,8 +9,8 @@ A web application for tracking Lightning Class sailing activity and managing the
 The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
 
 ### What Counts
-- **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew)
-- **Freebie Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
+- **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
+- **Non-Sailing Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
 - **One hour counts as a full day** - we just want you sailing!
 
 ### Award Tiers
@@ -21,11 +21,19 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 ## Key Features
 
 ### Current Implementation
-- **Simple Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
-- **Activity Management**: Edit and delete your own activity entries
+- **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
+- **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
+- **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Three Leaderboards**:
+  - **Sailor**: Individual rankings by total flashes
+  - **Fleet**: Fleet-level rankings with member counts
+  - **District**: District-level rankings with member counts
 - **User Authentication**: Secure registration and login system
 - **Authorization**: Users can only view and modify their own entries
 - **Data Integrity**: Prevents duplicate date entries per user
+- **Non-Sailing Day Cap**: Automatically caps maintenance and race committee days at 5 per year
+- **Date Ordering**: Activities ordered by activity date (newest first)
+- **User Highlighting**: Your position highlighted on leaderboards
 - **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
 - **Self-Hosted**: SQLite database with no external dependencies
 
@@ -143,7 +151,8 @@ composer test
 ```
 
 **Test Coverage:**
-- Feature tests: Authentication, CRUD operations, authorization, validation
+- 95 tests with 275+ assertions
+- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
 - Unit tests: Models, policies, business logic
 - Uses in-memory SQLite for fast test execution
 
@@ -174,7 +183,7 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
-- **PHPUnit** - Test suite (70 tests)
+- **PHPUnit** - Test suite (95 tests)
 
 **`composer fix`** runs:
 - **Laravel Pint** - Auto-fixes PHP formatting
@@ -280,21 +289,27 @@ For production deployment configuration, see the `.env` file and Laravel deploym
 **Completed Features:**
 - ✅ User registration and authentication
 - ✅ Profile management
-- ✅ Activity logging (Flashes)
+- ✅ Activity logging (Flashes) with activity type selection
 - ✅ Activity CRUD operations
-- ✅ Basic dashboard
+- ✅ Activity ordering by date (newest first)
+- ✅ "Just logged" badge for entries created today
+- ✅ Award tier calculations (10, 25, 50 days)
+- ✅ Progress tracking displays with visual progress bars
+- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons
+- ✅ Non-sailing day limits enforcement (5 per year)
+- ✅ Three leaderboards (Sailor, Fleet, District)
+- ✅ User highlighting on leaderboards
+- ✅ Leaderboard pagination and ranking
 
 **In Progress:**
-- 🔄 Award tier calculations
-- 🔄 Progress tracking displays
-- 🔄 Freebie day limits enforcement
-- 🔄 Year-end rollover logic
+- 🔄 Year-end rollover logic and grace period
 
 **Planned:**
-- 📋 Leaderboards (individual, fleet, district)
 - 📋 Award administrator dashboard
-- 📋 Historical year views
-- 📋 CSV export functionality
+- 📋 Historical year views (read-only previous years)
+- 📋 CSV export functionality for award fulfillment
+- 📋 Award certificates (downloadable PDFs)
+- 📋 Social sharing features
 
 ## Git Workflow
 
@@ -314,8 +329,8 @@ composer check             # Run tests + all quality checks
 ```
 
 **Current Coverage:**
-- 70 tests with 196 assertions
-- Feature tests: Authentication, CRUD operations, authorization, validation
+- 95 tests with 275+ assertions
+- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
 - Unit tests: Models, policies, business logic
 - Uses in-memory SQLite for fast execution
 
