@@ -20,12 +20,22 @@
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost btn-sm">Home</a></li>
-            <li><a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">Activities</a></li>
+            @auth
+                <li><a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">Activities</a></li>
+            @endauth
         </ul>
     </div>
     <div class="navbar-end gap-2">
-        <a href="#" class="btn btn-ghost btn-sm">Sign In</a>
-        <a href="#" class="btn btn-primary btn-sm">Sign Up</a>
+        @auth
+            <span class="text-sm">{{ auth()->user()->name }}</span>
+            <form method="POST" action="/logout" class="inline">
+                @csrf
+                <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
+            </form>
+        @else
+            <a href="/login" class="btn btn-ghost btn-sm">Sign In</a>
+            <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+        @endauth
     </div>
 </nav>
 
@@ -59,6 +69,9 @@
     <div>
         <p>© {{ date('Y') }} Lightning Class Association - GOT-FLASHES Challenge Tracker</p>
         <p class="text-xs opacity-70">Track your sailing days • Earn awards • Build the Lightning community</p>
+        <p class="text-xs opacity-60 mt-2">
+            Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>
+        </p>
     </div>
 </footer>
 </body>

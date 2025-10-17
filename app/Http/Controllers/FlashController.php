@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Flash;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class FlashController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $flashes = Flash::with('user')
+        $flashes = auth()->user()->flashes()
             ->latest()
             ->paginate(15);
 
@@ -33,9 +36,6 @@ class FlashController extends Controller
      */
     public function store(Request $request)
     {
-        // TODO: Replace with auth()->id() when authentication is implemented
-        $userId = 1; // Temporary: using first user
-
         $request->validate([
             'date' => [
                 'required',
@@ -60,7 +60,7 @@ class FlashController extends Controller
         ]);
 
         // Check for duplicate date
-        $exists = Flash::where('user_id', $userId)
+        $exists = auth()->user()->flashes()
             ->whereDate('date', $request->date)
             ->exists();
 
@@ -79,9 +79,8 @@ class FlashController extends Controller
             'notes',
         ]);
 
-        $validated['user_id'] = $userId;
-
-        Flash::create($validated);
+        // Use the authenticated user
+        auth()->user()->flashes()->create($validated);
 
         return redirect()->route('flashes.index')->with('success', 'Flash logged successfully!');
     }
@@ -99,7 +98,8 @@ class FlashController extends Controller
      */
     public function edit(Flash $flash)
     {
-        // todo add auth
+        $this->authorize('update', $flash);
+
         return view('flashes.edit', compact('flash'));
     }
 
@@ -108,8 +108,7 @@ class FlashController extends Controller
      */
     public function update(Request $request, Flash $flash)
     {
-        // TODO: Replace with auth check when authentication is implemented
-        $userId = 1; // Temporary: using first user
+        $this->authorize('update', $flash);
 
         $request->validate([
             'date' => [
@@ -135,7 +134,7 @@ class FlashController extends Controller
         ]);
 
         // Check for duplicate date (excluding current flash)
-        $exists = Flash::where('user_id', $userId)
+        $exists = auth()->user()->flashes()
             ->whereDate('date', $request->date)
             ->where('id', '!=', $flash->id)
             ->exists();
@@ -165,7 +164,10 @@ class FlashController extends Controller
      */
     public function destroy(Flash $flash)
     {
+        $this->authorize('delete', $flash);
+
         $flash->delete();
+
         return redirect()->route('flashes.index')->with('success', 'Flash deleted!');
     }
 }

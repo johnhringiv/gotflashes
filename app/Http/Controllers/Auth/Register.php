@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class Register extends Controller
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+            'date_of_birth' => ['required', 'date', 'before:today', 'after:1900-01-01'],
+            'gender' => ['required', 'in:male,female,non_binary,prefer_not_to_say'],
+            'address_line1' => ['required', 'string', 'max:255'],
+            'address_line2' => ['nullable', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'zip_code' => ['required', 'string', 'max:20'],
+            'country' => ['required', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:100'],
+            'fleet_number' => ['nullable', 'integer'],
+            'yacht_club' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        // Create the user
+        $user = User::create([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'address_line1' => $validated['address_line1'],
+            'address_line2' => $validated['address_line2'],
+            'city' => $validated['city'],
+            'state' => $validated['state'],
+            'zip_code' => $validated['zip_code'],
+            'country' => $validated['country'],
+            'district' => $validated['district'],
+            'fleet_number' => $validated['fleet_number'],
+            'yacht_club' => $validated['yacht_club'],
+        ]);
+
+        // Log the user in
+        Auth::login($user);
+
+        // Redirect to flashes index with success message
+        return redirect()->route('flashes.index')->with('success', 'Welcome to GOT-FLASHES! Your account has been created.');
+    }
+}

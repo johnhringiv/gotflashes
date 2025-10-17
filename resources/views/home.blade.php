@@ -54,12 +54,11 @@
                         </ul>
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg mb-2">Freebie Days (After 10 sailing days)</h3>
+                        <h3 class="font-bold text-lg mb-2">Non-Sailing Days</h3>
                         <ul class="list-disc list-inside space-y-1 text-base-content/80">
                             <li>Boat or trailer maintenance</li>
                             <li>Race Committee work (when Lightnings race)</li>
-                            <li>Maximum 5 freebie days per year</li>
-                            <li>Unlocked after reaching 10 sailing days</li>
+                            <li>Maximum 5 non-sailing days per year</li>
                         </ul>
                     </div>
                 </div>

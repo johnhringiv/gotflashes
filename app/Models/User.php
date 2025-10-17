@@ -19,9 +19,21 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'date_of_birth',
+        'gender',
+        'address_line1',
+        'address_line2',
+        'city',
+        'state',
+        'zip_code',
+        'country',
+        'district',
+        'fleet_number',
+        'yacht_club',
     ];
 
     /**
@@ -44,7 +56,16 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
         ];
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    public function getNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
     }
 
     public function flashes(): HasMany
