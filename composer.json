@@ -49,14 +49,15 @@
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
         ],
         "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "APP_ENV=testing php artisan config:clear --ansi",
+            "APP_ENV=testing php artisan test"
         ],
         "check": [
-            "@php artisan config:clear --ansi",
+            "APP_ENV=testing php artisan config:clear --ansi",
             "vendor/bin/pint --test",
             "vendor/bin/phpstan analyze --memory-limit=256M",
-            "npm run lint"
+            "npm run lint",
+            "APP_ENV=testing php artisan test"
         ],
         "fix": [
             "vendor/bin/pint",

@@ -154,6 +154,18 @@ Routes in `routes/web.php`:
 - If checks fail, commit is blocked
 - Run `composer fix` to auto-fix issues, then commit again
 
+### Quality Commands
+- `composer check` - Runs all quality checks (linting + tests)
+- `composer fix` - Auto-fixes code style issues
+- `composer test` - Runs test suite only
+
+**`composer check` includes:**
+- Laravel Pint (PHP formatting)
+- PHPStan (static analysis)
+- ESLint (JavaScript)
+- Stylelint (CSS)
+- PHPUnit test suite
+
 ### Linting Configuration
 - **PHP**: Laravel Pint (PSR-12) + PHPStan (level 5) via Larastan
 - **JavaScript**: ESLint with recommended rules
@@ -169,8 +181,8 @@ Routes in `routes/web.php`:
 
 ### GitHub Actions
 - Workflow: `.github/workflows/check.yml`
-- Runs on: push and PR to main/master/develop/tutorial branches
-- Single job runs `composer check` (same as local)
+- Runs on: push and PR to main/master/develop branches
+- Single job runs `composer check` (linting + tests)
 
 ## Implementation Status
 
@@ -213,10 +225,40 @@ When implementing year-based features (award tracking, freebie limits):
 - Freebie counter resets January 1st
 
 ### Testing Strategy
-- Feature tests: HTTP requests to response (full workflows)
-- Unit tests: Individual methods/classes in isolation
-- Use `RefreshDatabase` trait for test isolation
-- Database: Uses in-memory SQLite for speed
+
+**Test-Driven Development (TDD):**
+- Write tests first for new features when possible
+- All existing functionality has test coverage
+- Tests run automatically in CI/CD and pre-commit hooks
+
+**Test Organization:**
+- **Feature Tests** (`tests/Feature/`): Full HTTP request/response workflows
+  - Authentication (registration, login, logout)
+  - Flash CRUD operations
+  - Authorization checks
+  - Validation rules
+- **Unit Tests** (`tests/Unit/`): Individual methods/classes
+  - Model relationships and attributes
+  - Policy authorization logic
+  - Business logic in isolation
+
+**Testing Best Practices:**
+- Use `RefreshDatabase` trait for clean database state per test
+- Test database: In-memory SQLite (faster than disk)
+- Factory pattern: `UserFactory` for test data generation
+- Descriptive test names: `test_users_can_create_flash_with_minimal_data()`
+- Arrange-Act-Assert pattern in all tests
+
+**Current Coverage:**
+- 70 tests with 196 assertions
+- 100% coverage of existing features
+- Authentication, authorization, CRUD, validation all tested
+
+**Running Tests:**
+```bash
+composer test      # Run full test suite
+composer check     # Run tests + all quality checks
+```
 
 ### Common Pitfalls
 - Don't forget the unique constraint on (user_id, date) for flashes
