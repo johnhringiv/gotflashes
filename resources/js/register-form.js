@@ -1,12 +1,11 @@
 // Date of Birth input formatting and validation
 document.addEventListener('DOMContentLoaded', function() {
     const dobInput = document.querySelector('input[name="date_of_birth"]');
-    console.log('DOB input found:', dobInput);
 
     if (dobInput) {
         // Auto-format as user types (add hyphens only)
         dobInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
             let formatted = '';
 
             // Year (4 digits)
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let errorMessage = '';
 
             // Remove any existing error message
-            let existingError = dobInput.parentElement.querySelector('.dob-error-message');
+            const existingError = dobInput.parentElement.querySelector('.dob-error-message');
             if (existingError) {
                 existingError.remove();
             }

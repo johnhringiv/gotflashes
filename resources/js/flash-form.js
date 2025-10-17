@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Restrict numeric inputs to integers only
     const numericInputs = document.querySelectorAll('input[name="sail_number"]');
     numericInputs.forEach(input => {
-        input.addEventListener('input', function(e) {
+        input.addEventListener('input', function() {
             // Remove any non-digit characters
             this.value = this.value.replace(/[^0-9]/g, '');
         });

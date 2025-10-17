@@ -245,47 +245,19 @@ The award administrator view is specifically designed for award fulfillment purp
 
 ## 5. Technical Requirements
 
-### 5.1 Technology Stack
-
-**Backend Framework:**
-- Laravel (latest stable version)
-- PHP 8.1 or higher
-
-**Database:**
-- SQLite with Write-Ahead Logging (WAL) mode enabled
-- No separate database server required
-- Database stored as single file for easy backup
-
-**Frontend:**
-- Bootstrap 5 for responsive UI components
-- Blade templating engine (Laravel's built-in)
-- Vanilla JavaScript for client-side interactions
-
-**Web Server:**
-- Nginx as reverse proxy and web server
-- PHP-FPM for processing PHP requests
-
-**Security:**
-- Let's Encrypt SSL/TLS certificates for HTTPS
-- Automatic certificate renewal via certbot
-
-**Authentication:**
-- Laravel Breeze for user authentication scaffolding
-- Includes registration, login, password reset, and profile management
-
-### 5.2 Platform
+### 5.1 Platform
 - Standalone web-based application (no external integrations required)
 - Self-hosted on VPS or similar infrastructure
 - Accessible via browser on desktop and mobile devices
 - Responsive design for various screen sizes
 
-### 5.3 Data Persistence
+### 5.2 Data Persistence
 - User accounts and data must persist across sessions
 - Secure storage of user credentials (bcrypt password hashing)
 - Historical data retained indefinitely but locked from editing after year-end
 - Single SQLite database file contains all application data
 
-### 5.4 Data Integrity
+### 5.3 Data Integrity
 - **One activity per date rule**: Users cannot log multiple activities on the same calendar date
 - System must prevent duplicate date entries
 - If user attempts to log an activity on a date that already has an entry, system should:
@@ -298,21 +270,21 @@ The award administrator view is specifically designed for award fulfillment purp
 - Freebie options are only shown/enabled when user has not used all 5 freebie slots for current year
 - If all 5 freebies are used, freebie options are hidden or disabled with clear explanation
 
-### 5.5 Year-End Rollover
+### 5.4 Year-End Rollover
 - Activity counts automatically reset to zero on January 1st
 - Prior year data becomes read-only on February 1st (one-month grace period for late entries)
 - Users can view and edit the previous year's activities until January 31st
 - After January 31st, previous year data becomes view-only
 - System maintains complete activity history across all years
 
-### 5.6 Security
-- Password protection for user accounts (bcrypt hashing)
-- Secure authentication system via Laravel Breeze
+### 5.5 Security
+- Password protection for user accounts with secure hashing
+- Secure authentication system
 - Role-based access control (user vs. award administrator)
-- HTTPS/SSL encryption for data transmission via Let's Encrypt
-- CSRF protection (Laravel built-in)
-- SQL injection prevention (Laravel ORM/Eloquent)
-- XSS protection (Blade template escaping)
+- HTTPS/SSL encryption for data transmission
+- CSRF protection
+- SQL injection prevention
+- XSS protection
 
 ---
 

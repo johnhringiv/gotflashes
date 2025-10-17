@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Flash;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -102,7 +102,7 @@ class FlashSeeder extends Seeder
                 'event_type' => $isSailing ? $eventTypes[array_rand($eventTypes)] : null,
                 'location' => rand(0, 1) ? $locations[array_rand($locations)] : null,
                 'sail_number' => rand(0, 1) ? rand(10000, 15999) : null,
-                'notes' => rand(0, 2) ? null : 'Great day on the water with ' . rand(10, 20) . ' knot winds.',
+                'notes' => rand(0, 2) ? null : 'Great day on the water with '.rand(10, 20).' knot winds.',
             ]);
         }
     }

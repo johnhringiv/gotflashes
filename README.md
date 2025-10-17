@@ -1,61 +1,315 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GOT-FLASHES Challenge Tracker
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web application for tracking Lightning Class sailing activity and managing the GOT-FLASHES Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
-## About Laravel
+**GOT-FLASHES** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## About the GOT-FLASHES Challenge
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### What Counts
+- **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew)
+- **Freebie Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
+- **One hour counts as a full day** - we just want you sailing!
 
-## Learning Laravel
+### Award Tiers
+- **10 Days**: First tier recognition
+- **25 Days**: Second tier recognition
+- **50+ Days**: Third tier recognition (including Burgee eligibility)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Key Features
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### For Participants
+- **Simple Activity Logging**: Log sailing days and optional details (location, sail number, notes)
+- **Progress Tracking**: Visual indicators showing advancement toward each award tier
+- **Freebie Management**: Track remaining freebie slots (5 per year maximum)
+- **Historical Records**: View all past activity with year-by-year summaries
+- **Leaderboards**: Compare your performance with other sailors, fleets, and districts
+- **Profile Management**: Update your yacht club, fleet, district, and contact information
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### For Award Administrators
+- **Award Tracking**: View participants who have reached award thresholds
+- **Mailing Information**: Access participant contact details for award fulfillment
+- **Export Capabilities**: Download award-eligible participants for mail merge
 
-## Laravel Sponsors
+### Technical Highlights
+- **Secure Authentication**: Laravel Breeze-based registration and login
+- **Data Integrity**: Prevents duplicate entries, enforces freebie limits, validates dates
+- **Year-End Rollover**: Automatic reset with grace period for late entries (until January 31st)
+- **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
+- **Self-Hosted**: SQLite database with no external dependencies
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Technology Stack
 
-### Premium Partners
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Database**: SQLite with WAL mode
+- **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
+- **Authentication**: Laravel Breeze
+- **Server**: Nginx + PHP-FPM (production)
+- **Security**: HTTPS via Let's Encrypt SSL certificates
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Getting Started
 
-## Contributing
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- Node.js & NPM
+- SQLite
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Quick Setup
 
-## Code of Conduct
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/johnhringiv/gotflashes.git
+   cd gotflashes
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Install dependencies and setup**
+   ```bash
+   composer setup
+   ```
+   This command will:
+   - Install PHP dependencies
+   - Copy `.env.example` to `.env`
+   - Generate application key
+   - Run database migrations
+   - Install Node dependencies
+   - Build frontend assets
 
-## Security Vulnerabilities
+3. **Start development server**
+   ```bash
+   composer dev
+   ```
+   This runs multiple services concurrently:
+   - Laravel development server (http://localhost:8000)
+   - Queue worker
+   - Log viewer (Pail)
+   - Vite dev server for hot module reload
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+4. **Access the application**
+   Open http://localhost:8000 in your browser
 
-## License
+### Manual Setup (Alternative)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+If you prefer step-by-step setup:
+
+```bash
+# Install PHP dependencies
+composer install
+
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Create SQLite database
+touch database/database.sqlite
+
+# Run migrations
+php artisan migrate
+
+# Install Node dependencies
+npm install
+
+# Build assets
+npm run build
+
+# Start development server
+php artisan serve
+```
+
+### Creating Your First Admin User
+
+After setup, register a new account through the web interface. To grant admin privileges, use Laravel Tinker:
+
+```bash
+php artisan tinker
+```
+
+Then run:
+```php
+$user = User::where('email', 'your@email.com')->first();
+$user->is_admin = true;
+$user->save();
+```
+
+## Development Workflow
+
+### Running Tests
+```bash
+composer test
+```
+
+### Code Quality & Linting
+
+This project uses multiple linters to maintain code quality. Two simple commands handle everything:
+
+```bash
+# Check all code (PHP, JavaScript, CSS)
+composer check
+
+# Auto-fix all fixable issues
+composer fix
+```
+
+#### What Gets Checked
+
+**`composer check`** runs:
+- **Laravel Pint** - PHP code formatting (PSR-12)
+- **PHPStan** - PHP static analysis (type safety, bug detection)
+- **ESLint** - JavaScript linting
+- **Stylelint** - CSS linting
+
+**`composer fix`** runs:
+- **Laravel Pint** - Auto-fixes PHP formatting
+- **ESLint** - Auto-fixes JavaScript issues
+- **Stylelint** - Auto-fixes CSS issues
+
+#### Pre-commit Hooks
+
+This project uses Husky to automatically run code quality checks before each commit. When you commit, `composer check` runs automatically, which includes:
+- Laravel Pint (PHP formatting)
+- PHPStan (PHP static analysis)
+- ESLint (JavaScript linting)
+- Stylelint (CSS linting)
+
+If any check fails, the commit will be blocked until you run `composer fix` and fix any remaining issues.
+
+### Database Management
+
+**Create a new migration:**
+```bash
+php artisan make:migration create_table_name
+```
+
+**Run migrations:**
+```bash
+php artisan migrate
+```
+
+**Rollback last migration:**
+```bash
+php artisan migrate:rollback
+```
+
+**Fresh database (WARNING: destroys all data):**
+```bash
+php artisan migrate:fresh
+```
+
+### Useful Artisan Commands
+
+```bash
+# Clear all caches
+php artisan optimize:clear
+
+# View routes
+php artisan route:list
+
+# Open Tinker REPL
+php artisan tinker
+
+# View real-time logs
+php artisan pail
+```
+
+## Project Structure
+
+```
+gotflashes/
+├── app/
+│   ├── Http/Controllers/    # Request handling logic
+│   ├── Models/              # Eloquent models (User, Flash)
+│   └── ...
+├── database/
+│   ├── migrations/          # Database schema definitions
+│   └── database.sqlite      # SQLite database file
+├── docs/
+│   ├── prd.md              # Product Requirements Document
+│   └── CONTRIBUTING.md     # Contribution guidelines
+├── resources/
+│   ├── views/              # Blade templates
+│   ├── css/                # Stylesheets
+│   └── js/                 # JavaScript files
+├── routes/
+│   └── web.php            # Web routes
+├── tests/                 # PHPUnit tests
+└── public/               # Web server document root
+```
+
+## Documentation
+
+- **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
+- **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
+
+## Configuration
+
+Key environment variables in `.env`:
+
+```env
+APP_NAME="GOT-FLASHES Challenge"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/database/database.sqlite
+```
+
+For production deployment configuration, see the `.env` file and Laravel deployment documentation.
+
+## Current Implementation Status
+
+**Completed Features:**
+- ✅ User registration and authentication
+- ✅ Profile management
+- ✅ Activity logging (Flashes)
+- ✅ Activity CRUD operations
+- ✅ Basic dashboard
+
+**In Progress:**
+- 🔄 Award tier calculations
+- 🔄 Progress tracking displays
+- 🔄 Freebie day limits enforcement
+- 🔄 Year-end rollover logic
+
+**Planned:**
+- 📋 Leaderboards (individual, fleet, district)
+- 📋 Award administrator dashboard
+- 📋 Historical year views
+- 📋 CSV export functionality
+
+## Git Workflow
+
+Current branches:
+- `tutorial`: Development branch for current implementation
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed git workflow and branching strategy.
+
+## Testing
+
+Run the test suite:
+```bash
+php artisan test
+```
+
+Run tests with coverage:
+```bash
+php artisan test --coverage
+```
+
+## Support & Contributing
+
+This project is developed for the International Lightning Class Association. For questions about the GOT-FLASHES Challenge program, contact the ILCA office.
+
+Developers interested in contributing should read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on code style, testing, and pull request process.
+
+## Acknowledgments
+
+Built with Laravel, Tailwind CSS, and the Lightning Class sailing community in mind.
+
+---
+
+**GOT-FLASHES**: Get Out There - Let's keep Lightning sailing active and fun!

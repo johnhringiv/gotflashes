@@ -40,7 +40,7 @@ class FlashController extends Controller
             'date' => [
                 'required',
                 'date',
-                'before_or_equal:' . now()->addDay()->format('Y-m-d'),
+                'before_or_equal:'.now()->addDay()->format('Y-m-d'),
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
@@ -114,7 +114,7 @@ class FlashController extends Controller
             'date' => [
                 'required',
                 'date',
-                'before_or_equal:' . now()->addDay()->format('Y-m-d'),
+                'before_or_equal:'.now()->addDay()->format('Y-m-d'),
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
