@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+npm-debug.log
+
+# Laravel
+/vendor
+/storage/*.key
+/storage/pail
+/bootstrap/cache
+.env
+.env.backup
+.env.production
+*.sqlite
+*.sqlite-journal
+
+# Build artifacts
+/public/hot
+/public/storage
+
+# Testing
+.phpunit.result.cache
+/.phpunit.cache
+
+# IDE
+/.idea
+/.vscode
+/.nova
+/.fleet
+/.zed
+.phpactor.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+docs/
+todo.md
+CLAUDE.md
+
+# Docker
+Dockerfile
+.dockerignore

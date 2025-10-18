@@ -38,6 +38,9 @@
                         @else
                             <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $flash->activity_type)) }}</span>
                         @endif
+                        @if($flash->created_at->isToday())
+                            <span class="badge badge-success badge-sm">Just logged</span>
+                        @endif
                     </div>
 
                     @can('update', $flash)

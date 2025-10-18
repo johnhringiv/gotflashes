@@ -2,9 +2,9 @@ name: Code Quality
 
 on:
   push:
-    branches: [ main, master, develop, tutorial ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, master, develop, tutorial ]
+    branches: [ main, develop ]
 
 jobs:
   check:
@@ -32,6 +32,15 @@ jobs:
 
       - name: Install npm dependencies
         run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Setup Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
 
       - name: Run all code quality checks
         run: composer check

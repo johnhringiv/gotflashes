@@ -9,8 +9,8 @@ A web application for tracking Lightning Class sailing activity and managing the
 The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
 
 ### What Counts
-- **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew)
-- **Freebie Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
+- **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
+- **Non-Sailing Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
 - **One hour counts as a full day** - we just want you sailing!
 
 ### Award Tiers
@@ -20,34 +20,38 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 
 ## Key Features
 
-### For Participants
-- **Simple Activity Logging**: Log sailing days and optional details (location, sail number, notes)
-- **Progress Tracking**: Visual indicators showing advancement toward each award tier
-- **Freebie Management**: Track remaining freebie slots (5 per year maximum)
-- **Historical Records**: View all past activity with year-by-year summaries
-- **Leaderboards**: Compare your performance with other sailors, fleets, and districts
-- **Profile Management**: Update your yacht club, fleet, district, and contact information
-
-### For Award Administrators
-- **Award Tracking**: View participants who have reached award thresholds
-- **Mailing Information**: Access participant contact details for award fulfillment
-- **Export Capabilities**: Download award-eligible participants for mail merge
-
-### Technical Highlights
-- **Secure Authentication**: Laravel Breeze-based registration and login
-- **Data Integrity**: Prevents duplicate entries, enforces freebie limits, validates dates
-- **Year-End Rollover**: Automatic reset with grace period for late entries (until January 31st)
+### Current Implementation
+- **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
+- **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
+- **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Three Leaderboards**:
+  - **Sailor**: Individual rankings by total flashes
+  - **Fleet**: Fleet-level rankings with member counts
+  - **District**: District-level rankings with member counts
+- **User Authentication**: Secure registration and login system
+- **Authorization**: Users can only view and modify their own entries
+- **Data Integrity**: Prevents duplicate date entries per user
+- **Non-Sailing Day Cap**: Automatically caps maintenance and race committee days at 5 per year
+- **Date Ordering**: Activities ordered by activity date (newest first)
+- **User Highlighting**: Your position highlighted on leaderboards
 - **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
 - **Self-Hosted**: SQLite database with no external dependencies
+
+### Technical Highlights
+- **Secure Authentication**: Laravel's built-in session-based authentication
+- **Authorization Policies**: Enforces user ownership of activity records
+- **Database Constraints**: Unique index prevents duplicate entries per user per date
+- **Date Validation**: Prevents future date entries (with timezone tolerance)
+- **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
+- **Pre-commit Hooks**: Automatically runs code quality checks before commits
 
 ## Technology Stack
 
 - **Backend**: Laravel 12 (PHP 8.2+)
 - **Database**: SQLite with WAL mode
 - **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
-- **Authentication**: Laravel Breeze
-- **Server**: Nginx + PHP-FPM (production)
-- **Security**: HTTPS via Let's Encrypt SSL certificates
+- **Authentication**: Laravel's built-in session-based authentication
+- **Asset Bundling**: Vite
 
 ## Getting Started
 
@@ -90,6 +94,37 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 4. **Access the application**
    Open http://localhost:8000 in your browser
 
+### Docker Deployment
+
+For production deployment using Docker (no PHP/Node required on host):
+
+```bash
+# 1. Configure environment
+cp .env.docker .env
+# Edit .env and set APP_KEY
+
+# 2. Build and run
+mkdir -p database storage/app storage/logs
+docker build -t gotflashes:latest .
+docker run -d --name gotflashes --restart unless-stopped \
+  -p 8080:80 \
+  -v $(pwd)/database:/var/www/html/database \
+  -v $(pwd)/storage/app:/var/www/html/storage/app \
+  -v $(pwd)/storage/logs:/var/www/html/storage/logs \
+  --env-file .env \
+  gotflashes:latest
+```
+
+See **[DOCKER.md](DOCKER.md)** for complete Docker deployment guide including:
+- Quick start guide
+- Production deployment behind HAProxy
+- Management commands
+- Troubleshooting
+
+---
+
+## Local Development (Traditional)
+
 ### Manual Setup (Alternative)
 
 If you prefer step-by-step setup:
@@ -120,9 +155,9 @@ npm run build
 php artisan serve
 ```
 
-### Creating Your First Admin User
+### Creating an Admin User (When Implemented)
 
-After setup, register a new account through the web interface. To grant admin privileges, use Laravel Tinker:
+Admin functionality is planned but not yet implemented. Once available, you'll be able to grant admin privileges using Laravel Tinker:
 
 ```bash
 php artisan tinker
@@ -137,20 +172,38 @@ $user->save();
 
 ## Development Workflow
 
-### Running Tests
+### Testing
+
+This project follows Test-Driven Development (TDD) practices with comprehensive test coverage.
+
+**Run the test suite:**
 ```bash
 composer test
 ```
 
+**Test Coverage:**
+- 95 tests with 275+ assertions
+- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
+- Unit tests: Models, policies, business logic
+- Uses in-memory SQLite for fast test execution
+
+**Test Organization:**
+- `tests/Feature/` - Full HTTP request/response workflows
+- `tests/Unit/` - Individual components in isolation
+- All tests use `RefreshDatabase` for clean state
+
 ### Code Quality & Linting
 
-This project uses multiple linters to maintain code quality. Two simple commands handle everything:
+This project uses multiple linters and automated tests to maintain code quality. Three simple commands handle everything:
 
 ```bash
-# Check all code (PHP, JavaScript, CSS)
+# Check all code (linting + tests)
 composer check
 
-# Auto-fix all fixable issues
+# Run tests only
+composer test
+
+# Auto-fix code style issues
 composer fix
 ```
 
@@ -161,6 +214,7 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
+- **PHPUnit** - Test suite (95 tests)
 
 **`composer fix`** runs:
 - **Laravel Pint** - Auto-fixes PHP formatting
@@ -174,6 +228,7 @@ This project uses Husky to automatically run code quality checks before each com
 - PHPStan (PHP static analysis)
 - ESLint (JavaScript linting)
 - Stylelint (CSS linting)
+- PHPUnit (test suite)
 
 If any check fails, the commit will be blocked until you run `composer fix` and fix any remaining issues.
 
@@ -265,40 +320,52 @@ For production deployment configuration, see the `.env` file and Laravel deploym
 **Completed Features:**
 - ✅ User registration and authentication
 - ✅ Profile management
-- ✅ Activity logging (Flashes)
+- ✅ Activity logging (Flashes) with activity type selection
 - ✅ Activity CRUD operations
-- ✅ Basic dashboard
+- ✅ Activity ordering by date (newest first)
+- ✅ "Just logged" badge for entries created today
+- ✅ Award tier calculations (10, 25, 50 days)
+- ✅ Progress tracking displays with visual progress bars
+- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons
+- ✅ Non-sailing day limits enforcement (5 per year)
+- ✅ Three leaderboards (Sailor, Fleet, District)
+- ✅ User highlighting on leaderboards
+- ✅ Leaderboard pagination and ranking
 
 **In Progress:**
-- 🔄 Award tier calculations
-- 🔄 Progress tracking displays
-- 🔄 Freebie day limits enforcement
-- 🔄 Year-end rollover logic
+- 🔄 Year-end rollover logic and grace period
 
 **Planned:**
-- 📋 Leaderboards (individual, fleet, district)
 - 📋 Award administrator dashboard
-- 📋 Historical year views
-- 📋 CSV export functionality
+- 📋 Historical year views (read-only previous years)
+- 📋 CSV export functionality for award fulfillment
+- 📋 Award certificates (downloadable PDFs)
+- 📋 Social sharing features
 
 ## Git Workflow
 
 Current branches:
-- `tutorial`: Development branch for current implementation
+- `main`: Primary development branch
 
 See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed git workflow and branching strategy.
 
-## Testing
+## Testing Strategy
 
-Run the test suite:
+This project follows Test-Driven Development (TDD) practices with comprehensive test coverage.
+
+**Run tests:**
 ```bash
-php artisan test
+composer test              # Run test suite only
+composer check             # Run tests + all quality checks
 ```
 
-Run tests with coverage:
-```bash
-php artisan test --coverage
-```
+**Current Coverage:**
+- 95 tests with 275+ assertions
+- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
+- Unit tests: Models, policies, business logic
+- Uses in-memory SQLite for fast execution
+
+See the Testing section under Development Workflow above for more details.
 
 ## Support & Contributing
 

@@ -15,11 +15,38 @@ class FlashController extends Controller
      */
     public function index()
     {
-        $flashes = auth()->user()->flashes()
-            ->latest()
+        $user = auth()->user();
+        $currentYear = now()->year;
+
+        $flashes = $user->flashes()
+            ->orderBy('date', 'desc')
             ->paginate(15);
 
-        return view('flashes.index', ['flashes' => $flashes]);
+        // Calculate current year progress: sailing days + non-sailing days (capped at 5)
+        $stats = $user->flashStatsForYear($currentYear);
+
+        // Award tier milestones
+        $milestones = [10, 25, 50];
+        $nextMilestone = null;
+        $earnedAwards = [];
+
+        foreach ($milestones as $milestone) {
+            if ($stats->total >= $milestone) {
+                $earnedAwards[] = $milestone;
+            } elseif ($nextMilestone === null) {
+                $nextMilestone = $milestone;
+            }
+        }
+
+        return view('flashes.index', [
+            'flashes' => $flashes,
+            'totalFlashes' => $stats->total,
+            'sailingCount' => $stats->sailing,
+            'nonSailingCount' => min($stats->nonSailing, 5),
+            'nextMilestone' => $nextMilestone,
+            'earnedAwards' => $earnedAwards,
+            'currentYear' => $currentYear,
+        ]);
 
     }
 

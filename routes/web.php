@@ -4,11 +4,15 @@ use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
 use App\Http\Controllers\FlashController;
+use App\Http\Controllers\LeaderboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
 });
+
+Route::get('/leaderboard', [LeaderboardController::class, 'index'])
+    ->name('leaderboard');
 
 Route::resource('flashes', FlashController::class)
     ->only(['index', 'store', 'edit', 'update', 'destroy'])
