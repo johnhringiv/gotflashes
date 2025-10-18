@@ -94,6 +94,37 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 4. **Access the application**
    Open http://localhost:8000 in your browser
 
+### Docker Deployment
+
+For production deployment using Docker (no PHP/Node required on host):
+
+```bash
+# 1. Configure environment
+cp .env.docker .env
+# Edit .env and set APP_KEY
+
+# 2. Build and run
+mkdir -p database storage/app storage/logs
+docker build -t gotflashes:latest .
+docker run -d --name gotflashes --restart unless-stopped \
+  -p 8080:80 \
+  -v $(pwd)/database:/var/www/html/database \
+  -v $(pwd)/storage/app:/var/www/html/storage/app \
+  -v $(pwd)/storage/logs:/var/www/html/storage/logs \
+  --env-file .env \
+  gotflashes:latest
+```
+
+See **[DOCKER.md](DOCKER.md)** for complete Docker deployment guide including:
+- Quick start guide
+- Production deployment behind HAProxy
+- Management commands
+- Troubleshooting
+
+---
+
+## Local Development (Traditional)
+
 ### Manual Setup (Alternative)
 
 If you prefer step-by-step setup:
