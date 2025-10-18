@@ -23,17 +23,7 @@ class FlashController extends Controller
             ->paginate(15);
 
         // Calculate current year progress: sailing days + non-sailing days (capped at 5)
-        $sailingCount = $user->flashes()
-            ->whereYear('date', $currentYear)
-            ->where('activity_type', 'sailing')
-            ->count();
-
-        $nonSailingCount = $user->flashes()
-            ->whereYear('date', $currentYear)
-            ->whereIn('activity_type', ['maintenance', 'race_committee'])
-            ->count();
-
-        $totalFlashes = $sailingCount + min($nonSailingCount, 5);
+        $stats = $user->flashStatsForYear($currentYear);
 
         // Award tier milestones
         $milestones = [10, 25, 50];
@@ -41,7 +31,7 @@ class FlashController extends Controller
         $earnedAwards = [];
 
         foreach ($milestones as $milestone) {
-            if ($totalFlashes >= $milestone) {
+            if ($stats->total >= $milestone) {
                 $earnedAwards[] = $milestone;
             } elseif ($nextMilestone === null) {
                 $nextMilestone = $milestone;
@@ -50,9 +40,9 @@ class FlashController extends Controller
 
         return view('flashes.index', [
             'flashes' => $flashes,
-            'totalFlashes' => $totalFlashes,
-            'sailingCount' => $sailingCount,
-            'nonSailingCount' => min($nonSailingCount, 5),
+            'totalFlashes' => $stats->total,
+            'sailingCount' => $stats->sailing,
+            'nonSailingCount' => min($stats->nonSailing, 5),
             'nextMilestone' => $nextMilestone,
             'earnedAwards' => $earnedAwards,
             'currentYear' => $currentYear,

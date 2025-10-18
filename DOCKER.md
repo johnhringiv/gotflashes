@@ -162,6 +162,11 @@ docker run -d --name gotflashes --restart unless-stopped \
   gotflashes:latest
 ```
 
+### Resetting Permissions
+```bash
+sudo chown -R jhring:jhring database/ storage/ bootstrap/cache/
+```
+
 ---
 
 ## Production Deployment

@@ -68,7 +68,7 @@
                                     <td>{{ $user->yacht_club ?? '—' }}</td>
                                     <td class="text-center">
                                         <span class="badge badge-primary badge-lg">
-                                            {{ $user->flashes_2025_count }}
+                                            {{ $user->flashes_count }}
                                         </span>
                                     </td>
                                 </tr>

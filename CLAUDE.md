@@ -208,6 +208,11 @@ Routes in `routes/web.php`:
   - Sailor leaderboard (individual rankings)
   - Fleet leaderboard (aggregated by fleet_number)
   - District leaderboard (aggregated by district)
+- ✅ Leaderboard tie-breaking logic:
+  1. Total qualifying flashes (primary sort)
+  2. Sailing day count (tie-breaker #1 - more sailing days wins)
+  3. First entry timestamp (tie-breaker #2 - earliest entry wins)
+  4. Alphabetical by name (tie-breaker #3)
 - ✅ User highlighting on leaderboards
 - ✅ Leaderboard pagination (15 per page)
 - ✅ Dashboard with current year progress and earned awards

@@ -208,18 +208,31 @@ Public leaderboards to encourage friendly competition and community engagement:
 - Display: Rank, Name (or username), Days Logged, Fleet (optional), District (optional)
 - Filterable by: All participants, specific district, specific fleet
 - Top performers highlighted (e.g., Top 10, Top 25)
+- **Tie-breaking rules** (in order of precedence):
+  1. Total qualifying flashes (primary sort - descending)
+  2. Sailing day count (more sailing days wins - descending)
+  3. First entry timestamp (earliest entry wins - ascending)
+  4. Alphabetical by first name, then last name
 
 **Fleet Leaderboard:**
 - Rank fleets by average days per member or total days logged by fleet
 - Display: Rank, Fleet Number, Yacht Club, Total Days, Average Days/Member, Member Count
 - Shows which fleets are most active
 - Encourages fleet-level friendly competition
+- **Tie-breaking rules** (in order of precedence):
+  1. Total qualifying flashes (aggregated across all members - descending)
+  2. Total sailing days (aggregated across all members - descending)
+  3. Earliest first entry across all members (ascending)
 
 **District Leaderboard:**
 - Rank districts by average days per member or total days logged by district
 - Display: Rank, District Name, Total Days, Average Days/Member, Member Count
 - Shows which geographic regions are most active
 - Encourages district-level participation
+- **Tie-breaking rules** (in order of precedence):
+  1. Total qualifying flashes (aggregated across all members - descending)
+  2. Total sailing days (aggregated across all members - descending)
+  3. Earliest first entry across all members (ascending)
 
 **Leaderboard Updates:**
 - Up-to-date leaderboards calculated on page load (low expected traffic volume)

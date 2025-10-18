@@ -29,6 +29,17 @@ class FlashFactory extends Factory
     }
 
     /**
+     * Indicate that the flash is for sailing activity.
+     */
+    public function sailing(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'activity_type' => 'sailing',
+            'event_type' => $attributes['event_type'] ?? fake()->randomElement(['regatta', 'club_race', 'practice', 'leisure']),
+        ]);
+    }
+
+    /**
      * Indicate that the flash is for maintenance activity.
      */
     public function maintenance(): static

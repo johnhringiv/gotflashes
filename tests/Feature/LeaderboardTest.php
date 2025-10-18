@@ -693,4 +693,141 @@ class LeaderboardTest extends TestCase
         $response->assertSee('District 5');
         $response->assertSee('11');
     }
+
+    public function test_sailor_leaderboard_tie_breaking_by_sailing_count(): void
+    {
+        // User A: 10 total (8 sailing + 2 non-sailing)
+        $userA = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        for ($i = 1; $i <= 8; $i++) {
+            Flash::factory()->forUser($userA)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+        Flash::factory()->forUser($userA)->maintenance()->create(['date' => '2025-01-09']);
+        Flash::factory()->forUser($userA)->maintenance()->create(['date' => '2025-01-10']);
+
+        // User B: 10 total (10 sailing + 0 non-sailing) - should rank higher
+        $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($userB)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $response = $this->get('/leaderboard');
+
+        $response->assertStatus(200);
+        // Bob should appear before Alice (more sailing days)
+        $response->assertSeeInOrder(['Bob Jones', 'Alice Smith']);
+    }
+
+    public function test_sailor_leaderboard_tie_breaking_by_first_entry(): void
+    {
+        // Both users have 10 sailing days, but User A entered first
+        $userA = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $this->travel(-5)->days();
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($userA)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+        $this->travelBack();
+
+        $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($userB)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $response = $this->get('/leaderboard');
+
+        $response->assertStatus(200);
+        // Alice should appear before Bob (entered earlier)
+        $response->assertSeeInOrder(['Alice Smith', 'Bob Jones']);
+    }
+
+    public function test_sailor_leaderboard_tie_breaking_alphabetical(): void
+    {
+        // Both users have same count, same sailing days, entries at same time
+        $userA = User::factory()->create(['first_name' => 'Zara', 'last_name' => 'Adams']);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($userA)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $userB = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Baker']);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($userB)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $response = $this->get('/leaderboard');
+
+        $response->assertStatus(200);
+        // Alice should appear before Zara (alphabetical)
+        $response->assertSeeInOrder(['Alice Baker', 'Zara Adams']);
+    }
+
+    public function test_fleet_leaderboard_tie_breaking(): void
+    {
+        // Fleet 100: 20 total (15 sailing + 5 non-sailing)
+        $user1 = User::factory()->create(['fleet_number' => 100]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user1)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+        for ($i = 11; $i <= 13; $i++) {
+            Flash::factory()->forUser($user1)->maintenance()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $user2 = User::factory()->create(['fleet_number' => 100]);
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->forUser($user2)->sailing()->create(['date' => "2025-02-{$i}"]);
+        }
+        Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-06']);
+        Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-07']);
+
+        // Fleet 200: 20 total (20 sailing + 0 non-sailing) - should rank higher
+        $user3 = User::factory()->create(['fleet_number' => 200]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user3)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $user4 = User::factory()->create(['fleet_number' => 200]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user4)->sailing()->create(['date' => "2025-02-{$i}"]);
+        }
+
+        $response = $this->get('/leaderboard?tab=fleet');
+
+        $response->assertStatus(200);
+        // Fleet 200 should appear before Fleet 100 (more sailing days)
+        $response->assertSeeInOrder(['Fleet 200', 'Fleet 100']);
+    }
+
+    public function test_district_leaderboard_tie_breaking(): void
+    {
+        // District 5: 20 total (15 sailing + 5 non-sailing)
+        $user1 = User::factory()->create(['district' => 5]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user1)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+        for ($i = 11; $i <= 13; $i++) {
+            Flash::factory()->forUser($user1)->maintenance()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $user2 = User::factory()->create(['district' => 5]);
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->forUser($user2)->sailing()->create(['date' => "2025-02-{$i}"]);
+        }
+        Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-06']);
+        Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-07']);
+
+        // District 10: 20 total (20 sailing + 0 non-sailing) - should rank higher
+        $user3 = User::factory()->create(['district' => 10]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user3)->sailing()->create(['date' => "2025-01-{$i}"]);
+        }
+
+        $user4 = User::factory()->create(['district' => 10]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->forUser($user4)->sailing()->create(['date' => "2025-02-{$i}"]);
+        }
+
+        $response = $this->get('/leaderboard?tab=district');
+
+        $response->assertStatus(200);
+        // District 10 should appear before District 5 (more sailing days)
+        $response->assertSeeInOrder(['District 10', 'District 5']);
+    }
 }
