@@ -20,6 +20,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTP Basic Authentication
+    |--------------------------------------------------------------------------
+    |
+    | These credentials are used for HTTP Basic Authentication in production
+    | to allow stakeholder testing before public launch.
+    |
+    */
+
+    'basic' => [
+        'username' => env('BASIC_AUTH_USERNAME'),
+        'password' => env('BASIC_AUTH_PASSWORD'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Guards
     |--------------------------------------------------------------------------
     |

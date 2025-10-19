@@ -16,6 +16,7 @@
     "axios": "^1.11.0",
     "blade-formatter": "^1.44.2",
     "concurrently": "^9.0.1",
+    "daisyui": "^5.3.7",
     "eslint": "^9.37.0",
     "globals": "^16.4.0",
     "husky": "^9.1.7",

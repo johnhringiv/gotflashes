@@ -8,7 +8,10 @@
 
     <div class="max-w-6xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold">2025 Leaderboard</h1>
+            <h1 class="text-3xl font-bold">
+                <span class="text-primary">2025</span>
+                <span class="text-accent">Leaderboard</span>
+            </h1>
             <p class="text-base-content/70 mt-2">Top Lightning sailors by total flashes this year</p>
         </div>
 
@@ -33,7 +36,20 @@
 
         @if($leaderboard->count() > 0)
             <div class="card bg-base-100 shadow overflow-x-auto">
-                <table class="table table-zebra">
+                <table class="table">
+                    <style>
+                        .table tbody tr:nth-child(even):not(.current-user-row) {
+                            background-color: oklch(38% 0.09 245 / 0.1);
+                        }
+                        .current-user-row {
+                            background-color: oklch(44% 0.21 29 / 0.15);
+                        }
+                        .badge-accent {
+                            background-color: oklch(44% 0.21 29);
+                            color: oklch(100% 0 0);
+                            border-color: oklch(44% 0.21 29);
+                        }
+                    </style>
                     @if($currentTab === 'sailor')
                         <thead>
                             <tr>
@@ -56,7 +72,7 @@
                                 @php
                                     $isCurrentUser = auth()->check() && auth()->id() === $user->id;
                                 @endphp
-                                <tr class="{{ $isCurrentUser ? 'bg-primary/10 border-l-4 border-primary' : '' }}">
+                                <tr class="{{ $isCurrentUser ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
@@ -70,7 +86,7 @@
                                     <td class="text-center">{{ $user->fleet_number ?? '—' }}</td>
                                     <td>{{ $user->yacht_club ?? '—' }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $user->flashes_count }}
                                         </span>
                                     </td>
@@ -101,7 +117,7 @@
                                     <td class="font-medium">Fleet {{ $fleet->fleet_number }}</td>
                                     <td class="text-center">{{ $fleet->member_count }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $fleet->total_flashes }}
                                         </span>
                                     </td>
@@ -132,7 +148,7 @@
                                     <td class="font-medium">District {{ $district->district }}</td>
                                     <td class="text-center">{{ $district->member_count }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $district->total_flashes }}
                                         </span>
                                     </td>
