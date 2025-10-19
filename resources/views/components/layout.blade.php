@@ -1,9 +1,40 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="lofi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ isset($title) ? $title . ' - GOT-FLASHES' : 'GOT-FLASHES Challenge Tracker' }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    @php
+        $baseUrl = 'https://gotflashes.com';
+        $pageTitle = isset($title) ? $title . ' - GOT-FLASHES' : 'GOT-FLASHES Challenge Tracker';
+        $pageDescription = $description ?? 'Track your Lightning Class sailing days and earn awards. Get Out There - FLASHES encourages sailors to log sailing activities toward 10, 25, and 50+ day annual awards.';
+        $currentPath = request()->getPathInfo();
+        $pageUrl = $baseUrl . $currentPath;
+        $ogImage = $baseUrl . '/images/got_flashes.png';
+    @endphp
+
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDescription }}">
+    <meta name="author" content="Lightning Class Association">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ $pageUrl }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDescription }}">
+    <meta property="og:url" content="{{ $pageUrl }}">
+    <meta property="og:site_name" content="GOT-FLASHES Challenge Tracker">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image" content="{{ $ogImage }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $pageDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
     <link rel="preconnect" href="<https://fonts.bunny.net>">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
@@ -14,16 +45,16 @@
 <nav class="navbar bg-base-100 shadow-md">
     <div class="navbar-start">
         <a href="/" class="flex items-center px-2">
-            <img src="{{ asset('images/got_flashes.png') }}" alt="GOT-FLASHES Challenge Tracker" class="h-12">
+            <img src="/images/got_flashes.png" alt="GOT-FLASHES Challenge Tracker" class="h-12">
         </a>
     </div>
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost btn-sm">Home</a></li>
             @auth
-                <li><a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">Activities</a></li>
+                <li><a href="/flashes" class="btn btn-ghost btn-sm">Activities</a></li>
             @endauth
-            <li><a href="{{ route('leaderboard') }}" class="btn btn-ghost btn-sm">Leaderboard</a></li>
+            <li><a href="/leaderboard" class="btn btn-ghost btn-sm">Leaderboard</a></li>
         </ul>
     </div>
     <div class="navbar-end gap-2">
@@ -35,7 +66,7 @@
             </form>
         @else
             <a href="/login" class="btn btn-ghost btn-sm">Sign In</a>
-            <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+            <a href="/register" class="btn btn-primary btn-sm">Sign Up</a>
         @endauth
     </div>
 </nav>

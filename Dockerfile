@@ -26,17 +26,12 @@ WORKDIR /app
 
 # Install build dependencies (only in builder stage)
 RUN apk add --no-cache \
-    git \
-    curl \
-    zip \
     unzip \
-    libpng-dev \
     oniguruma-dev \
-    libxml2-dev \
     sqlite-dev
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_sqlite mbstring exif pcntl bcmath gd
+# Install PHP extensions (only what's needed)
+RUN docker-php-ext-install pdo_sqlite mbstring pcntl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -57,9 +52,6 @@ COPY --from=php-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
 # Install only runtime dependencies (no build deps needed)
 RUN apk add --no-cache \
-    libpng \
-    oniguruma \
-    libxml2 \
     sqlite-libs \
     nginx \
     supervisor
@@ -67,20 +59,28 @@ RUN apk add --no-cache \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
-COPY . .
-
-# Copy built assets from frontend stage
-COPY --from=frontend /app/public/build ./public/build
+# Copy only essential application directories and files
+COPY app ./app
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY public ./public
+COPY resources ./resources
+COPY routes ./routes
+COPY artisan composer.json composer.lock ./
+COPY database/migrations ./database/migrations
 
 # Copy PHP dependencies from builder stage
 COPY --from=php-builder /app/vendor ./vendor
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && mkdir -p /var/www/html/bootstrap/cache \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+# Copy built assets from frontend stage
+COPY --from=frontend /app/public/build ./public/build
+
+# Create storage directories and set permissions
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
+    && mkdir -p storage/app storage/logs \
+    && mkdir -p bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 storage bootstrap/cache
 
 # Create SQLite database directory
 RUN mkdir -p /var/www/html/database \
