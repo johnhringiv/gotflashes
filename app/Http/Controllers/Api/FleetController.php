@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FleetController extends Controller
@@ -43,10 +44,15 @@ class FleetController extends Controller
     /**
      * Get fleets by district
      */
-    public function fleetsByDistrict(int $districtId): JsonResponse
+    public function fleetsByDistrict(Request $request, int $districtId): JsonResponse
     {
+        // Validate that the district ID exists
+        $validated = $request->merge(['districtId' => $districtId])->validate([
+            'districtId' => 'required|integer|exists:districts,id',
+        ]);
+
         $fleets = DB::table('fleets')
-            ->where('district_id', $districtId)
+            ->where('district_id', $validated['districtId'])
             ->orderBy('fleet_number')
             ->get(['id', 'fleet_number', 'fleet_name']);
 

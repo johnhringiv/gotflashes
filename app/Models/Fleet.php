@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Fleet extends Model
 {
@@ -23,11 +24,18 @@ class Fleet extends Model
     }
 
     /**
-     * Get the users in the fleet.
+     * Get the users in the fleet (through members table).
      */
-    public function users(): HasMany
+    public function users(): HasManyThrough
     {
-        return $this->hasMany(User::class);
+        return $this->hasManyThrough(
+            User::class,
+            Member::class,
+            'fleet_id',  // Foreign key on members table
+            'id',        // Foreign key on users table
+            'id',        // Local key on fleets table
+            'user_id'    // Local key on members table
+        );
     }
 
     /**

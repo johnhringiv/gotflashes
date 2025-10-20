@@ -113,11 +113,37 @@ document.addEventListener('DOMContentLoaded', async function() {
                 fetch('/api/fleets')
             ]);
 
+            // Check if responses are OK
+            if (!districtsResponse.ok || !fleetsResponse.ok) {
+                throw new Error(`Failed to fetch data: Districts ${districtsResponse.status}, Fleets ${fleetsResponse.status}`);
+            }
+
             districts = await districtsResponse.json();
             fleets = await fleetsResponse.json();
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('Error fetching data:', error);
+            console.error('Error fetching districts and fleets:', error);
+
+            // Display user-friendly error message
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-error mb-4';
+            errorAlert.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Unable to load districts and fleets. Please refresh the page or try again later.</span>
+            `;
+
+            // Insert error before the first fieldset
+            const firstFieldset = document.querySelector('fieldset');
+            if (firstFieldset) {
+                firstFieldset.insertAdjacentElement('beforebegin', errorAlert);
+            }
+
+            // Disable the select elements to prevent submission with invalid data
+            districtSelect.disabled = true;
+            fleetSelect.disabled = true;
+
             return;
         }
 

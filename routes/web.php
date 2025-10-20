@@ -18,8 +18,8 @@ Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard');
 
-// API routes for fleets and districts
-Route::prefix('api')->group(function () {
+// API routes for fleets and districts (rate limited: 60 requests per minute)
+Route::prefix('api')->middleware('throttle:60,1')->group(function () {
     Route::get('/districts', [FleetController::class, 'districts']);
     Route::get('/fleets', [FleetController::class, 'fleets']);
     Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);

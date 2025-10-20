@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class District extends Model
 {
@@ -20,11 +21,18 @@ class District extends Model
     }
 
     /**
-     * Get the users in the district.
+     * Get the users in the district (through members table).
      */
-    public function users(): HasMany
+    public function users(): HasManyThrough
     {
-        return $this->hasMany(User::class);
+        return $this->hasManyThrough(
+            User::class,
+            Member::class,
+            'district_id', // Foreign key on members table
+            'id',          // Foreign key on users table
+            'id',          // Local key on districts table
+            'user_id'      // Local key on members table
+        );
     }
 
     /**
