@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
 class FleetController extends Controller
 {
     /**
-     * Get all districts
+     * Get all districts.
+     * Cached in browser for 1 year with ETag for validation.
      */
     public function districts(): JsonResponse
     {
@@ -18,11 +19,14 @@ class FleetController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json($districts);
+        return response()->json($districts)
+            ->header('Cache-Control', 'public, max-age=31536000, immutable')
+            ->header('ETag', md5(json_encode($districts)));
     }
 
     /**
-     * Get all fleets with their district information
+     * Get all fleets with their district information.
+     * Cached in browser for 1 year with ETag for validation.
      */
     public function fleets(): JsonResponse
     {
@@ -38,7 +42,9 @@ class FleetController extends Controller
             ->orderBy('fleets.fleet_number')
             ->get();
 
-        return response()->json($fleets);
+        return response()->json($fleets)
+            ->header('Cache-Control', 'public, max-age=31536000, immutable')
+            ->header('ETag', md5(json_encode($fleets)));
     }
 
     /**
