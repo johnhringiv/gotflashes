@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     @php
-        $baseUrl = 'https://gotflashes.com';
+        $baseUrl = rtrim(config('app.url'), '/');
         $pageTitle = isset($title) ? $title . ' - GOT-FLASHES' : 'GOT-FLASHES Challenge Tracker';
         $pageDescription = $description ?? 'Track your Lightning Class sailing days and earn awards. Get Out There - FLASHES encourages sailors to log sailing activities toward 10, 25, and 50+ day annual awards.';
         $currentPath = request()->getPathInfo();

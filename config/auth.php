@@ -26,6 +26,13 @@ return [
     | These credentials are used for HTTP Basic Authentication in production
     | to allow stakeholder testing before public launch.
     |
+    | IMPORTANT: These are plain text passwords used for HTTP Basic Auth,
+    | NOT hashed passwords like user authentication. Basic Auth is intended
+    | for protecting staging/pre-production environments. The password is
+    | transmitted over HTTPS and compared directly (not hashed).
+    |
+    | The /up health check endpoint is automatically excluded from Basic Auth.
+    |
     */
 
     'basic' => [

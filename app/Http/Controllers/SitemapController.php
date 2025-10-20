@@ -8,7 +8,7 @@ class SitemapController extends Controller
 {
     public function __invoke(): Response
     {
-        $baseUrl = 'https://gotflashes.com';
+        $baseUrl = rtrim(config('app.url'), '/');
 
         $urls = [
             [

@@ -15,6 +15,11 @@ class BasicAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip Basic Auth for health check endpoint
+        if ($request->is('up')) {
+            return $next($request);
+        }
+
         // Only apply Basic Auth in production environment
         if (app()->environment('production')) {
             $username = config('auth.basic.username');
