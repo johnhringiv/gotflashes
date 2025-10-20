@@ -18,8 +18,9 @@ Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard');
 
-// API routes for fleets and districts (rate limited: 60 requests per minute)
-Route::prefix('api')->middleware('throttle:60,1')->group(function () {
+// API routes for fleets and districts
+// Cache for 1 year with ETag support (data changes very infrequently)
+Route::prefix('api')->middleware(['throttle:60,1', 'cache.headers:public;max_age=31536000;etag'])->group(function () {
     Route::get('/districts', [FleetController::class, 'districts']);
     Route::get('/fleets', [FleetController::class, 'fleets']);
     Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
