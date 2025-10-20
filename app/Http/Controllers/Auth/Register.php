@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -45,30 +46,35 @@ class Register extends Controller
             'yacht_club' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Create the user
-        $user = User::create([
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'date_of_birth' => $validated['date_of_birth'],
-            'gender' => $validated['gender'],
-            'address_line1' => $validated['address_line1'],
-            'address_line2' => $validated['address_line2'] ?? null,
-            'city' => $validated['city'],
-            'state' => $validated['state'],
-            'zip_code' => $validated['zip_code'],
-            'country' => $validated['country'],
-            'yacht_club' => $validated['yacht_club'] ?? null,
-        ]);
+        // Create user and membership in a transaction to ensure atomicity
+        $user = DB::transaction(function () use ($validated) {
+            // Create the user
+            $user = User::create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'date_of_birth' => $validated['date_of_birth'],
+                'gender' => $validated['gender'],
+                'address_line1' => $validated['address_line1'],
+                'address_line2' => $validated['address_line2'] ?? null,
+                'city' => $validated['city'],
+                'state' => $validated['state'],
+                'zip_code' => $validated['zip_code'],
+                'country' => $validated['country'],
+                'yacht_club' => $validated['yacht_club'] ?? null,
+            ]);
 
-        // Always create membership record for current year (even if unaffiliated)
-        Member::create([
-            'user_id' => $user->id,
-            'district_id' => $validated['district_id'] ?? null,
-            'fleet_id' => $validated['fleet_id'] ?? null,
-            'year' => now()->year,
-        ]);
+            // Always create membership record for current year (even if unaffiliated)
+            Member::create([
+                'user_id' => $user->id,
+                'district_id' => $validated['district_id'] ?? null,
+                'fleet_id' => $validated['fleet_id'] ?? null,
+                'year' => now()->year,
+            ]);
+
+            return $user;
+        });
 
         // Log the user in
         Auth::login($user);
