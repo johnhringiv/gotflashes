@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            FleetsSeeder::class,  // Must run first to populate districts and fleets
             FlashSeeder::class,
         ]);
     }

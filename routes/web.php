@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\FleetController;
 use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
@@ -16,6 +17,13 @@ Route::get('/sitemap.xml', SitemapController::class);
 
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard');
+
+// API routes for fleets and districts
+Route::prefix('api')->group(function () {
+    Route::get('/districts', [FleetController::class, 'districts']);
+    Route::get('/fleets', [FleetController::class, 'fleets']);
+    Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
+});
 
 Route::resource('flashes', FlashController::class)
     ->only(['index', 'store', 'edit', 'update', 'destroy'])

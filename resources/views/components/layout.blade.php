@@ -40,10 +40,44 @@
 <body class="min-h-screen flex flex-col bg-base-200 font-sans">
 <nav class="navbar shadow-md" style="background-color: var(--color-primary); color: var(--color-primary-content);">
     <div class="navbar-start">
+        <!-- Mobile menu dropdown -->
+        <div class="dropdown lg:hidden">
+            <button type="button" tabindex="0" class="btn btn-ghost btn-circle text-white" aria-label="Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-3 shadow-lg bg-base-100 rounded-box w-56 text-base-content">
+                <li><a href="/" class="text-base py-3 {{ request()->path() === '/' ? 'active font-bold text-accent' : '' }}">Home</a></li>
+                @auth
+                    <li><a href="/flashes" class="text-base py-3 {{ str_starts_with(request()->path(), 'flashes') ? 'active font-bold text-accent' : '' }}">Activities</a></li>
+                @endauth
+                <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
+
+                @auth
+                    <li class="menu-title mt-2 text-xs opacity-70">Account</li>
+                    <li class="text-sm px-4 py-2 text-warning font-semibold">{{ auth()->user()->name }}</li>
+                    <li>
+                        <form method="POST" action="/logout">
+                            @csrf
+                            <button type="submit" class="text-base py-3 text-error font-semibold">Logout</button>
+                        </form>
+                    </li>
+                @else
+                    <li class="menu-title mt-2"></li>
+                    <li><a href="/login" class="text-base py-3">Sign In</a></li>
+                    <li><a href="/register" class="text-base py-3 font-semibold text-accent">Sign Up</a></li>
+                @endauth
+            </ul>
+        </div>
+
+        <!-- Logo -->
         <a href="/" class="flex items-center px-2">
             <img src="/images/got_flashes.png" alt="GOT-FLASHES Challenge Tracker" class="h-12">
         </a>
     </div>
+
+    <!-- Desktop menu (centered) -->
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
@@ -53,12 +87,14 @@
             <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
         </ul>
     </div>
-    <div class="navbar-end gap-2">
+
+    <!-- Auth buttons (desktop only) -->
+    <div class="navbar-end gap-2 hidden lg:flex">
         @auth
-            <span class="text-sm text-white">{{ auth()->user()->name }}</span>
+            <span class="text-sm text-warning font-semibold">{{ auth()->user()->name }}</span>
             <form method="POST" action="/logout" class="inline">
                 @csrf
-                <button type="submit" class="btn btn-ghost btn-sm text-white hover:bg-white/10">Logout</button>
+                <button type="submit" class="btn btn-error btn-sm">Logout</button>
             </form>
         @else
             <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10">Sign In</a>

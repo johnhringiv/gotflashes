@@ -82,8 +82,18 @@
                                             <span class="badge badge-sm badge-primary ml-2">You</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ $user->district ?? '—' }}</td>
-                                    <td class="text-center">{{ $user->fleet_number ?? '—' }}</td>
+                                    <td class="text-center">
+                                        @php
+                                            $district = $user->district_id ? \App\Models\District::find($user->district_id) : null;
+                                        @endphp
+                                        {{ $district?->name ?? '—' }}
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $fleet = $user->fleet_id ? \App\Models\Fleet::find($user->fleet_id) : null;
+                                        @endphp
+                                        {{ $fleet?->fleet_number ?? '—' }}
+                                    </td>
                                     <td>{{ $user->yacht_club ?? '—' }}</td>
                                     <td class="text-center">
                                         <span class="badge badge-accent badge-lg">
@@ -114,7 +124,7 @@
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
-                                    <td class="font-medium">Fleet {{ $fleet->fleet_number }}</td>
+                                    <td class="font-medium">Fleet {{ $fleet->fleet_number }} - {{ $fleet->fleet_name }}</td>
                                     <td class="text-center">{{ $fleet->member_count }}</td>
                                     <td class="text-center">
                                         <span class="badge badge-accent badge-lg">
@@ -145,7 +155,7 @@
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
-                                    <td class="font-medium">District {{ $district->district }}</td>
+                                    <td class="font-medium">{{ $district->name }}</td>
                                     <td class="text-center">{{ $district->member_count }}</td>
                                     <td class="text-center">
                                         <span class="badge badge-accent badge-lg">

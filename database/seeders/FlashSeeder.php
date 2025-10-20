@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\District;
 use App\Models\Flash;
+use App\Models\Fleet;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -13,6 +16,16 @@ class FlashSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get some existing districts and fleets (assumes FleetsSeeder has run)
+        $californiaDistrict = District::where('name', 'California')->first();
+        $centralAtlanticDistrict = District::where('name', 'Central Atlantic')->first();
+        $canadaDistrict = District::where('name', 'Central Canada')->first();
+
+        // Get specific fleets
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // Mission Bay (California)
+        $fleet1 = Fleet::where('fleet_number', 1)->first(); // Annapolis area
+        $canadaFleet = $canadaDistrict?->fleets()->first();
+
         // Create 3 test users with specific details
         $john = User::factory()->create([
             'first_name' => 'John',
@@ -20,10 +33,18 @@ class FlashSeeder extends Seeder
             'email' => 'john@example.com',
             'city' => 'San Diego',
             'state' => 'CA',
-            'district' => '11',
-            'fleet_number' => 50,
             'yacht_club' => 'San Diego Yacht Club',
         ]);
+
+        // Create membership for John in California / Fleet 194
+        if ($californiaDistrict && $fleet194) {
+            Member::create([
+                'user_id' => $john->id,
+                'district_id' => $californiaDistrict->id,
+                'fleet_id' => $fleet194->id,
+                'year' => now()->year,
+            ]);
+        }
 
         $sarah = User::factory()->create([
             'first_name' => 'Sarah',
@@ -31,10 +52,18 @@ class FlashSeeder extends Seeder
             'email' => 'sarah@example.com',
             'city' => 'Chicago',
             'state' => 'IL',
-            'district' => '8',
-            'fleet_number' => 123,
             'yacht_club' => 'Chicago Yacht Club',
         ]);
+
+        // Create membership for Sarah in Central Atlantic / Fleet 1
+        if ($centralAtlanticDistrict && $fleet1) {
+            Member::create([
+                'user_id' => $sarah->id,
+                'district_id' => $centralAtlanticDistrict->id,
+                'fleet_id' => $fleet1->id,
+                'year' => now()->year,
+            ]);
+        }
 
         $mike = User::factory()->create([
             'first_name' => 'Mike',
@@ -42,9 +71,15 @@ class FlashSeeder extends Seeder
             'email' => 'mike@example.com',
             'city' => 'Norfolk',
             'state' => 'VA',
-            'district' => '4',
-            'fleet_number' => 67,
             'yacht_club' => 'Fishing Bay Yacht Club',
+        ]);
+
+        // Create membership for Mike as unaffiliated
+        Member::create([
+            'user_id' => $mike->id,
+            'district_id' => null,
+            'fleet_id' => null,
+            'year' => now()->year,
         ]);
 
         // Create flashes for each user
