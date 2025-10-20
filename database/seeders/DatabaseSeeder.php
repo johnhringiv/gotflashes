@@ -12,8 +12,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Note: Districts and fleets are seeded automatically by the migration
+        // This seeder only runs FlashSeeder for local development test data
         $this->call([
-            FleetsSeeder::class,  // Must run first to populate districts and fleets
             FlashSeeder::class,
         ]);
     }

@@ -18,8 +18,8 @@ class LeaderboardTest extends TestCase
     {
         parent::setUp();
 
-        // Seed districts and fleets for all tests
-        $this->artisan('db:seed', ['--class' => 'FleetsSeeder']);
+        // Note: Districts and fleets are seeded automatically by the migration
+        // via RefreshDatabase trait
     }
 
     public function test_leaderboard_is_publicly_accessible(): void
@@ -1078,5 +1078,50 @@ class LeaderboardTest extends TestCase
         $response->assertStatus(200);
         // Central New York should appear before California (more sailing days)
         $response->assertSeeInOrder(['Central New York', 'California']);
+    }
+
+    public function test_pagination_preserves_tab_parameter(): void
+    {
+        // Create enough users to trigger pagination (more than 15)
+        $users = [];
+        for ($i = 1; $i <= 20; $i++) {
+            $user = User::factory()->create();
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => '2025-01-15',
+            ]);
+            $users[] = $user;
+        }
+
+        // Test sailor tab pagination
+        $response = $this->get('/leaderboard?tab=sailor&page=2');
+        $response->assertStatus(200);
+        $response->assertSee('tab=sailor');
+
+        // Test fleet tab pagination
+        $district = District::create(['name' => 'Test District']);
+        $fleet = Fleet::create([
+            'district_id' => $district->id,
+            'fleet_number' => 999,
+            'fleet_name' => 'Test Fleet',
+        ]);
+        foreach ($users as $user) {
+            Member::create([
+                'user_id' => $user->id,
+                'district_id' => $district->id,
+                'fleet_id' => $fleet->id,
+                'year' => 2025,
+            ]);
+        }
+
+        $response = $this->get('/leaderboard?tab=fleet');
+        $response->assertStatus(200);
+        // Check that pagination links include tab parameter
+        $response->assertSee('tab=fleet');
+
+        // Test district tab pagination
+        $response = $this->get('/leaderboard?tab=district');
+        $response->assertStatus(200);
+        $response->assertSee('tab=district');
     }
 }

@@ -172,7 +172,7 @@
             <!-- Pagination -->
             @if($leaderboard->hasPages())
                 <div class="mt-6">
-                    {{ $leaderboard->links() }}
+                    {{ $leaderboard->appends(['tab' => $currentTab])->links() }}
                 </div>
             @endif
         @else

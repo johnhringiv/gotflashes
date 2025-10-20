@@ -15,7 +15,7 @@ if [ -d "/var/www/html/database" ]; then
     chmod -R 775 /var/www/html/database
 fi
 
-# Run migrations
+# Run migrations (includes reference data seeding)
 echo "Running database migrations..."
 if ! php artisan migrate --force --no-interaction; then
     echo "Migration failed! Check your database configuration."

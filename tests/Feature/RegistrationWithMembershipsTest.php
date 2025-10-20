@@ -17,8 +17,8 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         parent::setUp();
 
-        // Seed districts and fleets
-        $this->artisan('db:seed', ['--class' => 'FleetsSeeder']);
+        // Note: Districts and fleets are seeded automatically by the migration
+        // via RefreshDatabase trait
     }
 
     public function test_user_can_register_with_district_and_fleet(): void
