@@ -65,8 +65,8 @@
                     </li>
                 @else
                     <li class="menu-title mt-2"></li>
-                    <li><a href="/login" class="text-base py-3">Sign In</a></li>
-                    <li><a href="/register" class="text-base py-3 font-semibold text-accent">Sign Up</a></li>
+                    <li><a href="/login" class="text-base py-3 {{ request()->path() === 'login' ? 'active font-bold text-accent' : '' }}">Sign In</a></li>
+                    <li><a href="/register" class="text-base py-3 {{ request()->path() === 'register' ? 'active font-bold text-accent' : '' }}">Sign Up</a></li>
                 @endauth
             </ul>
         </div>
@@ -97,8 +97,8 @@
                 <button type="submit" class="btn btn-error btn-sm">Logout</button>
             </form>
         @else
-            <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10">Sign In</a>
-            <a href="/register" class="btn btn-accent btn-sm">Sign Up</a>
+            <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10 {{ request()->path() === 'login' ? '!font-bold underline decoration-accent decoration-2 underline-offset-4' : '' }}">Sign In</a>
+            <a href="/register" class="btn btn-accent btn-sm {{ request()->path() === 'register' ? '!font-bold underline decoration-white decoration-2 underline-offset-4' : '' }}">Sign Up</a>
         @endauth
     </div>
 </nav>
@@ -114,16 +114,6 @@
                 <span>{{ session('success') }}</span>
             </div>
         </div>
-        <script>
-            setTimeout(() => {
-                const toast = document.getElementById('success-toast');
-                if (toast) {
-                    toast.style.transition = 'opacity 0.5s';
-                    toast.style.opacity = '0';
-                    setTimeout(() => toast.parentElement.remove(), 500);
-                }
-            }, 3000);
-        </script>
     @endif
 
     {{ $slot }}

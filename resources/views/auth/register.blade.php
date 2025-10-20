@@ -3,8 +3,6 @@
         Register
     </x-slot:title>
 
-    <!-- Tom Select CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
     <style>
         /* Fix Tom Select dropdown visibility */
         .ts-dropdown {
@@ -294,7 +292,7 @@
                                             </div>
                                         </span>
                                     </div>
-                                    <select name="district_id" id="district-select" class="select select-bordered @error('district_id') select-error @enderror" required>
+                                    <select name="district_id" id="district-select" class="select select-bordered @error('district_id') select-error @enderror" data-old-value="{{ old('district_id') }}" required>
                                         <option value="">Select district...</option>
                                     </select>
                                     @error('district_id')
@@ -318,7 +316,7 @@
                                             </div>
                                         </span>
                                     </div>
-                                    <select name="fleet_id" id="fleet-select" class="select select-bordered @error('fleet_id') select-error @enderror" required>
+                                    <select name="fleet_id" id="fleet-select" class="select select-bordered @error('fleet_id') select-error @enderror" data-old-value="{{ old('fleet_id') }}" required>
                                         <option value="">Select fleet...</option>
                                     </select>
                                     @error('fleet_id')
@@ -364,165 +362,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Tom Select JS -->
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            let districts = [];
-            let fleets = [];
-            let districtSelect, fleetSelect;
-
-            // Fetch data from API
-            try {
-                const [districtsResponse, fleetsResponse] = await Promise.all([
-                    fetch('/api/districts'),
-                    fetch('/api/fleets')
-                ]);
-
-                districts = await districtsResponse.json();
-                fleets = await fleetsResponse.json();
-
-                console.log('Loaded', districts.length, 'districts and', fleets.length, 'fleets');
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                return;
-            }
-
-            // Initialize District Select with IDs as values but names as display text
-            districtSelect = new TomSelect('#district-select', {
-                options: [
-                    { value: 'none', text: 'Unaffiliated/None', id: null },
-                    ...districts.map(d => ({ value: d.id, text: d.name, id: d.id, name: d.name }))
-                ],
-                placeholder: 'Search districts...',
-                maxOptions: null,
-                dropdownParent: 'body',
-                sortField: {
-                    field: 'text',
-                    direction: 'asc'
-                },
-                onChange: function(value) {
-                    // Blur to hide cursor after selection
-                    if (value) {
-                        this.blur();
-                    }
-
-                    // Clear fleet selection when district changes
-                    fleetSelect.clear();
-
-                    if (value === 'none') {
-                        // Show all fleets for unaffiliated (in case of user mistake)
-                        updateFleetOptions(fleets, false);
-                        // Auto-set fleet to "None" for unaffiliated
-                        fleetSelect.setValue('none', true); // silent=true
-                    } else if (value) {
-                        // Filter fleets by selected district ID
-                        const filteredFleets = fleets.filter(f => f.district_id == value);
-                        updateFleetOptions(filteredFleets, false);
-                    } else {
-                        // Show all fleets if no district selected
-                        updateFleetOptions(fleets, false);
-                    }
-                },
-                onType: function(str) {
-                    // Clear selection when user starts typing
-                    if (this.items.length > 0 && str.length === 1) {
-                        this.clear();
-                    }
-                }
-            });
-
-            console.log('Initialized district select with', districts.length, 'options');
-
-            // Initialize Fleet Select with IDs as values
-            fleetSelect = new TomSelect('#fleet-select', {
-                placeholder: 'Search fleets by name or number...',
-                maxOptions: null,
-                dropdownParent: 'body',
-                sortField: {
-                    field: 'fleet_number',
-                    direction: 'asc'
-                },
-                render: {
-                    option: function(data, escape) {
-                        // Handle "None" option without "Fleet" prefix
-                        if (data.value === 'none') {
-                            return '<div>None</div>';
-                        }
-                        return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
-                    },
-                    item: function(data, escape) {
-                        // Handle "None" option without "Fleet" prefix
-                        if (data.value === 'none') {
-                            return '<div>None</div>';
-                        }
-                        return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
-                    }
-                },
-                onChange: function(value) {
-                    // Blur to hide cursor after selection
-                    if (value) {
-                        this.blur();
-
-                        // Find the fleet by ID and set its district
-                        const fleet = fleets.find(f => f.id == value);
-                        if (fleet) {
-                            districtSelect.setValue(fleet.district_id, true); // silent=true to avoid triggering onChange
-                        }
-                    }
-                },
-                onType: function(str) {
-                    // Clear selection when user starts typing
-                    if (this.items.length > 0 && str.length === 1) {
-                        this.clear();
-                    }
-                }
-            });
-
-            // Add all fleet options initially
-            updateFleetOptions(fleets, false);
-
-            function updateFleetOptions(fleetList, showNoneOnly = false) {
-                // Clear existing options
-                fleetSelect.clearOptions();
-
-                // Add fleet options if not showing None only
-                if (!showNoneOnly) {
-                    fleetList.forEach(fleet => {
-                        fleetSelect.addOption({
-                            value: fleet.id,
-                            text: `Fleet ${fleet.fleet_number} - ${fleet.fleet_name}`,
-                            fleet_number: fleet.fleet_number,
-                            fleet_name: fleet.fleet_name,
-                            fleet_id: fleet.id,
-                            district_id: fleet.district_id,
-                            district_name: fleet.district_name
-                        });
-                    });
-                }
-
-                // Add "None" option at the bottom
-                fleetSelect.addOption({
-                    value: 'none',
-                    text: 'None',
-                    fleet_number: 'None',
-                    fleet_name: 'None'
-                });
-
-                fleetSelect.refreshOptions(false); // false = don't trigger focus
-            }
-
-            // Handle old() values for validation errors
-            const oldDistrictId = '{{ old("district_id") }}';
-            const oldFleetId = '{{ old("fleet_id") }}';
-
-            if (oldDistrictId) {
-                districtSelect.setValue(oldDistrictId);
-            }
-            if (oldFleetId) {
-                fleetSelect.setValue(oldFleetId);
-            }
-        });
-    </script>
 </x-layout>
