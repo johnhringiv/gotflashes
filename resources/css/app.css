@@ -1,14 +1,68 @@
 @import 'tailwindcss';
 
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "lightning";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base colors - Soft off-white with blue undertone */
+  --color-base-100: oklch(96% 0.003 245deg);
+  --color-base-200: oklch(92% 0.005 245deg);
+  --color-base-300: oklch(85% 0.008 245deg);
+  --color-base-content: oklch(25% 0.02 245deg);
+
+  /* Primary: Lightning Class Blue (#2a588c) - Main actions, navbar */
+  --color-primary: oklch(38% 0.09 245deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  /* Secondary: Lighter Blue - Links and headings */
+  --color-secondary: oklch(55% 0.12 240deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  /* Accent: Pure Red (#AE0000) - CTAs and emphasis */
+  --color-accent: oklch(44% 0.21 29deg);
+  --color-accent-content: oklch(100% 0 0deg);
+
+  /* Neutral: Dark blue-gray */
+  --color-neutral: oklch(25% 0.015 245deg);
+  --color-neutral-content: oklch(100% 0 0deg);
+
+  /* Status Colors */
+  --color-info: oklch(55% 0.15 240deg);
+  --color-info-content: oklch(100% 0 0deg);
+  --color-success: oklch(55% 0.15 150deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(70% 0.15 80deg);
+  --color-warning-content: oklch(20% 0.02 80deg);
+  --color-error: oklch(55% 0.20 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+
+  /* Border radius - Clean and professional */
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.375rem;
+
+  /* Base sizes */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* Border size */
+  --border: 1px;
+
+  /* Effects */
+  --depth: 1;
+  --noise: 0;
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
-
     --animate-fade-out: fade-out 4s ease-in-out forwards;
 
     @keyframes fade-out {

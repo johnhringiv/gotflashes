@@ -5,11 +5,14 @@ use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
 use App\Http\Controllers\FlashController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
 });
+
+Route::get('/sitemap.xml', SitemapController::class);
 
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard');

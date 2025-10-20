@@ -293,7 +293,7 @@ class LeaderboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Current User');
         $response->assertSee('You'); // Badge showing current user
-        $response->assertSee('bg-primary/10'); // Highlighted row styling
+        $response->assertSee('current-user-row'); // Highlighted row styling class
     }
 
     public function test_leaderboard_does_not_highlight_for_guest_users(): void

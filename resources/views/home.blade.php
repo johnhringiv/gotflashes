@@ -2,6 +2,9 @@
     <x-slot:title>
         Home
     </x-slot:title>
+    <x-slot:description>
+        GOT-FLASHES Challenge - Track your Lightning Class sailing days and earn awards at 10, 25, and 50+ days. Join sailors worldwide in getting on the water more often.
+    </x-slot:description>
 
     <div class="max-w-4xl mx-auto">
         <!-- Hero Section -->

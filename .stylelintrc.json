@@ -16,7 +16,8 @@
                     "layer",
                     "import",
                     "source",
-                    "theme"
+                    "theme",
+                    "plugin"
                 ]
             }
         ],
