@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'tom-select/dist/css/tom-select.css';
 
 @plugin "daisyui";
 
@@ -75,4 +76,30 @@
             pointer-events: none;
         }
     }
+}
+
+/* Floating Label - Always Visible (on border) */
+.floating-label-visible {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.floating-label-visible input,
+.floating-label-visible select,
+.floating-label-visible textarea {
+    width: 100%;
+    padding: 0.75rem;
+}
+
+.floating-label-visible label {
+    position: absolute;
+    left: 0.75rem;
+    top: -0.5rem;
+    font-size: 0.875rem;
+    color: oklch(60% 0.01 245deg);
+    pointer-events: none;
+    background: oklch(96% 0.003 245deg);
+    padding: 0 0.25rem;
+    z-index: 10;
 }

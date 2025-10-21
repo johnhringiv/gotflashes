@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\District;
 use App\Models\Flash;
+use App\Models\Fleet;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,6 +13,14 @@ use Tests\TestCase;
 class LeaderboardTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Note: Districts and fleets are seeded automatically by the migration
+        // via RefreshDatabase trait
+    }
 
     public function test_leaderboard_is_publicly_accessible(): void
     {
@@ -124,9 +135,18 @@ class LeaderboardTest extends TestCase
         $user = User::factory()->create([
             'first_name' => 'John',
             'last_name' => 'Doe',
-            'district' => 5,
-            'fleet_number' => 123,
             'yacht_club' => 'Test Yacht Club',
+        ]);
+
+        // Get specific district and fleet
+        $district = District::where('name', 'California')->first();
+        $fleet = Fleet::where('fleet_number', 194)->first(); // Fleet 194 is in California
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $district->id,
+            'fleet_id' => $fleet->id,
+            'year' => 2025,
         ]);
 
         Flash::factory()->create([
@@ -138,8 +158,8 @@ class LeaderboardTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('John Doe');
-        $response->assertSee('5'); // district
-        $response->assertSee('123'); // fleet number
+        $response->assertSee('California'); // district name
+        $response->assertSee('194'); // fleet number
         $response->assertSee('Test Yacht Club');
     }
 
@@ -148,9 +168,15 @@ class LeaderboardTest extends TestCase
         $user = User::factory()->create([
             'first_name' => 'Jane',
             'last_name' => 'Smith',
-            'district' => null,
-            'fleet_number' => null,
             'yacht_club' => null,
+        ]);
+
+        // Create unaffiliated membership (no district/fleet)
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => null,
+            'fleet_id' => null,
+            'year' => 2025,
         ]);
 
         Flash::factory()->create([
@@ -432,12 +458,38 @@ class LeaderboardTest extends TestCase
 
     public function test_fleet_tab_shows_fleet_rankings(): void
     {
-        // Create users in different fleets
-        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith', 'fleet_number' => 100]);
-        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones', 'fleet_number' => 100]);
-        $user3 = User::factory()->create(['first_name' => 'Charlie', 'last_name' => 'Brown', 'fleet_number' => 200]);
+        // Get fleets from seeded data
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // California
+        $fleet1 = Fleet::where('fleet_number', 1)->first(); // Central New York
 
-        // Fleet 100: Alice (5 flashes) + Bob (3 flashes) = 8 total
+        // Create users in different fleets
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+        $user3 = User::factory()->create(['first_name' => 'Charlie', 'last_name' => 'Brown']);
+
+        // Assign users to fleets for 2025
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user3->id,
+            'district_id' => $fleet1->district_id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
+        // Fleet 194: Alice (5 flashes) + Bob (3 flashes) = 8 total
         for ($i = 1; $i <= 5; $i++) {
             Flash::factory()->create([
                 'user_id' => $user1->id,
@@ -453,7 +505,7 @@ class LeaderboardTest extends TestCase
             ]);
         }
 
-        // Fleet 200: Charlie (10 flashes)
+        // Fleet 1: Charlie (10 flashes)
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->create([
                 'user_id' => $user3->id,
@@ -465,16 +517,27 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=fleet');
 
         $response->assertStatus(200);
-        $response->assertSee('Fleet 200');
-        $response->assertSee('Fleet 100');
-        $response->assertSeeInOrder(['Fleet 200', '10', 'Fleet 100', '8']);
+        $response->assertSee('Fleet 1');
+        $response->assertSee('Fleet 194');
+        $response->assertSeeInOrder(['Fleet 1', '10', 'Fleet 194', '8']);
     }
 
     public function test_fleet_tab_shows_member_count(): void
     {
-        // Create 3 users in fleet 100
+        // Get a fleet from seeded data
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // California
+
+        // Create 3 users in fleet 194
         for ($i = 1; $i <= 3; $i++) {
-            $user = User::factory()->create(['fleet_number' => 100]);
+            $user = User::factory()->create();
+
+            Member::create([
+                'user_id' => $user->id,
+                'district_id' => $fleet194->district_id,
+                'fleet_id' => $fleet194->id,
+                'year' => 2025,
+            ]);
+
             Flash::factory()->create([
                 'user_id' => $user->id,
                 'date' => "2025-01-{$i}",
@@ -485,14 +548,33 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=fleet');
 
         $response->assertStatus(200);
-        $response->assertSee('Fleet 100');
+        $response->assertSee('Fleet 194');
         $response->assertSee('3'); // Member count
     }
 
     public function test_fleet_tab_excludes_users_without_fleet_number(): void
     {
-        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith', 'fleet_number' => 100]);
-        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones', 'fleet_number' => null]);
+        // Get a fleet from seeded data
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+
+        // User 1 is in a fleet
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        // User 2 has no fleet
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => null,
+            'fleet_id' => null,
+            'year' => 2025,
+        ]);
 
         Flash::factory()->create([
             'user_id' => $user1->id,
@@ -509,18 +591,48 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=fleet');
 
         $response->assertStatus(200);
-        $response->assertSee('Fleet 100');
+        $response->assertSee('Fleet 194');
         $response->assertDontSee('Bob Jones'); // User without fleet not shown
     }
 
     public function test_district_tab_shows_district_rankings(): void
     {
-        // Create users in different districts
-        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith', 'district' => 5]);
-        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones', 'district' => 5]);
-        $user3 = User::factory()->create(['first_name' => 'Charlie', 'last_name' => 'Brown', 'district' => 10]);
+        // Get districts from seeded data
+        $california = District::where('name', 'California')->first();
+        $centralAtlantic = District::where('name', 'Central Atlantic')->first();
 
-        // District 5: Alice (5 flashes) + Bob (3 flashes) = 8 total
+        // Get fleets from those districts
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // California
+        $fleet173 = Fleet::where('fleet_number', 173)->first(); // Central Atlantic
+
+        // Create users in different districts
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+        $user3 = User::factory()->create(['first_name' => 'Charlie', 'last_name' => 'Brown']);
+
+        // Assign users to districts for 2025
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user3->id,
+            'district_id' => $centralAtlantic->id,
+            'fleet_id' => $fleet173->id,
+            'year' => 2025,
+        ]);
+
+        // California: Alice (5 flashes) + Bob (3 flashes) = 8 total
         for ($i = 1; $i <= 5; $i++) {
             Flash::factory()->create([
                 'user_id' => $user1->id,
@@ -536,7 +648,7 @@ class LeaderboardTest extends TestCase
             ]);
         }
 
-        // District 10: Charlie (10 flashes)
+        // Central Atlantic: Charlie (10 flashes)
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->create([
                 'user_id' => $user3->id,
@@ -548,16 +660,28 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=district');
 
         $response->assertStatus(200);
-        $response->assertSee('District 10');
-        $response->assertSee('District 5');
-        $response->assertSeeInOrder(['District 10', '10', 'District 5', '8']);
+        $response->assertSee('Central Atlantic');
+        $response->assertSee('California');
+        $response->assertSeeInOrder(['Central Atlantic', '10', 'California', '8']);
     }
 
     public function test_district_tab_shows_member_count(): void
     {
-        // Create 3 users in district 5
+        // Get a district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        // Create 3 users in California district
         for ($i = 1; $i <= 3; $i++) {
-            $user = User::factory()->create(['district' => 5]);
+            $user = User::factory()->create();
+
+            Member::create([
+                'user_id' => $user->id,
+                'district_id' => $california->id,
+                'fleet_id' => $fleet194->id,
+                'year' => 2025,
+            ]);
+
             Flash::factory()->create([
                 'user_id' => $user->id,
                 'date' => "2025-01-{$i}",
@@ -568,14 +692,34 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=district');
 
         $response->assertStatus(200);
-        $response->assertSee('District 5');
+        $response->assertSee('California');
         $response->assertSee('3'); // Member count
     }
 
     public function test_district_tab_excludes_users_without_district(): void
     {
-        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith', 'district' => 5]);
-        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones', 'district' => null]);
+        // Get a district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+
+        // User 1 is in a district
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        // User 2 has no district
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => null,
+            'fleet_id' => null,
+            'year' => 2025,
+        ]);
 
         Flash::factory()->create([
             'user_id' => $user1->id,
@@ -592,7 +736,7 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=district');
 
         $response->assertStatus(200);
-        $response->assertSee('District 5');
+        $response->assertSee('California');
         $response->assertDontSee('Bob Jones'); // User without district not shown
     }
 
@@ -606,9 +750,27 @@ class LeaderboardTest extends TestCase
 
     public function test_fleet_tab_caps_non_sailing_days_at_5_per_member(): void
     {
-        // Create 2 users in fleet 100
-        $user1 = User::factory()->create(['fleet_number' => 100]);
-        $user2 = User::factory()->create(['fleet_number' => 100]);
+        // Get a fleet from seeded data
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        // Create 2 users in fleet 194
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        // Assign both users to fleet 194
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
 
         // User 1: 2 sailing + 3 maintenance
         for ($i = 1; $i <= 2; $i++) {
@@ -645,15 +807,34 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=fleet');
 
         $response->assertStatus(200);
-        $response->assertSee('Fleet 100');
+        $response->assertSee('Fleet 194');
         $response->assertSee('11');
     }
 
     public function test_district_tab_caps_non_sailing_days_at_5_per_member(): void
     {
-        // Create 2 users in district 5
-        $user1 = User::factory()->create(['district' => 5]);
-        $user2 = User::factory()->create(['district' => 5]);
+        // Get a district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        // Create 2 users in California district
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        // Assign both users to California
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
 
         // User 1: 2 sailing + 3 maintenance
         for ($i = 1; $i <= 2; $i++) {
@@ -690,7 +871,7 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=district');
 
         $response->assertStatus(200);
-        $response->assertSee('District 5');
+        $response->assertSee('California');
         $response->assertSee('11');
     }
 
@@ -761,8 +942,19 @@ class LeaderboardTest extends TestCase
 
     public function test_fleet_leaderboard_tie_breaking(): void
     {
-        // Fleet 100: 20 total (15 sailing + 5 non-sailing)
-        $user1 = User::factory()->create(['fleet_number' => 100]);
+        // Get fleets from seeded data
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // California
+        $fleet1 = Fleet::where('fleet_number', 1)->first(); // Central New York
+
+        // Fleet 194: 20 total (15 sailing + 5 non-sailing)
+        $user1 = User::factory()->create();
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user1)->sailing()->create(['date' => "2025-01-{$i}"]);
         }
@@ -770,20 +962,41 @@ class LeaderboardTest extends TestCase
             Flash::factory()->forUser($user1)->maintenance()->create(['date' => "2025-01-{$i}"]);
         }
 
-        $user2 = User::factory()->create(['fleet_number' => 100]);
+        $user2 = User::factory()->create();
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $fleet194->district_id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 5; $i++) {
             Flash::factory()->forUser($user2)->sailing()->create(['date' => "2025-02-{$i}"]);
         }
         Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-06']);
         Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-07']);
 
-        // Fleet 200: 20 total (20 sailing + 0 non-sailing) - should rank higher
-        $user3 = User::factory()->create(['fleet_number' => 200]);
+        // Fleet 1: 20 total (20 sailing + 0 non-sailing) - should rank higher
+        $user3 = User::factory()->create();
+        Member::create([
+            'user_id' => $user3->id,
+            'district_id' => $fleet1->district_id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user3)->sailing()->create(['date' => "2025-01-{$i}"]);
         }
 
-        $user4 = User::factory()->create(['fleet_number' => 200]);
+        $user4 = User::factory()->create();
+        Member::create([
+            'user_id' => $user4->id,
+            'district_id' => $fleet1->district_id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user4)->sailing()->create(['date' => "2025-02-{$i}"]);
         }
@@ -791,14 +1004,29 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=fleet');
 
         $response->assertStatus(200);
-        // Fleet 200 should appear before Fleet 100 (more sailing days)
-        $response->assertSeeInOrder(['Fleet 200', 'Fleet 100']);
+        // Fleet 1 should appear before Fleet 194 (more sailing days)
+        $response->assertSeeInOrder(['Fleet 1', 'Fleet 194']);
     }
 
     public function test_district_leaderboard_tie_breaking(): void
     {
-        // District 5: 20 total (15 sailing + 5 non-sailing)
-        $user1 = User::factory()->create(['district' => 5]);
+        // Get districts from seeded data
+        $california = District::where('name', 'California')->first();
+        $centralNewYork = District::where('name', 'Central New York')->first();
+
+        // Get fleets
+        $fleet194 = Fleet::where('fleet_number', 194)->first(); // California
+        $fleet1 = Fleet::where('fleet_number', 1)->first(); // Central New York
+
+        // California: 20 total (15 sailing + 5 non-sailing)
+        $user1 = User::factory()->create();
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user1)->sailing()->create(['date' => "2025-01-{$i}"]);
         }
@@ -806,20 +1034,41 @@ class LeaderboardTest extends TestCase
             Flash::factory()->forUser($user1)->maintenance()->create(['date' => "2025-01-{$i}"]);
         }
 
-        $user2 = User::factory()->create(['district' => 5]);
+        $user2 = User::factory()->create();
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 5; $i++) {
             Flash::factory()->forUser($user2)->sailing()->create(['date' => "2025-02-{$i}"]);
         }
         Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-06']);
         Flash::factory()->forUser($user2)->maintenance()->create(['date' => '2025-02-07']);
 
-        // District 10: 20 total (20 sailing + 0 non-sailing) - should rank higher
-        $user3 = User::factory()->create(['district' => 10]);
+        // Central New York: 20 total (20 sailing + 0 non-sailing) - should rank higher
+        $user3 = User::factory()->create();
+        Member::create([
+            'user_id' => $user3->id,
+            'district_id' => $centralNewYork->id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user3)->sailing()->create(['date' => "2025-01-{$i}"]);
         }
 
-        $user4 = User::factory()->create(['district' => 10]);
+        $user4 = User::factory()->create();
+        Member::create([
+            'user_id' => $user4->id,
+            'district_id' => $centralNewYork->id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($user4)->sailing()->create(['date' => "2025-02-{$i}"]);
         }
@@ -827,7 +1076,52 @@ class LeaderboardTest extends TestCase
         $response = $this->get('/leaderboard?tab=district');
 
         $response->assertStatus(200);
-        // District 10 should appear before District 5 (more sailing days)
-        $response->assertSeeInOrder(['District 10', 'District 5']);
+        // Central New York should appear before California (more sailing days)
+        $response->assertSeeInOrder(['Central New York', 'California']);
+    }
+
+    public function test_pagination_preserves_tab_parameter(): void
+    {
+        // Create enough users to trigger pagination (more than 15)
+        $users = [];
+        for ($i = 1; $i <= 20; $i++) {
+            $user = User::factory()->create();
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => '2025-01-15',
+            ]);
+            $users[] = $user;
+        }
+
+        // Test sailor tab pagination
+        $response = $this->get('/leaderboard?tab=sailor&page=2');
+        $response->assertStatus(200);
+        $response->assertSee('tab=sailor');
+
+        // Test fleet tab pagination
+        $district = District::create(['name' => 'Test District']);
+        $fleet = Fleet::create([
+            'district_id' => $district->id,
+            'fleet_number' => 999,
+            'fleet_name' => 'Test Fleet',
+        ]);
+        foreach ($users as $user) {
+            Member::create([
+                'user_id' => $user->id,
+                'district_id' => $district->id,
+                'fleet_id' => $fleet->id,
+                'year' => 2025,
+            ]);
+        }
+
+        $response = $this->get('/leaderboard?tab=fleet');
+        $response->assertStatus(200);
+        // Check that pagination links include tab parameter
+        $response->assertSee('tab=fleet');
+
+        // Test district tab pagination
+        $response = $this->get('/leaderboard?tab=district');
+        $response->assertStatus(200);
+        $response->assertSee('tab=district');
     }
 }

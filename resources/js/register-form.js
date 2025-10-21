@@ -1,5 +1,7 @@
+import TomSelect from 'tom-select';
+
 // Date of Birth input formatting and validation
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const dobInput = document.querySelector('input[name="date_of_birth"]');
 
     if (dobInput) {
@@ -94,5 +96,188 @@ document.addEventListener('DOMContentLoaded', function() {
         dobInput.addEventListener('input', function(e) {
             e.target.setCustomValidity('');
         });
+    }
+
+    // Initialize TomSelect for district and fleet dropdowns
+    const districtSelect = document.getElementById('district-select');
+    const fleetSelect = document.getElementById('fleet-select');
+
+    if (districtSelect && fleetSelect) {
+        let districts = [];
+        let fleets = [];
+
+        // Fetch data from API
+        try {
+            const [districtsResponse, fleetsResponse] = await Promise.all([
+                fetch('/api/districts'),
+                fetch('/api/fleets')
+            ]);
+
+            // Check if responses are OK
+            if (!districtsResponse.ok || !fleetsResponse.ok) {
+                throw new Error(`Failed to fetch data: Districts ${districtsResponse.status}, Fleets ${fleetsResponse.status}`);
+            }
+
+            districts = await districtsResponse.json();
+            fleets = await fleetsResponse.json();
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error fetching districts and fleets:', error);
+
+            // Display user-friendly error message
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-error mb-4';
+            errorAlert.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Unable to load districts and fleets. Please refresh the page or try again later.</span>
+            `;
+
+            // Insert error before the first fieldset
+            const firstFieldset = document.querySelector('fieldset');
+            if (firstFieldset) {
+                firstFieldset.insertAdjacentElement('beforebegin', errorAlert);
+            }
+
+            // Disable the select elements to prevent submission with invalid data
+            districtSelect.disabled = true;
+            fleetSelect.disabled = true;
+
+            return;
+        }
+
+        // Initialize District Select with IDs as values but names as display text
+        const districtTomSelect = new TomSelect('#district-select', {
+            options: [
+                { value: 'none', text: 'Unaffiliated/None', id: null },
+                ...districts.map(d => ({ value: d.id, text: d.name, id: d.id, name: d.name }))
+            ],
+            placeholder: 'Search districts...',
+            maxOptions: null,
+            dropdownParent: 'body',
+            sortField: {
+                field: 'text',
+                direction: 'asc'
+            },
+            onChange: function(value) {
+                // Blur to hide cursor after selection
+                if (value) {
+                    this.blur();
+                }
+
+                // Clear fleet selection when district changes
+                fleetTomSelect.clear();
+
+                if (value === 'none') {
+                    // Show all fleets for unaffiliated (in case of user mistake)
+                    updateFleetOptions(fleets, false);
+                    // Auto-set fleet to "None" for unaffiliated
+                    fleetTomSelect.setValue('none', true); // silent=true
+                } else if (value) {
+                    // Filter fleets by selected district ID
+                    const filteredFleets = fleets.filter(f => f.district_id == value);
+                    updateFleetOptions(filteredFleets, false);
+                } else {
+                    // Show all fleets if no district selected
+                    updateFleetOptions(fleets, false);
+                }
+            },
+            onType: function(str) {
+                // Clear selection when user starts typing
+                if (this.items.length > 0 && str.length === 1) {
+                    this.clear();
+                }
+            }
+        });
+
+        // Initialize Fleet Select with IDs as values
+        const fleetTomSelect = new TomSelect('#fleet-select', {
+            placeholder: 'Search fleets by name or number...',
+            maxOptions: null,
+            dropdownParent: 'body',
+            sortField: {
+                field: 'fleet_number',
+                direction: 'asc'
+            },
+            render: {
+                option: function(data, escape) {
+                    // Handle "None" option without "Fleet" prefix
+                    if (data.value === 'none') {
+                        return '<div>None</div>';
+                    }
+                    return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
+                },
+                item: function(data, escape) {
+                    // Handle "None" option without "Fleet" prefix
+                    if (data.value === 'none') {
+                        return '<div>None</div>';
+                    }
+                    return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
+                }
+            },
+            onChange: function(value) {
+                // Blur to hide cursor after selection
+                if (value) {
+                    this.blur();
+
+                    // Find the fleet by ID and set its district
+                    const fleet = fleets.find(f => f.id == value);
+                    if (fleet) {
+                        districtTomSelect.setValue(fleet.district_id, true); // silent=true to avoid triggering onChange
+                    }
+                }
+            },
+            onType: function(str) {
+                // Clear selection when user starts typing
+                if (this.items.length > 0 && str.length === 1) {
+                    this.clear();
+                }
+            }
+        });
+
+        // Add all fleet options initially
+        updateFleetOptions(fleets, false);
+
+        function updateFleetOptions(fleetList, showNoneOnly = false) {
+            // Clear existing options
+            fleetTomSelect.clearOptions();
+
+            // Add fleet options if not showing None only
+            if (!showNoneOnly) {
+                fleetList.forEach(fleet => {
+                    fleetTomSelect.addOption({
+                        value: fleet.id,
+                        text: `Fleet ${fleet.fleet_number} - ${fleet.fleet_name}`,
+                        fleet_number: fleet.fleet_number,
+                        fleet_name: fleet.fleet_name,
+                        fleet_id: fleet.id,
+                        district_id: fleet.district_id,
+                        district_name: fleet.district_name
+                    });
+                });
+            }
+
+            // Add "None" option at the bottom
+            fleetTomSelect.addOption({
+                value: 'none',
+                text: 'None',
+                fleet_number: 'None',
+                fleet_name: 'None'
+            });
+
+            fleetTomSelect.refreshOptions(false); // false = don't trigger focus
+        }
+
+        // Handle old() values for validation errors (passed via data attributes)
+        const oldDistrictId = districtSelect.dataset.oldValue;
+        const oldFleetId = fleetSelect.dataset.oldValue;
+
+        if (oldDistrictId) {
+            districtTomSelect.setValue(oldDistrictId);
+        }
+        if (oldFleetId) {
+            fleetTomSelect.setValue(oldFleetId);
+        }
     }
 });

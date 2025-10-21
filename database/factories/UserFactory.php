@@ -38,8 +38,6 @@ class UserFactory extends Factory
             'state' => fake()->randomElement(['CA', 'NY', 'TX', 'FL', 'IL', 'OH', 'PA']),
             'zip_code' => fake()->postcode(),
             'country' => 'USA',
-            'district' => fake()->optional()->numberBetween(1, 15),
-            'fleet_number' => fake()->optional()->numberBetween(1, 999),
             'yacht_club' => fake()->optional()->company(),
         ];
     }

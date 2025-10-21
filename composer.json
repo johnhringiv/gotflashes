@@ -57,6 +57,7 @@
             "vendor/bin/pint --test",
             "vendor/bin/phpstan analyze --memory-limit=256M",
             "npm run lint",
+            "npm test",
             "APP_ENV=testing php artisan test"
         ],
         "fix": [
