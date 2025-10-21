@@ -51,14 +51,14 @@
                         }
                     </style>
                     @if($currentTab === 'sailor')
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>Name</th>
-                                <th class="text-center">District</th>
-                                <th class="text-center">Fleet #</th>
-                                <th>Yacht Club</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">Name</th>
+                                <th class="text-center font-bold">District</th>
+                                <th class="text-center font-bold">Fleet #</th>
+                                <th class="font-bold">Yacht Club</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -104,12 +104,12 @@
                             @endforeach
                         </tbody>
                     @elseif($currentTab === 'fleet')
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>Fleet #</th>
-                                <th class="text-center">Members</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">Fleet #</th>
+                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -120,7 +120,11 @@
                         </thead>
                         <tbody>
                             @foreach($leaderboard as $index => $fleet)
-                                <tr>
+                                @php
+                                    $userFleet = auth()->check() ? auth()->user()->currentMembership()?->fleet_id : null;
+                                    $isUserFleet = $userFleet && $userFleet === $fleet->id;
+                                @endphp
+                                <tr class="{{ $isUserFleet ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
@@ -135,12 +139,12 @@
                             @endforeach
                         </tbody>
                     @else
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>District</th>
-                                <th class="text-center">Members</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">District</th>
+                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -151,7 +155,11 @@
                         </thead>
                         <tbody>
                             @foreach($leaderboard as $index => $district)
-                                <tr>
+                                @php
+                                    $userDistrict = auth()->check() ? auth()->user()->currentMembership()?->district_id : null;
+                                    $isUserDistrict = $userDistrict && $userDistrict === $district->id;
+                                @endphp
+                                <tr class="{{ $isUserDistrict ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>

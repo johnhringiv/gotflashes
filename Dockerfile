@@ -1,7 +1,7 @@
 # Multi-stage build for Laravel application
 
 # Stage 1: Build frontend assets
-FROM node:20-alpine AS frontend
+FROM node:alpine AS frontend
 
 WORKDIR /app
 
@@ -20,12 +20,12 @@ COPY public ./public
 RUN npm run build
 
 # Stage 2: Build PHP dependencies and extensions
-FROM php:8.2-fpm-alpine AS php-builder
+FROM php:8.4-fpm-alpine AS php-builder
 
 WORKDIR /app
 
 # Install build dependencies (only in builder stage)
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && apk --no-cache add \
     unzip \
     oniguruma-dev \
     sqlite-dev
@@ -44,14 +44,14 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --no-cache
 
 # Stage 3: Production runtime image
-FROM php:8.2-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Copy compiled PHP extensions from builder
 COPY --from=php-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=php-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
 # Install only runtime dependencies (no build deps needed)
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && apk --no-cache add \
     sqlite-libs \
     nginx \
     supervisor
@@ -59,34 +59,32 @@ RUN apk add --no-cache \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy only essential application directories and files
-COPY app ./app
-COPY bootstrap ./bootstrap
-COPY config ./config
-COPY public ./public
-COPY resources ./resources
-COPY routes ./routes
-COPY artisan composer.json composer.lock ./
-COPY database/migrations ./database/migrations
-
-# Copy PHP dependencies from builder stage
-COPY --from=php-builder /app/vendor ./vendor
-
-# Copy built assets from frontend stage
-COPY --from=frontend /app/public/build ./public/build
-
-# Create storage directories and set permissions
+# Create directory structure first (as root, before copying files)
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
     && mkdir -p storage/app storage/logs \
     && mkdir -p bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 storage bootstrap/cache
+    && mkdir -p database
 
-# Create SQLite database directory
-RUN mkdir -p /var/www/html/database \
-    && touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html/database \
-    && chmod -R 775 /var/www/html/database
+# Copy application files with correct ownership from the start (avoids chown layer bloat)
+COPY --chown=www-data:www-data app ./app
+COPY --chown=www-data:www-data bootstrap ./bootstrap
+COPY --chown=www-data:www-data config ./config
+COPY --chown=www-data:www-data public ./public
+COPY --chown=www-data:www-data resources ./resources
+COPY --chown=www-data:www-data routes ./routes
+COPY --chown=www-data:www-data artisan composer.json composer.lock ./
+COPY --chown=www-data:www-data database/migrations ./database/migrations
+COPY --chown=www-data:www-data docker/.env.docker ./.env
+
+# Copy dependencies with correct ownership
+COPY --from=php-builder --chown=www-data:www-data /app/vendor ./vendor
+COPY --from=frontend --chown=www-data:www-data /app/public/build ./public/build
+
+# Set permissions on writable directories (chmod doesn't duplicate data like chown does)
+RUN chmod -R 755 storage bootstrap/cache \
+    && touch database/database.sqlite \
+    && chmod 775 database \
+    && chmod 664 database/database.sqlite
 
 # Copy nginx configuration
 COPY docker/nginx.conf /etc/nginx/nginx.conf
