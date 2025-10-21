@@ -24,16 +24,13 @@ class LeaderboardController extends Controller
             $tab = 'sailor';
         }
 
-        // Wrap in transaction for consistency across complex queries
-        $leaderboard = DB::transaction(function () use ($tab, $year) {
-            if ($tab === 'sailor') {
-                return $this->getSailorLeaderboard($year);
-            } elseif ($tab === 'fleet') {
-                return $this->getFleetLeaderboard($year);
-            } else {
-                return $this->getDistrictLeaderboard($year);
-            }
-        });
+        if ($tab === 'sailor') {
+            $leaderboard = $this->getSailorLeaderboard($year);
+        } elseif ($tab === 'fleet') {
+            $leaderboard = $this->getFleetLeaderboard($year);
+        } else {
+            $leaderboard = $this->getDistrictLeaderboard($year);
+        }
 
         return view('leaderboard.index', [
             'leaderboard' => $leaderboard,
