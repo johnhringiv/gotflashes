@@ -2,7 +2,7 @@
 
 ## Overview
 
-The GOT-FLASHES application tracks district and fleet memberships using a **year-end snapshot** approach. This means users are considered members of the district and fleet they are affiliated with at the end of each calendar year, regardless of any mid-year changes.
+The G.O.T. Flashes application tracks district and fleet memberships using a **year-end snapshot** approach. This means users are considered members of the district and fleet they are affiliated with at the end of each calendar year, regardless of any mid-year changes.
 
 ## Business Rules
 

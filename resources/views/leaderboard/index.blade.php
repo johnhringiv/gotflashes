@@ -3,7 +3,7 @@
         Leaderboard
     </x-slot:title>
     <x-slot:description>
-        View the Lightning Class GOT-FLASHES leaderboard rankings. See top sailors, fleets, and districts by sailing days tracked in 2025.
+        View the Lightning Class G.O.T. Flashes leaderboard rankings. See top sailors, fleets, and districts by sailing days tracked in 2025.
     </x-slot:description>
 
     <div class="max-w-6xl mx-auto">

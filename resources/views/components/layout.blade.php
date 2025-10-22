@@ -6,7 +6,7 @@
 
     @php
         $baseUrl = rtrim(config('app.url'), '/');
-        $pageTitle = isset($title) ? $title . ' - GOT-FLASHES' : 'GOT-FLASHES Challenge Tracker';
+        $pageTitle = isset($title) ? $title . ' - G.O.T. Flashes' : 'G.O.T. Flashes Challenge Tracker';
         $pageDescription = $description ?? 'Track your Lightning Class sailing days and earn awards. Get Out There - FLASHES encourages sailors to log sailing activities toward 10, 25, and 50+ day annual awards.';
         $currentPath = request()->getPathInfo();
         $pageUrl = $baseUrl . $currentPath;
@@ -25,7 +25,7 @@
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDescription }}">
     <meta property="og:url" content="{{ $pageUrl }}">
-    <meta property="og:site_name" content="GOT-FLASHES Challenge Tracker">
+    <meta property="og:site_name" content="G.O.T. Flashes Challenge Tracker">
     <meta property="og:locale" content="en_US">
     <meta property="og:image" content="{{ $ogImage }}">
 
@@ -73,7 +73,7 @@
 
         <!-- Logo -->
         <a href="/" class="flex items-center px-2">
-            <img src="/images/got_flashes.png" alt="GOT-FLASHES Challenge Tracker" class="h-12">
+            <img src="/images/got_flashes.png" alt="G.O.T. Flashes Challenge Tracker" class="h-12">
         </a>
     </div>
 
@@ -121,7 +121,7 @@
 
 <footer class="footer footer-center p-5 bg-base-300 text-base-content text-xs">
     <div>
-        <p>© {{ date('Y') }} Lightning Class Association - GOT-FLASHES Challenge Tracker</p>
+        <p>© {{ date('Y') }} Lightning Class Association - G.O.T. Flashes Challenge Tracker</p>
         <p class="text-xs opacity-70">Track your sailing days • Earn awards • Build the Lightning community</p>
         <p class="text-xs opacity-60 mt-2">
             Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>

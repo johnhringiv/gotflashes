@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "Starting GOT-FLASHES application..."
+echo "Starting G.O.T. Flashes application..."
 
 # Ensure database file exists if it doesn't already
 if [ ! -f /var/www/html/database/database.sqlite ]; then

@@ -1,6 +1,6 @@
-# Contributing to GOT-FLASHES
+# Contributing to G.O.T. Flashes
 
-Thank you for your interest in contributing to the GOT-FLASHES Challenge Tracker!
+Thank you for your interest in contributing to the G.O.T. Flashes Challenge Tracker!
 
 ## Quick Start
 

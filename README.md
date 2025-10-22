@@ -1,14 +1,14 @@
-# GOT-FLASHES Challenge Tracker
+# G.O.T. Flashes Challenge Tracker
 
-A web application for tracking Lightning Class sailing activity and managing the GOT-FLASHES Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
+A web application for tracking Lightning Class sailing activity and managing the G.O.T. Flashes Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
-**GOT-FLASHES** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
+**G.O.T. Flashes** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
 
 **🌐 Live Application**: [https://gotflashes.com](https://gotflashes.com)
 
-## About the GOT-FLASHES Challenge
+## About the G.O.T. Flashes Challenge
 
-The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
+The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
 
 ### What Counts
 - **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
@@ -340,7 +340,7 @@ See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for t
 
 ## Support & Contributing
 
-This project is developed for the International Lightning Class Association. For questions about the GOT-FLASHES Challenge program, contact the ILCA office.
+This project is developed for the International Lightning Class Association. For questions about the G.O.T. Flashes Challenge program, contact the ILCA office.
 
 Developers interested in contributing should read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on code style, testing, and pull request process.
 
@@ -350,4 +350,4 @@ Built with Laravel, Tailwind CSS, and the Lightning Class sailing community in m
 
 ---
 
-**GOT-FLASHES**: Get Out There - Let's keep Lightning sailing active and fun!
+**G.O.T. Flashes**: Get Out There - Let's keep Lightning sailing active and fun!

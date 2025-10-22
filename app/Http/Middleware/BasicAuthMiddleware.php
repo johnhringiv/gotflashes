@@ -37,7 +37,7 @@ class BasicAuthMiddleware
             // Verify credentials
             if ($inputUser !== $username || $inputPass !== $password) {
                 return response('Unauthorized', 401)
-                    ->header('WWW-Authenticate', 'Basic realm="GOT-FLASHES Staging"');
+                    ->header('WWW-Authenticate', 'Basic realm="G.O.T. Flashes Staging"');
             }
         }
 

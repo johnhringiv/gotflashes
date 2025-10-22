@@ -1,8 +1,8 @@
-# GOT-FLASHES Challenge Tracker
+# G.O.T. Flashes Challenge Tracker
 ## Product Requirements Document
 
 ### Executive Summary
-A standalone web-based application to replace the current web form for tracking participant days sailing Lightnings as part of the GOT-FLASHES Challenge. The system tracks annual sailing activity and automatically identifies award eligibility (10, 25, or 50+ days), with the goal of encouraging Lightning sailors to get on the water more frequently and creating friendly competition within fleets and districts.
+A standalone web-based application to replace the current web form for tracking participant days sailing Lightnings as part of the G.O.T. Flashes Challenge. The system tracks annual sailing activity and automatically identifies award eligibility (10, 25, or 50+ days), with the goal of encouraging Lightning sailors to get on the water more frequently and creating friendly competition within fleets and districts.
 
 ---
 
@@ -43,7 +43,7 @@ New users can create accounts with the following information:
 ## 2. Activity Tracking
 
 ### 2.1 Program Rules - What Counts
-The following activities count toward GOT-FLASHES awards:
+The following activities count toward G.O.T. Flashes awards:
 
 **Sailing Days:**
 - Any time spent sailing on ANY Lightning (not just your own boat)

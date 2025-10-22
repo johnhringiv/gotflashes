@@ -1,6 +1,6 @@
 # Docker Deployment
 
-Operational guide for deploying and managing GOT-FLASHES with Docker.
+Operational guide for deploying and managing G.O.T. Flashes with Docker.
 
 ## Configuration
 

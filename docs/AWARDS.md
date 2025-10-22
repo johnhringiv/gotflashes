@@ -1,6 +1,6 @@
 # Award Icons
 
-This document describes the award system and placeholder icons used in the GOT-FLASHES Challenge Tracker.
+This document describes the award system and placeholder icons used in the G.O.T. Flashes Challenge Tracker.
 
 ## Award Tiers
 
