@@ -22,6 +22,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Observability Settings
+    |--------------------------------------------------------------------------
+    |
+    | These settings control query logging and performance monitoring.
+    |
+    */
+
+    'log_queries' => env('LOG_QUERIES', false),
+    'log_slow_queries' => env('LOG_SLOW_QUERIES', true),
+    'slow_query_threshold_ms' => env('SLOW_QUERY_THRESHOLD_MS', 100),
+
+    /*
+    |--------------------------------------------------------------------------
     | Deprecations Log Channel
     |--------------------------------------------------------------------------
     |
@@ -71,6 +84,42 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+        ],
+
+        // Structured logging for better observability
+        'structured' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/structured.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'replace_placeholders' => true,
+        ],
+
+        // Performance logging channel
+        'performance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/performance.log'),
+            'level' => 'info',
+            'days' => 7,
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+        ],
+
+        // Security and authentication logging
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+        ],
+
+        // Database query logging
+        'query' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/queries.log'),
+            'level' => 'debug',
+            'days' => 3,
         ],
 
         'slack' => [

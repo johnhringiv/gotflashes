@@ -13,7 +13,6 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 ### What Counts
 - **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
 - **Non-Sailing Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
-- **One hour counts as a full day** - we just want you sailing!
 
 ### Award Tiers
 - **10 Days**: First tier recognition
@@ -62,6 +61,7 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
+- **Deployment**: Docker (Alpine Linux + PHP-FPM + Nginx + Supervisor)
 
 ## Getting Started
 
@@ -328,7 +328,13 @@ Additionally, the following paths need to be mounted for persistent storage
 - /var/www/html/storage/logs
 - /var/www/html/database/database.sqlite
 
-The app is behind a reverse proxy with SSL being handled externally following this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting).
+The production deployment stack:
+- **Cloudflare**: DNS and CDN
+- **ACME/Let's Encrypt**: SSL certificate management
+- **HAProxy**: SSL termination and reverse proxy
+- **Docker Container**: Application (nginx + PHP-FPM)
+
+See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for the full deployment setup.
 
 ## Support & Contributing
 

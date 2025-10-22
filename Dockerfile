@@ -56,35 +56,47 @@ RUN apk upgrade --no-cache && apk --no-cache add \
     nginx \
     supervisor
 
-# Set working directory
-WORKDIR /var/www/html
+# Create a non-root user with UID/GID 1000 (commonly used for first non-root user)
+# This matches many host systems' first user, reducing permission conflicts
+RUN addgroup -g 1000 -S appuser && \
+    adduser -u 1000 -S appuser -G appuser && \
+    addgroup appuser www-data
 
-# Create directory structure first (as root, before copying files)
+# Configure nginx directories for appuser
+RUN mkdir -p /var/cache/nginx /var/log/nginx /run && \
+    touch /run/nginx.pid && \
+    chown -R appuser:appuser /run/nginx.pid /var/cache/nginx /var/log/nginx
+
+# Set working directory and change ownership to appuser
+WORKDIR /var/www/html
+RUN chown appuser:appuser /var/www/html
+
+# Switch to appuser for all subsequent operations
+USER appuser
+
+# Create directory structure as appuser
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
     && mkdir -p storage/app storage/logs \
     && mkdir -p bootstrap/cache \
     && mkdir -p database
 
-# Copy application files with correct ownership from the start (avoids chown layer bloat)
-COPY --chown=www-data:www-data app ./app
-COPY --chown=www-data:www-data bootstrap ./bootstrap
-COPY --chown=www-data:www-data config ./config
-COPY --chown=www-data:www-data public ./public
-COPY --chown=www-data:www-data resources ./resources
-COPY --chown=www-data:www-data routes ./routes
-COPY --chown=www-data:www-data artisan composer.json composer.lock ./
-COPY --chown=www-data:www-data database/migrations ./database/migrations
-COPY --chown=www-data:www-data docker/.env.docker ./.env
+# Copy application files (owned by appuser since USER is set)
+COPY app ./app
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY public ./public
+COPY resources ./resources
+COPY routes ./routes
+COPY artisan composer.json composer.lock ./
+COPY database/migrations ./database/migrations
+COPY docker/.env.docker ./.env
 
-# Copy dependencies with correct ownership
-COPY --from=php-builder --chown=www-data:www-data /app/vendor ./vendor
-COPY --from=frontend --chown=www-data:www-data /app/public/build ./public/build
+# Copy dependencies (owned by appuser since USER is set)
+COPY --from=php-builder /app/vendor ./vendor
+COPY --from=frontend /app/public/build ./public/build
 
-# Set permissions on writable directories (chmod doesn't duplicate data like chown does)
-RUN chmod -R 755 storage bootstrap/cache \
-    && touch database/database.sqlite \
-    && chmod 775 database \
-    && chmod 664 database/database.sqlite
+# Switch back to root to copy config files
+USER root
 
 # Copy nginx configuration
 COPY docker/nginx.conf /etc/nginx/nginx.conf
@@ -99,8 +111,11 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port 80 (HTTP only - SSL handled by HAProxy)
-EXPOSE 80
+# Expose port 8080 (nginx listens on non-privileged port for Synology compatibility)
+EXPOSE 8080
+
+# Switch to appuser for runtime
+USER appuser
 
 # Use supervisor to run nginx, php-fpm, and queue worker
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
