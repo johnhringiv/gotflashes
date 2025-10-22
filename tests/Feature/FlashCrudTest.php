@@ -277,4 +277,131 @@ class FlashCrudTest extends TestCase
 
         $response->assertRedirect(route('login'));
     }
+
+    public function test_warning_message_shown_when_logging_sixth_non_sailing_day(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 5 non-sailing days (maintenance and race committee)
+        for ($i = 1; $i <= 3; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'maintenance',
+            ]);
+        }
+        for ($i = 4; $i <= 5; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'race_committee',
+            ]);
+        }
+
+        // Log 6th non-sailing day (this one doesn't count toward awards)
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'activity_type' => 'maintenance',
+        ]);
+
+        $response->assertRedirect(route('flashes.index'));
+        $response->assertSessionHas('warning');
+        $this->assertStringContainsString('5 non-sailing days', session('warning'));
+        $this->assertStringContainsString('counting toward awards', session('warning'));
+
+        // Verify the activity was still created
+        $this->assertDatabaseCount('flashes', 6);
+    }
+
+    public function test_success_message_shown_for_first_five_non_sailing_days(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 4 non-sailing days
+        for ($i = 1; $i <= 4; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'maintenance',
+            ]);
+        }
+
+        // Log 5th non-sailing day (this one still counts toward awards)
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'date' => now()->startOfYear()->addDays(5)->format('Y-m-d'),
+            'activity_type' => 'race_committee',
+        ]);
+
+        $response->assertRedirect(route('flashes.index'));
+        $response->assertSessionHas('success', 'Flash logged successfully!');
+        $response->assertSessionMissing('warning');
+    }
+
+    public function test_warning_message_appears_for_maintenance_activity(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 5 non-sailing days
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'maintenance',
+            ]);
+        }
+
+        // Log 6th maintenance day
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'activity_type' => 'maintenance',
+        ]);
+
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_warning_message_appears_for_race_committee_activity(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 5 non-sailing days
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'race_committee',
+            ]);
+        }
+
+        // Log 6th race committee day
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'activity_type' => 'race_committee',
+        ]);
+
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_no_warning_for_sailing_activities(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 5 non-sailing days
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'maintenance',
+            ]);
+        }
+
+        // Log sailing day (should not trigger warning even with 5 non-sailing days)
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertSessionHas('success', 'Flash logged successfully!');
+        $response->assertSessionMissing('warning');
+    }
 }

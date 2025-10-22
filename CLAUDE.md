@@ -67,6 +67,7 @@ php artisan tinker
 
 **Activity Types:**
 - `sailing` - Always available, counts toward awards (unlimited)
+  - Event types: `regatta`, `club_race`, `practice`, `leisure` (displays as "Day Sailing")
 - `maintenance` - Boat/trailer work (non-sailing day)
 - `race_committee` - Race committee work (non-sailing day)
 
@@ -75,7 +76,7 @@ php artisan tinker
 - Users can log more than 5 non-sailing days, but only 5 count toward totals
 - No minimum sailing days required to log non-sailing days
 - Non-sailing day limit resets annually on January 1st
-- UI should indicate when 5 counting non-sailing days have been used
+- Warning message displayed when logging 6th+ non-sailing day (days that don't count toward awards)
 
 **Date Restrictions:**
 - Users cannot log future dates (max: today +1 day for timezone handling)
@@ -133,6 +134,9 @@ Routes in `routes/web.php`:
 - Use Tailwind utility classes first
 - Custom CSS only when necessary in `resources/css/app.css`
 - Tailwind v4 uses `@source` and `@theme` directives
+- Custom "lightning" theme with Lightning Class brand colors
+- Floating label form styling (label appears in border outline)
+- Tooltips use lighter blue background (secondary color)
 
 ### Database Schema
 
@@ -140,8 +144,17 @@ Routes in `routes/web.php`:
 - Authentication: email (unique), password, remember_token
 - Personal: first_name, last_name, date_of_birth, gender
 - Address: address_line1, address_line2, city, state, zip_code, country
-- Sailing: district, fleet_number, yacht_club
+- Sailing: district_id (FK to districts), fleet_id (FK to fleets), yacht_club
 - Admin: is_admin (boolean, default false)
+
+**districts table:**
+- Lightning Class districts for geographic organization
+- Used in leaderboard aggregation
+
+**fleets table:**
+- Lightning Class fleets (numbered)
+- Includes fleet_number and fleet_name
+- Used in leaderboard aggregation
 
 **flashes table:**
 - user_id (foreign key to users)
@@ -193,18 +206,20 @@ Routes in `routes/web.php`:
 ## Implementation Status
 
 **Completed:**
-- ✅ User registration and authentication
+- ✅ User registration and authentication with district/fleet selection
 - ✅ Flash CRUD (create, read, update, delete)
 - ✅ Flash authorization policies
 - ✅ Date validation and duplicate prevention
 - ✅ Activity ordering by date (newest first)
 - ✅ "Just logged" badge for entries created today
-- ✅ UI with Tailwind CSS and DaisyUI components
+- ✅ UI with Tailwind CSS v4 and DaisyUI components
 - ✅ Award tier calculations (10, 25, 50 days)
-- ✅ Progress tracking with visual progress bars
-- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons SVG
+- ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
+- ✅ Award badge images (got-10-badge.png, got-25-badge.png, got-50-badge.png, burgee-50.jpg)
+- ✅ Separate earned awards card with gradient background
 - ✅ Non-sailing day cap enforcement (5 per year) in all queries
-- ✅ Three leaderboards with tabs:
+- ✅ Warning toast when logging non-sailing day after reaching 5-day limit
+- ✅ Three leaderboards with tabs (renamed "Days Sailed" and "Sailors"):
   - Sailor leaderboard (individual rankings)
   - Fleet leaderboard (aggregated by fleet_number)
   - District leaderboard (aggregated by district)
@@ -216,10 +231,12 @@ Routes in `routes/web.php`:
 - ✅ User highlighting on leaderboards
 - ✅ Leaderboard pagination (15 per page)
 - ✅ Dashboard with current year progress and earned awards
+- ✅ Floating label form styling on registration and flash forms
+- ✅ Lightning Class logo on homepage
+- ✅ Favicon integration
 
 **In Progress:**
 - 🔄 Year-end rollover logic (grace period until Jan 31)
-- 🔄 Non-sailing day limits UI enforcement (show when 5 used)
 
 **Planned:**
 - 📋 Award administrator dashboard

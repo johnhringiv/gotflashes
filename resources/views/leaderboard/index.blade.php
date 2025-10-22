@@ -61,7 +61,7 @@
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>
@@ -108,11 +108,11 @@
                             <tr>
                                 <th class="text-center font-bold">Rank</th>
                                 <th class="font-bold">Fleet #</th>
-                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">Sailors</th>
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>
@@ -143,11 +143,11 @@
                             <tr>
                                 <th class="text-center font-bold">Rank</th>
                                 <th class="font-bold">District</th>
-                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">Sailors</th>
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>

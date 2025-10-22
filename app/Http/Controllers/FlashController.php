@@ -109,6 +109,16 @@ class FlashController extends Controller
         // Use the authenticated user
         auth()->user()->flashes()->create($validated);
 
+        // Check if this is a non-sailing activity and if they've reached the limit
+        if (in_array($request->activity_type, ['maintenance', 'race_committee'])) {
+            $currentYear = now()->year;
+            $stats = auth()->user()->flashStatsForYear($currentYear);
+
+            if ($stats->nonSailing > 5) {
+                return redirect()->route('flashes.index')->with('warning', "Non-sailing day logged! Heads up: You've already got 5 non-sailing days counting toward awards. Keep logging though—we want to see all your Lightning time!");
+            }
+        }
+
         return redirect()->route('flashes.index')->with('success', 'Flash logged successfully!');
     }
 

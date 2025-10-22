@@ -25,7 +25,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
 - **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
-- **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward
+- **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
 - **Three Leaderboards**:
   - **Sailor**: Individual rankings by total flashes with year-specific memberships
@@ -52,7 +52,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
-- **Comprehensive Testing**: 168 tests with 500+ assertions including JavaScript unit tests
+- **Comprehensive Testing**: 175 tests with 520+ assertions including JavaScript unit tests
 
 ## Technology Stack
 
@@ -192,7 +192,7 @@ composer test
 ```
 
 **Test Coverage:**
-- 168 tests with 500+ assertions (PHP + JavaScript)
+- 175 tests with 520+ assertions (PHP + JavaScript)
 - Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking, navigation, registration with memberships
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
 - JavaScript tests: Registration form validation and dynamic fleet selection
@@ -225,7 +225,7 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
-- **PHPUnit** - PHP test suite (168 tests)
+- **PHPUnit** - PHP test suite (175 tests)
 - **Vitest** - JavaScript test suite (via npm test)
 
 **`composer fix`** runs:
@@ -309,6 +309,7 @@ gotflashes/
 ## Documentation
 
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
+- **[Membership Year-End Logic](docs/membership-year-end-logic.md)**: Year-specific membership system documentation
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
 ## Production Deployment Details

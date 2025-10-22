@@ -19,7 +19,16 @@ New users can create accounts with the following information:
 - Physical mailing address
 - District (optional)
 - Yacht Club (optional)
-- Fleet Number (optional)
+- Fleet Number (optional - dynamically filtered by selected district)
+
+**Year-Specific Memberships:**
+District and fleet affiliations are tracked per calendar year rather than as a single static value. When users register, a membership record is created for the current year with their selected district and fleet. This system allows:
+- Users to change districts or fleets over time while maintaining historical accuracy
+- Leaderboards to reflect year-end affiliations (the district/fleet users belonged to during each specific year)
+- Automatic carry-forward of memberships from previous years when not explicitly updated
+- Support for unaffiliated sailors (those without a district or fleet)
+
+For detailed information on membership logic and year-end processing, see [membership-year-end-logic.md](membership-year-end-logic.md).
 
 **Note**: Users do not need to be Lightning owners - crews and anyone who sails on Lightnings can participate.
 
@@ -65,23 +74,29 @@ Users log activities using a simple form for each day:
     - **Sailing on a Lightning**
     - **Boat/Trailer Maintenance (non-sailing day)** - Available until 5 non-sailing days used
     - **Race Committee Work (non-sailing day)** - Available until 5 non-sailing days used
+- **Sailing Type** (required when activity type is "Sailing"):
+    - **Regatta** - Competitive racing events
+    - **Club Race** - Local club racing
+    - **Practice** - Practice sailing sessions
+    - **Day Sailing** - Recreational sailing
+    - **Purpose**: Helps the Lightning Class understand constituent activities and sailing patterns for analytics and planning
 - **Optional fields** (enhance tracking and create richer records):
     - Location (city, lake, venue)
-    - Sail Number
+    - Sail Number (must be numeric)
     - Notes (free-form text)
 
-**Non-sailing day Entry Restrictions:**
-The system will only allow users to log non-sailing day activities when they have non-sailing days remaining:
-- All users have 5 non-sailing day slots per calendar year
-- System displays remaining non-sailing days (e.g., "3 of 5 non-sailing days remaining")
-- After 5 non-sailing days are used, non-sailing day options are hidden/disabled
-- Clear messaging explains when all non-sailing days have been used
+**Non-sailing day Entry Behavior:**
+- All users have 5 non-sailing day slots per calendar year that count toward awards
+- Users can log non-sailing day activities at any time (no restrictions)
+- After 5 non-sailing days are logged, additional non-sailing days can still be logged but won't count toward awards
+- Warning message displayed when logging 6th+ non-sailing day to inform user it won't count toward awards
+- Users are encouraged to continue logging all Lightning-related activity for complete records
 
 **Benefits of this approach:**
-- Simple, straightforward rules - just a maximum of 5 non-sailing days per year
-- Users can log maintenance and race committee work immediately
-- Eliminates confusion about eligibility requirements
-- Better user experience with clear remaining non-sailing day count
+- Simple, straightforward rules - just a maximum of 5 non-sailing days per year count toward awards
+- Users can log all their Lightning activity without restrictions
+- Clear warning messaging when logging non-counting days
+- Encourages complete activity tracking while maintaining award integrity
 
 **Edit Restrictions:**
 - Users can edit or delete activities from the current calendar year only

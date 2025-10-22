@@ -9,22 +9,23 @@
             <p class="text-base-content/70 mt-2">Your sailing days and progress toward awards</p>
         </div>
 
-        <!-- Progress Card -->
-        <div class="card bg-base-100 shadow mb-6">
-            <div class="card-body">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="card-title text-xl">{{ $currentYear }} Progress</h2>
-
-                    <!-- Award Badges -->
-                    @if(count($earnedAwards) > 0)
-                        <div class="flex gap-2">
+        <!-- Earned Awards Card (Option 2) -->
+        @if(count($earnedAwards) > 0)
+            <div class="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg mb-6 border-2 border-primary/20">
+                <div class="card-body py-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="card-title text-xl mb-1">{{ $currentYear }} Earned Awards</h2>
+                            <p class="text-sm text-base-content/70">Congratulations on your achievements!</p>
+                        </div>
+                        <div class="flex gap-6">
                             @foreach($earnedAwards as $award)
                                 @php
-                                    $color = match($award) {
-                                        10 => '#CD7F32', // Bronze
-                                        25 => '#C0C0C0', // Silver
-                                        50 => '#FFD700', // Gold
-                                        default => '#FFD700'
+                                    $badgeImage = match($award) {
+                                        10 => 'got-10-badge.png',
+                                        25 => 'got-25-badge.png',
+                                        50 => 'got-50-badge.png',
+                                        default => 'got-50-badge.png'
                                     };
                                     $title = match($award) {
                                         10 => '10 Day Award',
@@ -33,18 +34,21 @@
                                         default => 'Award'
                                     };
                                 @endphp
-                                <div class="tooltip" data-tip="{{ $title }}">
-                                    <div class="badge badge-lg badge-primary gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="{{ $color }}" class="bi bi-trophy-fill" viewBox="0 0 16 16">
-                                            <path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935"/>
-                                        </svg>
-                                        <span class="font-bold">{{ $award }}</span>
-                                    </div>
+                                <div class="flex flex-col items-center gap-2">
+                                    <img src="{{ asset('images/' . $badgeImage) }}" alt="{{ $title }}" class="w-20 h-20 object-contain drop-shadow-lg">
+                                    <span class="text-xs font-semibold text-center">{{ $title }}</span>
                                 </div>
                             @endforeach
                         </div>
-                    @endif
+                    </div>
                 </div>
+            </div>
+        @endif
+
+        <!-- Progress Card -->
+        <div class="card bg-base-100 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-xl mb-4">{{ $currentYear }} Progress</h2>
 
                 <div class="flex items-center gap-4 mb-4">
                     <div class="stat p-0 flex-1">
@@ -62,31 +66,51 @@
                     @else
                         <div class="stat p-0 flex-1">
                             <div class="stat-title text-xs">Achievement</div>
-                            <div class="stat-value text-3xl">🏆</div>
+                            <div class="stat-value text-3xl">
+                                <img src="{{ asset('images/burgee-50.jpg') }}" alt="Burgee" class="h-9 w-auto object-contain inline-block">
+                            </div>
                             <div class="stat-desc text-xs">All tiers completed!</div>
                         </div>
                     @endif
                 </div>
 
                 <!-- Progress Bar -->
-                @if($nextMilestone)
-                    @php
-                        $previousMilestone = 0;
-                        if ($nextMilestone == 25) $previousMilestone = 10;
-                        if ($nextMilestone == 50) $previousMilestone = 25;
-                        $progress = (($totalFlashes - $previousMilestone) / ($nextMilestone - $previousMilestone)) * 100;
-                        $progress = max(0, min(100, $progress));
-                    @endphp
-                    <div>
-                        <div class="flex justify-between text-xs text-base-content/70 mb-1">
-                            <span>{{ $previousMilestone }} days</span>
-                            <span>{{ $nextMilestone }} days</span>
-                        </div>
+                @php
+                    // Calculate progress percentage (0 to 50+ scale)
+                    $maxScale = 50;
+                    $progress = min(100, ($totalFlashes / $maxScale) * 100);
+
+                    // Award marker positions (at 10, 25, 50 days)
+                    $marker10 = (10 / $maxScale) * 100;
+                    $marker25 = (25 / $maxScale) * 100;
+                    $marker50 = (50 / $maxScale) * 100;
+                @endphp
+                <div>
+                    <div class="relative mb-2">
                         <progress class="progress progress-primary w-full h-3" value="{{ $progress }}" max="100"></progress>
+
+                        <!-- Award markers -->
+                        <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            <!-- 10 Day Marker -->
+                            <div class="absolute flex flex-col items-center" style="left: {{ $marker10 }}%; transform: translateX(-50%);">
+                                <div class="w-8 h-8 rounded-full border-2 {{ in_array(10, $earnedAwards) ? 'border-primary bg-primary' : 'border-base-300 bg-base-100' }} -mt-2.5"></div>
+                                <span class="text-xs mt-1 text-base-content/60">10</span>
+                            </div>
+
+                            <!-- 25 Day Marker -->
+                            <div class="absolute flex flex-col items-center" style="left: {{ $marker25 }}%; transform: translateX(-50%);">
+                                <div class="w-8 h-8 rounded-full border-2 {{ in_array(25, $earnedAwards) ? 'border-primary bg-primary' : 'border-base-300 bg-base-100' }} -mt-2.5"></div>
+                                <span class="text-xs mt-1 text-base-content/60">25</span>
+                            </div>
+
+                            <!-- 50 Day Marker -->
+                            <div class="absolute flex flex-col items-center" style="left: {{ $marker50 }}%; transform: translateX(-50%);">
+                                <div class="w-8 h-8 rounded-full border-2 {{ in_array(50, $earnedAwards) ? 'border-primary bg-primary' : 'border-base-300 bg-base-100' }} -mt-2.5"></div>
+                                <span class="text-xs mt-1 text-base-content/60">50+</span>
+                            </div>
+                        </div>
                     </div>
-                @else
-                    <progress class="progress progress-success w-full h-3" value="100" max="100"></progress>
-                @endif
+                </div>
             </div>
         </div>
 

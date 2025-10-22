@@ -78,6 +78,24 @@
     }
 }
 
+/* Tooltip custom colors - Lighter blue */
+.tooltip:before,
+.tooltip-top:before,
+.tooltip-bottom:before,
+.tooltip-left:before,
+.tooltip-right:before {
+    background-color: oklch(55% 0.12 240deg) !important; /* Secondary blue - lighter */
+    color: oklch(100% 0 0deg) !important; /* White text */
+}
+
+.tooltip:after,
+.tooltip-top:after,
+.tooltip-bottom:after,
+.tooltip-left:after,
+.tooltip-right:after {
+    border-color: oklch(55% 0.12 240deg) transparent transparent transparent !important;
+}
+
 /* Floating Label - Always Visible (on border) */
 .floating-label-visible {
     position: relative;
