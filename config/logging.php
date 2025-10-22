@@ -32,6 +32,7 @@ return [
     'log_queries' => env('LOG_QUERIES', false),
     'log_slow_queries' => env('LOG_SLOW_QUERIES', true),
     'slow_query_threshold_ms' => env('SLOW_QUERY_THRESHOLD_MS', 100),
+    'slow_request_threshold_ms' => env('SLOW_REQUEST_THRESHOLD_MS', 300),
 
     /*
     |--------------------------------------------------------------------------

@@ -329,10 +329,12 @@ Additionally, the following paths need to be mounted for persistent storage
 - /var/www/html/database/database.sqlite
 
 The production deployment stack:
-- **Cloudflare**: DNS and CDN
+- **Cloudflare**: DNS and CDN (firewall restricts traffic to Cloudflare IPs only)
 - **ACME/Let's Encrypt**: SSL certificate management
 - **HAProxy**: SSL termination and reverse proxy
 - **Docker Container**: Application (nginx + PHP-FPM)
+
+**Security Note:** Firewall-level restrictions ensure only Cloudflare IPs can reach the server, allowing nginx to safely trust `X-Forwarded-For` headers for real client IP logging.
 
 See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for the full deployment setup.
 

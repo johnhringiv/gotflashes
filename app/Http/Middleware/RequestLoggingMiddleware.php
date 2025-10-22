@@ -55,12 +55,14 @@ class RequestLoggingMiddleware
         ]);
 
         // Log performance metrics if response is slow
-        if ($duration > 1000) { // If response takes more than 1 second
+        $slowRequestThreshold = config('logging.slow_request_threshold_ms', 300);
+        if ($duration > $slowRequestThreshold) {
             Log::channel('performance')->warning('Slow request detected', [
                 'request_id' => $requestId,
                 'method' => $request->method(),
                 'path' => $request->path(),
                 'duration_ms' => round($duration, 2),
+                'threshold_ms' => $slowRequestThreshold,
                 'user_id' => auth()->id(),
             ]);
         }

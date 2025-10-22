@@ -25,13 +25,11 @@ class QueryLogListener
             return;
         }
 
-        // Format the query with bindings for logging
-        $fullQuery = $this->formatQuery($event->sql, $event->bindings);
-
         // Log all queries to query channel if enabled
         if ($shouldLogAllQueries) {
             Log::channel('query')->debug('Database query executed', [
-                'sql' => $fullQuery,
+                'sql' => $event->sql,
+                'bindings' => $event->bindings,
                 'time_ms' => $time,
                 'connection' => $event->connectionName,
                 'slow_query' => $isSlowQuery,
@@ -41,31 +39,12 @@ class QueryLogListener
         // Log slow queries to performance channel (only if not already logged to query channel)
         if ($isSlowQuery && $shouldLogSlowQueries && ! $shouldLogAllQueries) {
             Log::channel('performance')->warning('Slow database query detected', [
-                'sql' => $fullQuery,
+                'sql' => $event->sql,
+                'bindings' => $event->bindings,
                 'time_ms' => $time,
                 'connection' => $event->connectionName,
                 'threshold_ms' => $threshold,
             ]);
         }
-    }
-
-    /**
-     * Format query with bindings for logging
-     */
-    private function formatQuery(string $sql, array $bindings): string
-    {
-        return vsprintf(str_replace('?', '%s', $sql), array_map(function ($binding) {
-            if (is_string($binding)) {
-                return "'$binding'";
-            }
-            if (is_bool($binding)) {
-                return $binding ? '1' : '0';
-            }
-            if (is_null($binding)) {
-                return 'NULL';
-            }
-
-            return $binding;
-        }, $bindings));
     }
 }
