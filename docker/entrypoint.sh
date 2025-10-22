@@ -3,16 +3,11 @@ set -e
 
 echo "Starting GOT-FLASHES application..."
 
-# Only handle volume-mounted directories (they override image directories)
-# If using volumes, recreate structure and fix permissions
-if [ -d "/var/www/html/database" ]; then
-    # Ensure database file exists (for volume mounts)
-    if [ ! -f /var/www/html/database/database.sqlite ]; then
-        echo "Creating SQLite database..."
-        touch /var/www/html/database/database.sqlite
-    fi
-    chown -R www-data:www-data /var/www/html/database
-    chmod -R 775 /var/www/html/database
+# Ensure database file exists if it doesn't already
+if [ ! -f /var/www/html/database/database.sqlite ]; then
+    echo "Creating SQLite database..."
+    touch /var/www/html/database/database.sqlite
+    chmod 664 /var/www/html/database/database.sqlite
 fi
 
 # Run migrations (includes reference data seeding)
