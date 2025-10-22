@@ -4,6 +4,8 @@ A web application for tracking Lightning Class sailing activity and managing the
 
 **GOT-FLASHES** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
 
+**🌐 Live Application**: [https://gotflashes.com](https://gotflashes.com)
+
 ## About the GOT-FLASHES Challenge
 
 The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
@@ -11,7 +13,6 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 ### What Counts
 - **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
 - **Non-Sailing Days**: Up to 5 days per year for boat/trailer maintenance or race committee work
-- **One hour counts as a full day** - we just want you sailing!
 
 ### Award Tiers
 - **10 Days**: First tier recognition
@@ -24,8 +25,10 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
 - **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward
+- **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
 - **Three Leaderboards**:
-  - **Sailor**: Individual rankings by total flashes
+  - **Sailor**: Individual rankings by total flashes with year-specific memberships
   - **Fleet**: Fleet-level rankings with member counts
   - **District**: District-level rankings with member counts
 - **User Authentication**: Secure registration and login system
@@ -34,16 +37,22 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **Non-Sailing Day Cap**: Automatically caps maintenance and race committee days at 5 per year
 - **Date Ordering**: Activities ordered by activity date (newest first)
 - **User Highlighting**: Your position highlighted on leaderboards
+- **Leaderboard Tie-Breaking**: Advanced ranking logic (total flashes → sailing days → first entry → alphabetical)
 - **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
 - **Self-Hosted**: SQLite database with no external dependencies
+- **Production Ready**: Docker containerization with optimized builds and caching
 
 ### Technical Highlights
 - **Secure Authentication**: Laravel's built-in session-based authentication
 - **Authorization Policies**: Enforces user ownership of activity records
-- **Database Constraints**: Unique index prevents duplicate entries per user per date
+- **Year-Based Membership System**: Separate memberships table tracks district/fleet affiliations per year
+- **Dynamic API Endpoints**: Real-time fleet lookup with 1-hour cache + ETag support
+- **Database Constraints**: Unique indexes prevent duplicate entries per user per date/year
 - **Date Validation**: Prevents future date entries (with timezone tolerance)
+- **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
+- **Comprehensive Testing**: 168 tests with 500+ assertions including JavaScript unit tests
 
 ## Technology Stack
 
@@ -52,6 +61,7 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
+- **Deployment**: Docker (Alpine Linux + PHP-FPM + Nginx + Supervisor)
 
 ## Getting Started
 
@@ -182,9 +192,10 @@ composer test
 ```
 
 **Test Coverage:**
-- 95 tests with 275+ assertions
-- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
-- Unit tests: Models, policies, business logic
+- 168 tests with 500+ assertions (PHP + JavaScript)
+- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking, navigation, registration with memberships
+- Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
+- JavaScript tests: Registration form validation and dynamic fleet selection
 - Uses in-memory SQLite for fast test execution
 
 **Test Organization:**
@@ -214,7 +225,8 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
-- **PHPUnit** - Test suite (95 tests)
+- **PHPUnit** - PHP test suite (168 tests)
+- **Vitest** - JavaScript test suite (via npm test)
 
 **`composer fix`** runs:
 - **Laravel Pint** - Auto-fixes PHP formatting
@@ -276,7 +288,7 @@ php artisan pail
 gotflashes/
 ├── app/
 │   ├── Http/Controllers/    # Request handling logic
-│   ├── Models/              # Eloquent models (User, Flash)
+│   ├── Models/              # Eloquent models (User, Flash, Member, District, Fleet)
 │   └── ...
 ├── database/
 │   ├── migrations/          # Database schema definitions
@@ -299,73 +311,32 @@ gotflashes/
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
-## Configuration
+## Production Deployment Details
 
-Key environment variables in `.env`:
+For production most ENV variables are set in the container via `docker/.env.docker`.
+The following sensitive variables will need to be set manually
 
 ```env
-APP_NAME="GOT-FLASHES Challenge"
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost
+APP_KEY
 
-DB_CONNECTION=sqlite
-DB_DATABASE=/absolute/path/to/database/database.sqlite
+# optional
+BASIC_AUTH_USERNAME
+BASIC_AUTH_PASSWORD
 ```
 
-For production deployment configuration, see the `.env` file and Laravel deployment documentation.
+Additionally, the following paths need to be mounted for persistent storage
+- /var/www/html/storage/logs
+- /var/www/html/database/database.sqlite
 
-## Current Implementation Status
+The production deployment stack:
+- **Cloudflare**: DNS and CDN (firewall restricts traffic to Cloudflare IPs only)
+- **ACME/Let's Encrypt**: SSL certificate management
+- **HAProxy**: SSL termination and reverse proxy
+- **Docker Container**: Application (nginx + PHP-FPM)
 
-**Completed Features:**
-- ✅ User registration and authentication
-- ✅ Profile management
-- ✅ Activity logging (Flashes) with activity type selection
-- ✅ Activity CRUD operations
-- ✅ Activity ordering by date (newest first)
-- ✅ "Just logged" badge for entries created today
-- ✅ Award tier calculations (10, 25, 50 days)
-- ✅ Progress tracking displays with visual progress bars
-- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons
-- ✅ Non-sailing day limits enforcement (5 per year)
-- ✅ Three leaderboards (Sailor, Fleet, District)
-- ✅ User highlighting on leaderboards
-- ✅ Leaderboard pagination and ranking
+**Security Note:** Firewall-level restrictions ensure only Cloudflare IPs can reach the server, allowing nginx to safely trust `X-Forwarded-For` headers for real client IP logging.
 
-**In Progress:**
-- 🔄 Year-end rollover logic and grace period
-
-**Planned:**
-- 📋 Award administrator dashboard
-- 📋 Historical year views (read-only previous years)
-- 📋 CSV export functionality for award fulfillment
-- 📋 Award certificates (downloadable PDFs)
-- 📋 Social sharing features
-
-## Git Workflow
-
-Current branches:
-- `main`: Primary development branch
-
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed git workflow and branching strategy.
-
-## Testing Strategy
-
-This project follows Test-Driven Development (TDD) practices with comprehensive test coverage.
-
-**Run tests:**
-```bash
-composer test              # Run test suite only
-composer check             # Run tests + all quality checks
-```
-
-**Current Coverage:**
-- 95 tests with 275+ assertions
-- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking
-- Unit tests: Models, policies, business logic
-- Uses in-memory SQLite for fast execution
-
-See the Testing section under Development Workflow above for more details.
+See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for the full deployment setup.
 
 ## Support & Contributing
 

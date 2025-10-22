@@ -2,10 +2,16 @@
     <x-slot:title>
         Leaderboard
     </x-slot:title>
+    <x-slot:description>
+        View the Lightning Class GOT-FLASHES leaderboard rankings. See top sailors, fleets, and districts by sailing days tracked in 2025.
+    </x-slot:description>
 
     <div class="max-w-6xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold">2025 Leaderboard</h1>
+            <h1 class="text-3xl font-bold">
+                <span class="text-primary">2025</span>
+                <span class="text-accent">Leaderboard</span>
+            </h1>
             <p class="text-base-content/70 mt-2">Top Lightning sailors by total flashes this year</p>
         </div>
 
@@ -30,16 +36,29 @@
 
         @if($leaderboard->count() > 0)
             <div class="card bg-base-100 shadow overflow-x-auto">
-                <table class="table table-zebra">
+                <table class="table">
+                    <style>
+                        .table tbody tr:nth-child(even):not(.current-user-row) {
+                            background-color: oklch(38% 0.09 245 / 0.1);
+                        }
+                        .current-user-row {
+                            background-color: oklch(44% 0.21 29 / 0.15);
+                        }
+                        .badge-accent {
+                            background-color: oklch(44% 0.21 29);
+                            color: oklch(100% 0 0);
+                            border-color: oklch(44% 0.21 29);
+                        }
+                    </style>
                     @if($currentTab === 'sailor')
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>Name</th>
-                                <th class="text-center">District</th>
-                                <th class="text-center">Fleet #</th>
-                                <th>Yacht Club</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">Name</th>
+                                <th class="text-center font-bold">District</th>
+                                <th class="text-center font-bold">Fleet #</th>
+                                <th class="font-bold">Yacht Club</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -53,7 +72,7 @@
                                 @php
                                     $isCurrentUser = auth()->check() && auth()->id() === $user->id;
                                 @endphp
-                                <tr class="{{ $isCurrentUser ? 'bg-primary/10 border-l-4 border-primary' : '' }}">
+                                <tr class="{{ $isCurrentUser ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
@@ -63,11 +82,21 @@
                                             <span class="badge badge-sm badge-primary ml-2">You</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ $user->district ?? '—' }}</td>
-                                    <td class="text-center">{{ $user->fleet_number ?? '—' }}</td>
+                                    <td class="text-center">
+                                        @php
+                                            $district = $user->district_id ? \App\Models\District::find($user->district_id) : null;
+                                        @endphp
+                                        {{ $district?->name ?? '—' }}
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $fleet = $user->fleet_id ? \App\Models\Fleet::find($user->fleet_id) : null;
+                                        @endphp
+                                        {{ $fleet?->fleet_number ?? '—' }}
+                                    </td>
                                     <td>{{ $user->yacht_club ?? '—' }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $user->flashes_count }}
                                         </span>
                                     </td>
@@ -75,12 +104,12 @@
                             @endforeach
                         </tbody>
                     @elseif($currentTab === 'fleet')
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>Fleet #</th>
-                                <th class="text-center">Members</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">Fleet #</th>
+                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -91,14 +120,18 @@
                         </thead>
                         <tbody>
                             @foreach($leaderboard as $index => $fleet)
-                                <tr>
+                                @php
+                                    $userFleet = auth()->check() ? auth()->user()->currentMembership()?->fleet_id : null;
+                                    $isUserFleet = $userFleet && $userFleet === $fleet->id;
+                                @endphp
+                                <tr class="{{ $isUserFleet ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
-                                    <td class="font-medium">Fleet {{ $fleet->fleet_number }}</td>
+                                    <td class="font-medium">Fleet {{ $fleet->fleet_number }} - {{ $fleet->fleet_name }}</td>
                                     <td class="text-center">{{ $fleet->member_count }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $fleet->total_flashes }}
                                         </span>
                                     </td>
@@ -106,12 +139,12 @@
                             @endforeach
                         </tbody>
                     @else
-                        <thead>
+                        <thead class="bg-base-300 border-b-2 border-base-content/20">
                             <tr>
-                                <th class="text-center">Rank</th>
-                                <th>District</th>
-                                <th class="text-center">Members</th>
-                                <th class="text-center">
+                                <th class="text-center font-bold">Rank</th>
+                                <th class="font-bold">District</th>
+                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
                                             Total Flashes
@@ -122,14 +155,18 @@
                         </thead>
                         <tbody>
                             @foreach($leaderboard as $index => $district)
-                                <tr>
+                                @php
+                                    $userDistrict = auth()->check() ? auth()->user()->currentMembership()?->district_id : null;
+                                    $isUserDistrict = $userDistrict && $userDistrict === $district->id;
+                                @endphp
+                                <tr class="{{ $isUserDistrict ? 'current-user-row border-l-4 border-accent' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
-                                    <td class="font-medium">District {{ $district->district }}</td>
+                                    <td class="font-medium">{{ $district->name }}</td>
                                     <td class="text-center">{{ $district->member_count }}</td>
                                     <td class="text-center">
-                                        <span class="badge badge-primary badge-lg">
+                                        <span class="badge badge-accent badge-lg">
                                             {{ $district->total_flashes }}
                                         </span>
                                     </td>
@@ -143,7 +180,7 @@
             <!-- Pagination -->
             @if($leaderboard->hasPages())
                 <div class="mt-6">
-                    {{ $leaderboard->links() }}
+                    {{ $leaderboard->appends(['tab' => $currentTab])->links() }}
                 </div>
             @endif
         @else

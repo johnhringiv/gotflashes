@@ -31,8 +31,6 @@ class User extends Authenticatable
         'state',
         'zip_code',
         'country',
-        'district',
-        'fleet_number',
         'yacht_club',
     ];
 
@@ -71,6 +69,46 @@ class User extends Authenticatable
     public function flashes(): HasMany
     {
         return $this->hasMany(Flash::class);
+    }
+
+    /**
+     * Get the user's membership records (year-end affiliations).
+     */
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class);
+    }
+
+    /**
+     * Get the user's membership for a specific year.
+     * If no membership exists for the specified year, carries forward from the most recent previous year.
+     *
+     * Example: User signs up in 2024, doesn't update in 2025 -> 2025 uses 2024 membership.
+     */
+    public function membershipForYear(int $year): ?Member
+    {
+        // First, try to find exact membership for this year
+        /** @var Member|null $membership */
+        $membership = $this->members()->where('year', $year)->first();
+
+        if ($membership) {
+            return $membership;
+        }
+
+        // If not found, get the most recent membership before this year (carry-forward)
+        /** @var Member|null */
+        return $this->members()
+            ->where('year', '<', $year)
+            ->orderBy('year', 'desc')
+            ->first();
+    }
+
+    /**
+     * Get the user's current year membership.
+     */
+    public function currentMembership(): ?Member
+    {
+        return $this->membershipForYear(now()->year);
     }
 
     /**

@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /flashes
+Disallow: /login
+Disallow: /register
+Disallow: /logout
+
+Sitemap: https://gotflashes.com/sitemap.xml
