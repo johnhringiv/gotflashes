@@ -31,18 +31,17 @@
             @can('update', $flash)
                 @if($flash->isEditable($minDate, $maxDate))
                     <div class="flex gap-1">
-                        <a href="/flashes/{{ $flash->id }}/edit" class="btn btn-ghost btn-xs">
+                        <button type="button"
+                            wire:click="openEditModal({{ $flash->id }})"
+                            class="btn btn-ghost btn-xs">
                             Edit
-                        </a>
-                        <form method="POST" action="/flashes/{{ $flash->id }}">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                onclick="return confirm('Are you sure you want to delete this flash?')"
-                                class="btn btn-ghost btn-xs text-error">
-                                Delete
-                            </button>
-                        </form>
+                        </button>
+                        <button type="button"
+                            wire:click="delete({{ $flash->id }})"
+                            wire:confirm="Are you sure you want to delete this flash?"
+                            class="btn btn-ghost btn-xs text-error">
+                            Delete
+                        </button>
                     </div>
                 @endif
             @endcan

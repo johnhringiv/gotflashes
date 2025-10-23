@@ -1,9 +1,5 @@
 <div>
-    <form action="{{ $action }}" method="POST">
-        @csrf
-        @if($method !== 'POST')
-            @method($method)
-        @endif
+    <form wire:submit="save">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <!-- Date(s) - order-1 on mobile, col 1 on desktop -->
@@ -55,7 +51,7 @@
                     <div class="label">
                         <span class="label-text">Activity Type</span>
                     </div>
-                    <select name="activity_type" class="select select-bordered @error('activity_type') select-error @enderror" required>
+                    <select wire:model.defer="activity_type" id="activity_type" class="select select-bordered @error('activity_type') select-error @enderror" required>
                         <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
                         <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
@@ -82,8 +78,12 @@
                             </div>
                         </span>
                     </div>
-                    <select name="event_type" id="sailing_type" class="select select-bordered @error('event_type') select-error @enderror">
-                        <option value="" disabled {{ $event_type ? '' : 'selected' }}>Select sailing type - All count equally</option>
+                    <select wire:model="event_type" id="sailing_type"
+                            class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
+                            {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
+                        <option value="" disabled {{ $event_type ? '' : 'selected' }}>
+                            {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
+                        </option>
                         <option value="regatta" {{ $event_type == 'regatta' ? 'selected' : '' }}>Regatta</option>
                         <option value="club_race" {{ $event_type == 'club_race' ? 'selected' : '' }}>Club Race</option>
                         <option value="practice" {{ $event_type == 'practice' ? 'selected' : '' }}>Practice</option>
@@ -99,7 +99,7 @@
 
             <!-- Location - order-4 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-4 md:order-2">
-                <input type="text" name="location" value="{{ $location }}"
+                <input type="text" wire:model="location"
                        placeholder="Lake Norman, NC"
                        class="input input-bordered w-full" maxlength="255">
                 <label>Location (optional)</label>
@@ -107,7 +107,8 @@
 
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-5 md:order-4">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" name="sail_number" value="{{ $sail_number }}"
+                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model="sail_number"
+                       id="sail_number"
                        placeholder="15234"
                        class="input input-bordered w-full">
                 <label>Sail Number (optional)</label>
@@ -116,17 +117,24 @@
 
         <!-- Notes -->
         <div class="mb-6 floating-label-visible">
-            <textarea name="notes" rows="3"
+            <textarea wire:model="notes" rows="3"
                       placeholder="Tell us about your day on the water..."
-                      class="textarea textarea-bordered w-full">{{ $notes }}</textarea>
+                      class="textarea textarea-bordered w-full"></textarea>
             <label>Notes (optional)</label>
         </div>
 
         <!-- Submit Button -->
         <div class="form-control mt-6">
-            <button type="submit" class="btn btn-primary">
-                {{ $submitText }}
-            </button>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {{ $submitText }}
+                </button>
+                @if($mode === 'edit')
+                    <button type="button" wire:click="$dispatch('close-edit-modal')" class="btn btn-error">
+                        Cancel
+                    </button>
+                @endif
+            </div>
         </div>
     </form>
 </div>

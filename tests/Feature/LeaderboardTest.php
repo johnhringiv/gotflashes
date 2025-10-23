@@ -924,13 +924,21 @@ class LeaderboardTest extends TestCase
     {
         // Both users have same count, same sailing days, entries at same time
         $userA = User::factory()->create(['first_name' => 'Zara', 'last_name' => 'Adams']);
-        for ($i = 1; $i <= 10; $i++) {
-            Flash::factory()->forUser($userA)->sailing()->create(['date' => "2025-01-{$i}"]);
-        }
-
         $userB = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Baker']);
+
+        // Create flashes with identical timestamps for both users to force alphabetical tie-breaking
+        $timestamp = now()->subDays(5);
         for ($i = 1; $i <= 10; $i++) {
-            Flash::factory()->forUser($userB)->sailing()->create(['date' => "2025-01-{$i}"]);
+            Flash::factory()->forUser($userA)->sailing()->create([
+                'date' => "2025-01-{$i}",
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+            Flash::factory()->forUser($userB)->sailing()->create([
+                'date' => "2025-01-{$i}",
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
         }
 
         $response = $this->get('/leaderboard');

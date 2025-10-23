@@ -213,15 +213,23 @@ span.flatpickr-weekday {
     color: oklch(100% 0 0deg) !important;
 }
 
-/* Today's date */
-.flatpickr-day.today {
+/* Today's date - ONLY when not selected */
+.flatpickr-day.today:not(.selected) {
     border-color: oklch(44% 0.21 29deg) !important;
     background: oklch(96% 0.003 245deg) !important;
 }
 
-.flatpickr-day.today:hover {
+.flatpickr-day.today:not(.selected):hover {
     background: oklch(92% 0.005 245deg) !important;
     border-color: oklch(44% 0.21 29deg) !important;
+}
+
+/* Today's date when selected - blue background with red border */
+.flatpickr-day.today.selected,
+.flatpickr-day.today.selected:hover {
+    background: oklch(38% 0.09 245deg) !important;
+    border-color: oklch(44% 0.21 29deg) !important;
+    color: oklch(100% 0 0deg) !important;
 }
 
 /* Future dates (disabled) - grayed out */

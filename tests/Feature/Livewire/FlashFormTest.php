@@ -19,7 +19,7 @@ class FlashFormTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
                 'submitText' => 'Log Activity',
             ])
             ->assertStatus(200)
@@ -41,8 +41,7 @@ class FlashFormTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
                 'flash' => $flash,
-                'action' => route('flashes.update', $flash),
-                'method' => 'PUT',
+
                 'submitText' => 'Update Activity',
             ])
             ->assertStatus(200)
@@ -59,7 +58,7 @@ class FlashFormTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ])
             ->assertSet('mode', 'create');
     }
@@ -74,8 +73,7 @@ class FlashFormTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
                 'flash' => $flash,
-                'action' => route('flashes.update', $flash),
-                'method' => 'PUT',
+
             ])
             ->assertSet('mode', 'edit');
     }
@@ -89,7 +87,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         // In February, minDate should be start of current year (2025-01-01)
@@ -106,7 +104,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         // In January, minDate should be start of previous year (2024-01-01) - grace period
@@ -123,7 +121,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         // maxDate should be tomorrow (for timezone tolerance)
@@ -140,7 +138,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         // Initial render: minDate should include previous year
@@ -172,7 +170,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         $existingDates = $component->viewData('existingDates');
@@ -198,7 +196,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         $existingDates = $component->viewData('existingDates');
@@ -225,8 +223,7 @@ class FlashFormTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
                 'flash' => $flash,
-                'action' => route('flashes.update', $flash),
-                'method' => 'PUT',
+
             ])
             ->assertSet('date', '2025-01-15')
             ->assertSet('activity_type', 'maintenance')
@@ -251,7 +248,7 @@ class FlashFormTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
                 'flash' => $flash,
-                'action' => route('flashes.update', $flash),
+
             ])
             ->assertSet('location', '')
             ->assertSet('sail_number', '')
@@ -264,7 +261,7 @@ class FlashFormTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ])
             ->assertSee('id="date-picker"', false); // Multi-date picker for create
     }
@@ -279,8 +276,7 @@ class FlashFormTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
                 'flash' => $flash,
-                'action' => route('flashes.update', $flash),
-                'method' => 'PUT',
+
             ])
             ->assertSee('id="date-picker-single"', false); // Single-date picker for edit
     }
@@ -294,7 +290,7 @@ class FlashFormTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+
             ]);
 
         // Check that 2024 dates are within range
@@ -319,10 +315,179 @@ class FlashFormTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(FlashForm::class, [
-                'action' => route('flashes.store'),
+                'submitText' => 'Log Activity',
             ])
             ->assertSee('data-min-date="2024-01-01"', false)
             ->assertSee('data-max-date="2025-01-16"', false)
             ->assertSee('data-existing-dates', false);
+    }
+
+    // NEW LIVEWIRE FUNCTIONALITY TESTS
+
+    public function test_can_save_single_flash_via_livewire(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->setDate(2025, 1, 15));
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'regatta')
+            ->set('location', 'Lake Norman')
+            ->set('sail_number', '15234')
+            ->set('notes', 'Great day')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertDispatched('flash-saved')
+            ->assertDispatched('toast');
+
+        // Check the flash was created (date might include timestamp)
+        $this->assertDatabaseCount('flashes', 1);
+        $flash = Flash::first();
+        $this->assertEquals($user->id, $flash->user_id);
+        $this->assertEquals('2025-01-15', $flash->date->format('Y-m-d'));
+        $this->assertEquals('sailing', $flash->activity_type);
+        $this->assertEquals('regatta', $flash->event_type);
+        $this->assertEquals('Lake Norman', $flash->location);
+        $this->assertEquals(15234, $flash->sail_number);
+        $this->assertEquals('Great day', $flash->notes);
+    }
+
+    public function test_can_save_multiple_flashes_via_livewire(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->setDate(2025, 1, 15));
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-10', '2025-01-11', '2025-01-12'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'club_race')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertDispatched('flash-saved');
+
+        $this->assertDatabaseCount('flashes', 3);
+
+        // Verify all three dates were saved
+        $flashes = $user->flashes()->pluck('date')->map(fn ($d) => $d->format('Y-m-d'))->toArray();
+        $this->assertContains('2025-01-10', $flashes);
+        $this->assertContains('2025-01-11', $flashes);
+        $this->assertContains('2025-01-12', $flashes);
+    }
+
+    public function test_form_resets_after_successful_save(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'regatta')
+            ->set('location', 'Lake Norman')
+            ->set('sail_number', '15234')
+            ->set('notes', 'Great day')
+            ->call('save')
+            ->assertSet('dates', [])
+            ->assertSet('activity_type', '')
+            ->assertSet('event_type', '')
+            ->assertSet('location', '')
+            ->assertSet('sail_number', '')
+            ->assertSet('notes', '');
+    }
+
+    public function test_validates_required_dates(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', [])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'regatta')
+            ->call('save')
+            ->assertHasErrors(['dates']);
+    }
+
+    public function test_validates_required_activity_type(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', '')
+            ->call('save')
+            ->assertHasErrors(['activity_type']);
+    }
+
+    public function test_validates_event_type_required_for_sailing(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', '')
+            ->call('save')
+            ->assertHasErrors(['event_type']);
+    }
+
+    public function test_event_type_not_required_for_maintenance(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'maintenance')
+            ->set('event_type', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('flashes', [
+            'user_id' => $user->id,
+            'activity_type' => 'maintenance',
+            'event_type' => null,
+        ]);
+    }
+
+    public function test_prevents_duplicate_dates(): void
+    {
+        $user = User::factory()->create();
+        Flash::factory()->forUser($user)->create(['date' => '2025-01-15']);
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'regatta')
+            ->call('save')
+            ->assertHasErrors(['dates']);
+    }
+
+    public function test_shows_warning_toast_when_exceeding_non_sailing_limit(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->setDate(2025, 1, 15));
+
+        // Create 5 non-sailing activities already
+        for ($i = 1; $i <= 5; $i++) {
+            Flash::factory()->forUser($user)->create([
+                'date' => "2025-01-0{$i}",
+                'activity_type' => 'maintenance',
+            ]);
+        }
+
+        Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity'])
+            ->set('dates', ['2025-01-15']) // Use current date from travelTo
+            ->set('activity_type', 'maintenance')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertDispatched('toast');
     }
 }

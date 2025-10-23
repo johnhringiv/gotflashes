@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Flash;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class FlashForm extends Component
@@ -11,10 +12,6 @@ class FlashForm extends Component
     public ?Flash $flash = null;
 
     public string $mode = 'create'; // 'create' or 'edit'
-
-    public string $action = '';
-
-    public string $method = 'POST';
 
     public string $submitText = 'Log Activity';
 
@@ -33,11 +30,9 @@ class FlashForm extends Component
 
     public $notes = '';
 
-    public function mount(?Flash $flash = null, string $action = '', string $method = 'POST', string $submitText = 'Log Activity')
+    public function mount(?Flash $flash = null, string $submitText = 'Log Activity')
     {
         $this->flash = $flash;
-        $this->action = $action;
-        $this->method = $method;
         $this->submitText = $submitText;
 
         // Determine mode based on whether we have a flash with data
@@ -52,6 +47,170 @@ class FlashForm extends Component
             $this->sail_number = $this->flash->sail_number ?? '';
             $this->notes = $this->flash->notes ?? '';
         }
+    }
+
+    public function save()
+    {
+        // Handle edit mode vs create mode differently
+        if ($this->mode === 'edit') {
+            return $this->update();
+        }
+
+        // Determine minimum allowed date based on grace period
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay()->format('Y-m-d');
+
+        $this->validate([
+            'dates' => 'required|array|min:1',
+            'dates.*' => [
+                'required',
+                'date',
+                'after_or_equal:'.$minDate->format('Y-m-d'),
+                'before_or_equal:'.$maxDate,
+            ],
+            'activity_type' => 'required|in:sailing,maintenance,race_committee',
+            'event_type' => [
+                'required_if:activity_type,sailing',
+                'nullable',
+                'in:regatta,club_race,practice,leisure',
+            ],
+            'location' => 'nullable|string|max:255',
+            'sail_number' => 'nullable|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        $dates = $this->dates;
+
+        // Check for duplicate dates before creating any (database-level filtering)
+        $existingDates = auth()->user()->flashes()
+            ->whereIn(DB::raw('DATE(date)'), $dates)
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
+        if (! empty($existingDates)) {
+            $this->addError('dates', 'You already have activities logged for: '.implode(', ', $existingDates).'. Please remove these dates or edit existing entries.');
+
+            return;
+        }
+
+        // Prepare common data for all flashes
+        $commonData = [
+            'activity_type' => $this->activity_type,
+            'event_type' => $this->event_type ?: null,
+            'location' => $this->location ?: null,
+            'sail_number' => $this->sail_number ?: null,
+            'notes' => $this->notes ?: null,
+        ];
+
+        // Use transaction to ensure all-or-nothing
+        DB::transaction(function () use ($dates, $commonData) {
+            foreach ($dates as $date) {
+                auth()->user()->flashes()->create(array_merge($commonData, ['date' => $date]));
+            }
+        });
+
+        // Check if this is a non-sailing activity and if they've reached the limit
+        $hasWarning = false;
+        if (in_array($this->activity_type, ['maintenance', 'race_committee'])) {
+            $currentYear = now()->year;
+            $stats = auth()->user()->flashStatsForYear($currentYear);
+
+            if ($stats->nonSailing > 5) {
+                $hasWarning = true;
+            }
+        }
+
+        $count = count($dates);
+        $message = $count === 1 ? 'Flash logged successfully!' : "{$count} flashes logged successfully!";
+
+        if ($hasWarning) {
+            $this->dispatch('toast', [
+                'type' => 'warning',
+                'message' => "Non-sailing days logged! Heads up: You've already got 5 non-sailing days counting toward awards. Keep logging though—we want to see all your Lightning time!",
+            ]);
+        } else {
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => $message,
+            ]);
+        }
+
+        // Emit event to refresh other components
+        $this->dispatch('flash-saved');
+
+        // Reset form
+        $this->reset(['dates', 'activity_type', 'event_type', 'location', 'sail_number', 'notes']);
+    }
+
+    public function update()
+    {
+        // Authorization check
+        if (! $this->flash || auth()->id() !== $this->flash->user_id) {
+            abort(403);
+        }
+
+        // Determine minimum allowed date based on grace period
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay();
+
+        // Check if flash is within editable date range
+        if (! $this->flash->isEditable($minDate, $maxDate)) {
+            abort(403, 'This activity is outside the editable date range.');
+        }
+
+        $this->validate([
+            'date' => [
+                'required',
+                'date',
+                'after_or_equal:'.$minDate->format('Y-m-d'),
+                'before_or_equal:'.$maxDate->format('Y-m-d'),
+            ],
+            'activity_type' => 'required|in:sailing,maintenance,race_committee',
+            'event_type' => [
+                'required_if:activity_type,sailing',
+                'nullable',
+                'in:regatta,club_race,practice,leisure',
+            ],
+            'location' => 'nullable|string|max:255',
+            'sail_number' => 'nullable|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Check for duplicate date (excluding current flash)
+        $exists = auth()->user()->flashes()
+            ->whereDate('date', $this->date)
+            ->where('id', '!=', $this->flash->id)
+            ->exists();
+
+        if ($exists) {
+            $this->addError('date', 'You already have an activity logged for this date. Please choose a different date.');
+
+            return;
+        }
+
+        // Update the flash
+        $this->flash->update([
+            'date' => $this->date,
+            'activity_type' => $this->activity_type,
+            'event_type' => $this->event_type ?: null,
+            'location' => $this->location ?: null,
+            'sail_number' => $this->sail_number ?: null,
+            'notes' => $this->notes ?: null,
+        ]);
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Flash updated successfully!',
+        ]);
+
+        // Emit event to refresh other components
+        $this->dispatch('flash-saved');
+
+        // Close the edit modal
+        $this->dispatch('close-edit-modal');
     }
 
     public function render()

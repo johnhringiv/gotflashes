@@ -87,9 +87,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": [
-                "laravel/pail"
-            ]
+            "dont-discover": []
         }
     },
     "config": {
