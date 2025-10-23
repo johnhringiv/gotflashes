@@ -115,16 +115,18 @@ Users log activities using a simple form for each day:
 - Encourages complete activity tracking while maintaining award integrity
 
 **Edit Restrictions:**
-- Users can edit or delete activities from the current calendar year only
-- Activities from previous years are view-only and cannot be modified
+- Users can edit or delete activities from the current calendar year
+- During January, users can also edit or delete activities from the previous year (grace period)
+- Starting February 1st, previous year activities become read-only and cannot be modified
 - Users cannot create multiple activities for the same date
 - All activities must be logged by January 31st of the following year (grace period for logging previous year's activities)
 
 **Grace Period Implementation:**
 - During January, the calendar date picker shows both current year and previous year dates
-- This allows users to select and log activities from the previous year during the grace period
+- This allows users to select, log, edit, and delete activities from the previous year during the grace period
 - Starting February 1st, only current year dates are shown in the date picker
-- This enforces the January 31st deadline for logging previous year activities
+- This enforces the January 31st deadline for logging and editing previous year activities
+- Edit/delete buttons are hidden for activities outside the editable date range
 
 **Date Entry Restrictions:**
 - Users cannot log activities with future dates
@@ -152,7 +154,8 @@ Boat Work and Race Committee days count toward awards with these limitations:
 - Activities displayed in reverse chronological order (most recent first)
 - All logged activities count toward awards (since ineligible ones cannot be logged)
 - Current year activities can be edited or deleted
-- Previous years' activities are read-only (view only)
+- Previous year activities can be edited or deleted during January grace period
+- Previous years' activities become read-only starting February 1st (view only)
 - Activity history shows:
     - Date
     - Activity type (sailing, maintenance, or race committee)
@@ -264,9 +267,11 @@ Display key metrics for current calendar year:
     - Notes (free-form text area)
 
 **Historical View:**
-- Access to view previous years' data in read-only format
+- Access to view previous years' data
+- During January grace period, previous year activities can be edited or deleted
+- After January 31st, previous years' data becomes read-only (cannot be edited or deleted)
 - Annual summary for each past year (total days, awards earned)
-- Complete activity log from prior years (cannot be edited or deleted)
+- Complete activity log from prior years
 
 ### 4.2 Leaderboards
 Public leaderboards to encourage friendly competition and community engagement:

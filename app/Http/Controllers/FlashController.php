@@ -60,8 +60,8 @@ class FlashController extends Controller
             'earnedAwards' => $earnedAwards,
             'currentYear' => $currentYear,
             'existingDates' => $existingDates,
-            'minDate' => $minDate->format('Y-m-d'),
-            'maxDate' => $maxDate->format('Y-m-d'),
+            'minDate' => $minDate,
+            'maxDate' => $maxDate,
         ]);
 
     }
@@ -177,6 +177,15 @@ class FlashController extends Controller
     {
         $this->authorize('update', $flash);
 
+        // Check if flash is within editable date range
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay();
+
+        if (! $flash->isEditable($minDate, $maxDate)) {
+            abort(403, 'This activity is outside the editable date range.');
+        }
+
         return view('flashes.edit', compact('flash'));
     }
 
@@ -187,11 +196,21 @@ class FlashController extends Controller
     {
         $this->authorize('update', $flash);
 
+        // Check if flash is within editable date range
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay();
+
+        if (! $flash->isEditable($minDate, $maxDate)) {
+            abort(403, 'This activity is outside the editable date range.');
+        }
+
         $request->validate([
             'date' => [
                 'required',
                 'date',
-                'before_or_equal:'.now()->addDay()->format('Y-m-d'),
+                'after_or_equal:'.$minDate->format('Y-m-d'),
+                'before_or_equal:'.$maxDate->format('Y-m-d'),
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
@@ -242,6 +261,15 @@ class FlashController extends Controller
     public function destroy(Flash $flash)
     {
         $this->authorize('delete', $flash);
+
+        // Check if flash is within editable date range
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay();
+
+        if (! $flash->isEditable($minDate, $maxDate)) {
+            abort(403, 'This activity is outside the editable date range.');
+        }
 
         $flash->delete();
 

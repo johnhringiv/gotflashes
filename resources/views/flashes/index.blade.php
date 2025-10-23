@@ -130,7 +130,7 @@
 
         <div class="space-y-4">
             @forelse($flashes as $flash)
-                <x-flash-card :flash="$flash" />
+                <x-flash-card :flash="$flash" :min-date="$minDate" :max-date="$maxDate" />
             @empty
                 <div class="hero py-12">
                     <div class="hero-content text-center">

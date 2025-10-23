@@ -346,7 +346,10 @@ class FlashCrudTest extends TestCase
     public function test_users_can_delete_their_own_flash(): void
     {
         $user = User::factory()->create();
-        $flash = Flash::factory()->forUser($user)->create();
+        // Create flash with today's date to ensure it's within editable range
+        $flash = Flash::factory()->forUser($user)->create([
+            'date' => now()->format('Y-m-d'),
+        ]);
 
         $response = $this->actingAs($user)->delete(route('flashes.destroy', $flash));
 

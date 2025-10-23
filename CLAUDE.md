@@ -62,6 +62,7 @@ php artisan tinker
 - Fields: user_id, date, activity_type, event_type, location, sail_number, notes
 - Relationship: `belongsTo(User::class)`
 - Key constraint: One flash per user per date (enforced by unique index)
+- Method: `isEditable($minDate, $maxDate)` - Determines if flash can be edited/deleted based on grace period logic
 
 ### Business Rules
 
@@ -83,6 +84,8 @@ php artisan tinker
 - Cannot duplicate dates (one activity per date per user)
 - Current year activities: editable/deletable
 - Previous years' activities: read-only after January 31st grace period
+- Edit/delete buttons only appear for activities within the editable date range (`Flash::isEditable()`)
+- Backend authorization checks (`edit()`, `update()`, `destroy()`) enforce editable date range with 403 responses
 
 **Award Tiers:**
 - 10 days = First tier

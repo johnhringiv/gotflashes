@@ -30,7 +30,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Year selector dropdown (shows only allowed years based on grace period)
   - All-or-nothing validation (if any date has an error, no entries are created)
   - Calendar styled with Lightning Class brand colors
-- **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
+- **Activity Management**: Edit and delete your own activity entries (current year + grace period for previous year in January)
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration

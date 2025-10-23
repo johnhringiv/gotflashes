@@ -19,8 +19,8 @@
                 {{-- Multi-date picker for create mode --}}
                 <input type="text" id="date-picker"
                        data-existing-dates="{{ json_encode($existingDates) }}"
-                       data-min-date="{{ $minDate }}"
-                       data-max-date="{{ $maxDate }}"
+                       data-min-date="{{ $minDate->format('Y-m-d') }}"
+                       data-max-date="{{ $maxDate->format('Y-m-d') }}"
                        placeholder="Select date(s)"
                        class="input input-bordered w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
                 <label>Date(s)</label>
