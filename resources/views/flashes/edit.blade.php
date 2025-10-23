@@ -13,6 +13,9 @@
                     :action="route('flashes.update', $flash)"
                     method="PUT"
                     submit-text="Update Activity"
+                    :min-date="$minDate"
+                    :max-date="$maxDate"
+                    :existing-dates="$existingDates"
                 >
                     <div class="card-actions justify-between">
                         <a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">

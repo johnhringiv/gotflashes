@@ -1,8 +1,21 @@
 import flatpickr from 'flatpickr';
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize multi-date picker (create mode)
     const datePickerElement = document.getElementById('date-picker');
-    const formElement = datePickerElement?.closest('form');
+    if (datePickerElement) {
+        initializeDatePicker(datePickerElement, 'multiple');
+    }
+
+    // Initialize single-date picker (edit mode)
+    const datePickerSingleElement = document.getElementById('date-picker-single');
+    if (datePickerSingleElement) {
+        initializeDatePicker(datePickerSingleElement, 'single');
+    }
+});
+
+function initializeDatePicker(datePickerElement, mode) {
+    const formElement = datePickerElement.closest('form');
 
     if (datePickerElement && formElement) {
         // Get min/max dates from data attributes (passed from controller)
@@ -96,18 +109,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
 
-        flatpickr(datePickerElement, {
-            mode: 'multiple',
+        // Get default date for single mode
+        const defaultDate = datePickerElement.getAttribute('data-default-date');
+
+        // Build flatpickr config based on mode
+        const config = {
+            mode: mode,
             dateFormat: 'Y-m-d',
             minDate: minDateStr,
             maxDate: maxDateStr,
-            conjunction: ', ',
             allowInput: false,
             clickOpens: true,
             showMonths: 1,
             static: false,
             disableMobile: false,
-            disable: existingDates, // Disable dates that already have entries
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 // Add custom class to existing dates to style them differently
                 const dateStr = fp.formatDate(dayElem.dateObj, 'Y-m-d');
@@ -121,7 +136,13 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             onMonthChange: hideExtraWeeks,
             onYearChange: hideExtraWeeks,
-            onChange: function(selectedDates, dateStr, instance) {
+        };
+
+        // Add mode-specific configuration
+        if (mode === 'multiple') {
+            config.conjunction = ', ';
+            config.disable = existingDates; // Disable dates that already have entries
+            config.onChange = function(selectedDates, dateStr, instance) {
                 // Remove any existing date[] hidden inputs
                 formElement.querySelectorAll('input[name="dates[]"]').forEach(input => input.remove());
 
@@ -136,7 +157,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Update display value
                 datePickerElement.value = dateStr;
+            };
+        } else if (mode === 'single') {
+            // For single mode, disable all existing dates except the current one being edited
+            const currentDate = defaultDate;
+            config.disable = existingDates.filter(date => date !== currentDate);
+
+            // Set default date for edit mode
+            if (defaultDate) {
+                config.defaultDate = defaultDate;
             }
-        });
+
+            config.onChange = function(selectedDates, dateStr) {
+                // For single mode, just update the input value
+                datePickerElement.value = dateStr;
+            };
+        }
+
+        flatpickr(datePickerElement, config);
     }
-});
+}

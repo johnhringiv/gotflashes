@@ -186,7 +186,16 @@ class FlashController extends Controller
             abort(403, 'This activity is outside the editable date range.');
         }
 
-        return view('flashes.edit', compact('flash'));
+        // Get existing dates for date picker (to disable duplicates)
+        $user = auth()->user();
+        $existingDates = $user->flashes()
+            ->where('date', '>=', $minDate)
+            ->where('date', '<=', $maxDate)
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
+        return view('flashes.edit', compact('flash', 'minDate', 'maxDate', 'existingDates'));
     }
 
     /**

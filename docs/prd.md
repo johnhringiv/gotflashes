@@ -79,9 +79,11 @@ The following activities may count toward your annual total:
 Users log activities using a simple form for each day:
 - **Date of activity** (cannot duplicate an existing entry date)
     - **Multi-date selection**: Users can select multiple dates at once using an interactive calendar picker
+    - **Edit mode**: Same calendar picker in single-date mode (prevents duplicates, respects grace period)
     - All selected dates will use the same activity details (type, location, notes, etc.)
     - Dates with existing entries are visually marked with a lightning logo and cannot be selected
     - Future dates are grayed out and disabled
+    - Year selector dropdown shows only allowed years based on grace period
     - Calendar styled with brand colors for consistent user experience
     - All-or-nothing validation: if any selected date has an error (e.g., duplicate), no entries are created
 - Activity type (always available options):

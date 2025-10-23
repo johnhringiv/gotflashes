@@ -1,4 +1,4 @@
-@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity', 'existingDates' => [], 'minDate' => null, 'maxDate' => null])
+@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity', 'existingDates' => [], 'minDate', 'maxDate'])
 
 <form action="{{ $action }}" method="POST">
     @csrf
@@ -10,14 +10,22 @@
         <!-- Date(s) - order-1 on mobile, col 1 on desktop -->
         <div class="mb-6 floating-label-visible order-1">
             @if($flash)
-                {{-- Single date for edit mode --}}
-                <input type="date" name="date" value="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
-                       max="{{ now()->addDay()->format('Y-m-d') }}"
-                       class="input input-bordered w-full @error('date') input-error @enderror" required>
+                {{-- Single date picker for edit mode --}}
+                <input type="text" id="date-picker-single"
+                       name="date"
+                       data-mode="single"
+                       data-default-date="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
+                       data-min-date="{{ $minDate->format('Y-m-d') }}"
+                       data-max-date="{{ $maxDate->format('Y-m-d') }}"
+                       data-existing-dates="{{ json_encode($existingDates) }}"
+                       value="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
+                       placeholder="Select date"
+                       class="input input-bordered w-full @error('date') input-error @enderror" required readonly>
                 <label>Date</label>
             @else
                 {{-- Multi-date picker for create mode --}}
                 <input type="text" id="date-picker"
+                       data-mode="multiple"
                        data-existing-dates="{{ json_encode($existingDates) }}"
                        data-min-date="{{ $minDate->format('Y-m-d') }}"
                        data-max-date="{{ $maxDate->format('Y-m-d') }}"
