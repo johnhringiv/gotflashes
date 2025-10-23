@@ -214,7 +214,7 @@ span.flatpickr-weekday {
 /* Dates with entries - show lightning logo */
 .flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry,
 .flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry:hover {
-    background-image: url('../../../public/images/lightning_logo.png') !important;
+    background-image: url('../../public/images/lightning_logo.png') !important;
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -229,7 +229,7 @@ span.flatpickr-weekday {
 .flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today,
 .flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:hover,
 .flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:focus {
-    background-image: url('../../../public/images/lightning_logo.png') !important;
+    background-image: url('../../public/images/lightning_logo.png') !important;
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;

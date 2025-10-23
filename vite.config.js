@@ -13,7 +13,7 @@ export default defineConfig(({ command, mode }) => ({
             tailwindcss(),
         ] : []),
     ],
-    base: '/',
+    base: command === 'build' ? '/build/' : '/',
     test: {
         globals: true,
         environment: 'happy-dom',
