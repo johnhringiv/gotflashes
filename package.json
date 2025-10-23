@@ -19,7 +19,6 @@
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/user-event": "^14.6.1",
-    "axios": "^1.11.0",
     "blade-formatter": "^1.44.2",
     "concurrently": "^9.0.1",
     "daisyui": "^5.3.7",
@@ -38,6 +37,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "flatpickr": "^4.6.13",
     "tom-select": "^2.4.3"
   }
 }

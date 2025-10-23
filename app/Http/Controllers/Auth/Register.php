@@ -80,6 +80,6 @@ class Register extends Controller
         Auth::login($user);
 
         // Redirect to flashes index with success message
-        return redirect()->route('flashes.index')->with('success', 'Welcome to GOT-FLASHES! Your account has been created.');
+        return redirect()->route('flashes.index')->with('success', 'Welcome to G.O.T. Flashes! Your account has been created.');
     }
 }

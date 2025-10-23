@@ -221,8 +221,7 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('flashes.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('bi-trophy-fill'); // Trophy icon
-        $response->assertSee('#CD7F32'); // Bronze color
+        $response->assertSee('got-10-badge.png'); // 10 Day badge image
         $response->assertSee('10 Day Award');
     }
 
@@ -242,8 +241,8 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('flashes.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('#CD7F32'); // Bronze color (still earned)
-        $response->assertSee('#C0C0C0'); // Silver color
+        $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
+        $response->assertSee('got-25-badge.png'); // 25 Day badge image
         $response->assertSee('25 Day Award');
     }
 
@@ -270,9 +269,63 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('flashes.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('#CD7F32'); // Bronze color (still earned)
-        $response->assertSee('#C0C0C0'); // Silver color (still earned)
-        $response->assertSee('#FFD700'); // Gold color
+        $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
+        $response->assertSee('got-25-badge.png'); // 25 Day badge image (still earned)
+        $response->assertSee('got-50-badge.png'); // 50 Day badge image
         $response->assertSee('50 Day Award (Burgee)');
+    }
+
+    public function test_burgee_image_shown_when_all_tiers_completed(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 50+ sailing days
+        for ($i = 1; $i <= 28; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+        for ($i = 1; $i <= 22; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addMonth()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('flashes.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('burgee-50.jpg'); // Burgee image in "Next Award" stat
+        $response->assertSee('All tiers completed!'); // Stat description
+    }
+
+    public function test_burgee_image_not_shown_below_50_days(): void
+    {
+        $user = User::factory()->create();
+
+        // Create 49 sailing days (just below the threshold)
+        for ($i = 1; $i <= 28; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+        for ($i = 1; $i <= 21; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addMonth()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('flashes.index'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('burgee-50.jpg'); // No burgee yet
+        $response->assertSee('1 days to go'); // Should show "1 days to go" for next milestone
     }
 }

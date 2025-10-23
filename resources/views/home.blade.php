@@ -3,17 +3,24 @@
         Home
     </x-slot:title>
     <x-slot:description>
-        GOT-FLASHES Challenge - Track your Lightning Class sailing days and earn awards at 10, 25, and 50+ days. Join sailors worldwide in getting on the water more often.
+        G.O.T. Flashes Challenge - Track your Lightning Class sailing days and earn awards at 10, 25, and 50+ days. Join sailors worldwide in getting on the water more often.
     </x-slot:description>
 
     <div class="max-w-4xl mx-auto">
         <!-- Hero Section -->
         <div class="card bg-base-100 shadow-xl">
-            <div class="card-body text-center">
-                <h1 class="text-4xl font-bold mb-4">Welcome to the GOT-FLASHES Challenge!</h1>
-                <p class="text-lg text-base-content/80">
-                    Track your Lightning sailing days, earn awards, and join sailors across the class in getting on the water more often.
-                </p>
+            <div class="card-body">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="flex-shrink-0">
+                        <img src="/images/lightning_logo.png" alt="Lightning Class" class="h-32 w-auto">
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <h1 class="text-4xl font-bold mb-4">Welcome to the G.O.T. Flashes Challenge!</h1>
+                        <p class="text-lg text-base-content/80">
+                            Track your Lightning sailing days, earn awards, and join sailors across the class in getting on the water more often.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -52,7 +59,6 @@
                         <ul class="list-disc list-inside space-y-1 text-base-content/80">
                             <li>Any time sailing on ANY Lightning</li>
                             <li>Skipper or crew - both count!</li>
-                            <li>Even one hour counts as a full day</li>
                             <li>Goal: Get the boat off the dock!</li>
                         </ul>
                     </div>
@@ -77,7 +83,7 @@
                 </p>
                 <div class="alert alert-info mt-4">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>All activities must be logged by December 31st to count for the current year.</span>
+                    <span>Previous year activities must be logged by January 31st. After this date, previous years become read-only.</span>
                 </div>
             </div>
         </div>

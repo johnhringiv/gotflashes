@@ -1,14 +1,14 @@
-# GOT-FLASHES Challenge Tracker
+# G.O.T. Flashes Challenge Tracker
 
-A web application for tracking Lightning Class sailing activity and managing the GOT-FLASHES Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
+A web application for tracking Lightning Class sailing activity and managing the G.O.T. Flashes Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
-**GOT-FLASHES** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
+**G.O.T. Flashes** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
 
 **🌐 Live Application**: [https://gotflashes.com](https://gotflashes.com)
 
-## About the GOT-FLASHES Challenge
+## About the G.O.T. Flashes Challenge
 
-The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
+The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the water more frequently by recognizing their annual sailing activity. Participants earn awards at 10, 25, and 50+ days, with the simple goal: **Get the boat off the dock!**
 
 ### What Counts
 - **Sailing Days**: Any time spent sailing on a Lightning (as skipper or crew) - unlimited
@@ -23,9 +23,15 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 
 ### Current Implementation
 - **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
+- **Multi-Date Selection**: Interactive calendar picker allows logging multiple dates at once
+  - Select multiple dates with the same activity details
+  - Existing entries marked with lightning logo (cannot be re-selected)
+  - Future dates grayed out and disabled
+  - All-or-nothing validation (if any date has an error, no entries are created)
+  - Calendar styled with Lightning Class brand colors
 - **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
-- **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward
+- **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
 - **Three Leaderboards**:
   - **Sailor**: Individual rankings by total flashes with year-specific memberships
@@ -39,7 +45,7 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **User Highlighting**: Your position highlighted on leaderboards
 - **Leaderboard Tie-Breaking**: Advanced ranking logic (total flashes → sailing days → first entry → alphabetical)
 - **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
-- **Self-Hosted**: SQLite database with no external dependencies
+- **Self-Hosted**: All assets and dependencies bundled locally (no CDNs)
 - **Production Ready**: Docker containerization with optimized builds and caching
 
 ### Technical Highlights
@@ -52,13 +58,19 @@ The GOT-FLASHES Challenge encourages Lightning Class sailors to get on the water
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
-- **Comprehensive Testing**: 168 tests with 500+ assertions including JavaScript unit tests
+- **Comprehensive Testing**: 182 tests with 560+ assertions including JavaScript unit tests
 
 ## Technology Stack
 
 - **Backend**: Laravel 12 (PHP 8.2+)
 - **Database**: SQLite with WAL mode
-- **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
+- **Frontend**:
+  - Tailwind CSS v4 (self-hosted, no CDN)
+  - DaisyUI (component library)
+  - Blade templates
+  - Vanilla JavaScript with native `fetch()` API
+  - Flatpickr (multi-date calendar picker)
+  - Tom-Select (searchable dropdowns)
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
 - **Deployment**: Docker (Alpine Linux + PHP-FPM + Nginx + Supervisor)
@@ -192,10 +204,11 @@ composer test
 ```
 
 **Test Coverage:**
-- 168 tests with 500+ assertions (PHP + JavaScript)
-- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking, navigation, registration with memberships
+- 182 tests with 560+ assertions (PHP + JavaScript)
+- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
 - JavaScript tests: Registration form validation and dynamic fleet selection
+- Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution
 
 **Test Organization:**
@@ -225,7 +238,7 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
-- **PHPUnit** - PHP test suite (168 tests)
+- **PHPUnit** - PHP test suite (175 tests)
 - **Vitest** - JavaScript test suite (via npm test)
 
 **`composer fix`** runs:
@@ -309,6 +322,7 @@ gotflashes/
 ## Documentation
 
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
+- **[Membership Year-End Logic](docs/membership-year-end-logic.md)**: Year-specific membership system documentation
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
 ## Production Deployment Details
@@ -340,7 +354,7 @@ See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for t
 
 ## Support & Contributing
 
-This project is developed for the International Lightning Class Association. For questions about the GOT-FLASHES Challenge program, contact the ILCA office.
+This project is developed for the International Lightning Class Association. For questions about the G.O.T. Flashes Challenge program, contact the ILCA office.
 
 Developers interested in contributing should read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on code style, testing, and pull request process.
 
@@ -350,4 +364,4 @@ Built with Laravel, Tailwind CSS, and the Lightning Class sailing community in m
 
 ---
 
-**GOT-FLASHES**: Get Out There - Let's keep Lightning sailing active and fun!
+**G.O.T. Flashes**: Get Out There - Let's keep Lightning sailing active and fun!

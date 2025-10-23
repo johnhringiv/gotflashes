@@ -9,12 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only run if elements exist on the page
     if (activityType && sailingType) {
         function updateSailingTypeState() {
+            const placeholderOption = sailingType.querySelector('option[value=""][disabled]');
+
             if (activityType.value === 'sailing') {
                 sailingType.disabled = false;
                 sailingType.required = true;
                 sailingType.classList.remove('select-disabled');
                 if (sailingTypeRequired) sailingTypeRequired.style.display = 'inline';
                 if (sailingTypeHelp) sailingTypeHelp.textContent = 'All sailing types count equally toward awards.';
+                if (placeholderOption) placeholderOption.textContent = 'Select sailing type - All count equally';
             } else {
                 sailingType.disabled = true;
                 sailingType.required = false;
@@ -22,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sailingType.classList.add('select-disabled');
                 if (sailingTypeRequired) sailingTypeRequired.style.display = 'none';
                 if (sailingTypeHelp) sailingTypeHelp.textContent = 'Only applicable for sailing activities.';
+                if (placeholderOption) placeholderOption.textContent = 'Not applicable';
             }
         }
 

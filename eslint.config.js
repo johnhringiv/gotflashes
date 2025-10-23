@@ -10,7 +10,6 @@ export default [
             globals: {
                 ...globals.browser,
                 ...globals.node,
-                axios: 'readonly',
             },
         },
         rules: {

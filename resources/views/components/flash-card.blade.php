@@ -12,7 +12,14 @@
                     <span class="text-sm text-base-content/60">(edited {{ $flash->updated_at->diffForHumans() }})</span>
                 @endif
                 @if($flash->activity_type === 'sailing' && $flash->event_type)
-                    <span class="badge badge-primary badge-sm">Sailing - {{ ucfirst(str_replace('_', ' ', $flash->event_type)) }}</span>
+                    @php
+                        $eventTypeLabel = match($flash->event_type) {
+                            'leisure' => 'Day Sailing',
+                            'club_race' => 'Club Race',
+                            default => ucfirst(str_replace('_', ' ', $flash->event_type))
+                        };
+                    @endphp
+                    <span class="badge badge-primary badge-sm">Sailing - {{ $eventTypeLabel }}</span>
                 @else
                     <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $flash->activity_type)) }}</span>
                 @endif

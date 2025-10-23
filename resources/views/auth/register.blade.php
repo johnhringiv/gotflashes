@@ -276,7 +276,7 @@
                         </div>
 
                         <div class="divider my-6">Lightning Class Info</div>
-                        <p class="text-sm text-base-content/70 mb-4">Choose your district and fleet to compete on the leaderboard—let's see who can log the most days on the water!</p>
+                        <p class="text-sm text-base-content/70 mb-4">Choose your fleet and district—let's see who gets out there!</p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                             <!-- District -->

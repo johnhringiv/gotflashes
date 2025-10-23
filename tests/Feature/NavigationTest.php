@@ -185,7 +185,7 @@ class NavigationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('/images/got_flashes.png', false);
-        $response->assertSee('GOT-FLASHES Challenge Tracker');
+        $response->assertSee('G.O.T. Flashes Challenge Tracker');
         $response->assertSee('href="/"', false);
     }
 
