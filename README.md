@@ -23,6 +23,12 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 
 ### Current Implementation
 - **Activity Logging**: Log sailing days with details (location, sail number, event type, notes)
+- **Multi-Date Selection**: Interactive calendar picker allows logging multiple dates at once
+  - Select multiple dates with the same activity details
+  - Existing entries marked with lightning logo (cannot be re-selected)
+  - Future dates grayed out and disabled
+  - All-or-nothing validation (if any date has an error, no entries are created)
+  - Calendar styled with Lightning Class brand colors
 - **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
@@ -39,7 +45,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **User Highlighting**: Your position highlighted on leaderboards
 - **Leaderboard Tie-Breaking**: Advanced ranking logic (total flashes → sailing days → first entry → alphabetical)
 - **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
-- **Self-Hosted**: SQLite database with no external dependencies
+- **Self-Hosted**: All assets and dependencies bundled locally (no CDNs)
 - **Production Ready**: Docker containerization with optimized builds and caching
 
 ### Technical Highlights
@@ -52,13 +58,19 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
-- **Comprehensive Testing**: 175 tests with 520+ assertions including JavaScript unit tests
+- **Comprehensive Testing**: 182 tests with 560+ assertions including JavaScript unit tests
 
 ## Technology Stack
 
 - **Backend**: Laravel 12 (PHP 8.2+)
 - **Database**: SQLite with WAL mode
-- **Frontend**: Tailwind CSS v4, Blade templates, Vanilla JavaScript
+- **Frontend**:
+  - Tailwind CSS v4 (self-hosted, no CDN)
+  - DaisyUI (component library)
+  - Blade templates
+  - Vanilla JavaScript with native `fetch()` API
+  - Flatpickr (multi-date calendar picker)
+  - Tom-Select (searchable dropdowns)
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
 - **Deployment**: Docker (Alpine Linux + PHP-FPM + Nginx + Supervisor)
@@ -192,10 +204,11 @@ composer test
 ```
 
 **Test Coverage:**
-- 175 tests with 520+ assertions (PHP + JavaScript)
-- Feature tests: Authentication, CRUD operations, authorization, validation, leaderboards, progress tracking, navigation, registration with memberships
+- 182 tests with 560+ assertions (PHP + JavaScript)
+- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
 - JavaScript tests: Registration form validation and dynamic fleet selection
+- Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution
 
 **Test Organization:**

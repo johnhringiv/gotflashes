@@ -19,7 +19,7 @@ class FlashValidationTest extends TestCase
             'event_type' => 'practice',
         ]);
 
-        $response->assertSessionHasErrors('date');
+        $response->assertSessionHasErrors('dates');
     }
 
     public function test_activity_type_is_required(): void
@@ -27,7 +27,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
         ]);
 
         $response->assertSessionHasErrors('activity_type');
@@ -38,7 +38,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'invalid_type',
         ]);
 
@@ -50,7 +50,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
         ]);
 
@@ -62,7 +62,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'invalid_event',
         ]);
@@ -75,7 +75,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'maintenance',
             'event_type' => 'regatta',
         ]);
@@ -90,12 +90,12 @@ class FlashValidationTest extends TestCase
         $futureDate = now()->addDays(2)->format('Y-m-d');
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => $futureDate,
+            'dates' => [$futureDate],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
 
-        $response->assertSessionHasErrors('date');
+        $response->assertSessionHasErrors('dates.0');
     }
 
     public function test_date_can_be_today(): void
@@ -103,7 +103,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->format('Y-m-d'),
+            'dates' => [now()->format('Y-m-d')],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -117,7 +117,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->addDay()->format('Y-m-d'),
+            'dates' => [now()->addDay()->format('Y-m-d')],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -131,7 +131,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -145,7 +145,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
             'location' => 'Lake Example',
@@ -162,7 +162,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -176,7 +176,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
             'sail_number' => 'not-a-number',
@@ -190,7 +190,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -204,7 +204,7 @@ class FlashValidationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
             'notes' => 'Great day on the water!',
@@ -224,7 +224,7 @@ class FlashValidationTest extends TestCase
 
         foreach ($validTypes as $index => $type) {
             $response = $this->actingAs($user)->post(route('flashes.store'), [
-                'date' => now()->subDays($index)->format('Y-m-d'),
+                'dates' => [now()->subDays($index)->format('Y-m-d')],
                 'activity_type' => 'sailing',
                 'event_type' => $type,
             ]);
@@ -240,7 +240,7 @@ class FlashValidationTest extends TestCase
 
         // Sailing
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -248,14 +248,14 @@ class FlashValidationTest extends TestCase
 
         // Maintenance
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-02',
+            'dates' => ['2025-01-02'],
             'activity_type' => 'maintenance',
         ]);
         $response->assertSessionHasNoErrors();
 
         // Race Committee
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-03',
+            'dates' => ['2025-01-03'],
             'activity_type' => 'race_committee',
         ]);
         $response->assertSessionHasNoErrors();

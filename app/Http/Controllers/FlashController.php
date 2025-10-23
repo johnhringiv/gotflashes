@@ -38,6 +38,21 @@ class FlashController extends Controller
             }
         }
 
+        // Get existing dates for the user within selectable range (for disabling in date picker)
+        // Current year + previous year (if before Feb 1st grace period)
+        $minDate = now()->startOfYear();
+        if (now()->month === 1) {
+            // January: allow previous year entries
+            $minDate = now()->subYear()->startOfYear();
+        }
+
+        $existingDates = $user->flashes()
+            ->where('date', '>=', $minDate)
+            ->where('date', '<=', now()->addDay())
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
         return view('flashes.index', [
             'flashes' => $flashes,
             'totalFlashes' => $stats->total,
@@ -46,6 +61,7 @@ class FlashController extends Controller
             'nextMilestone' => $nextMilestone,
             'earnedAwards' => $earnedAwards,
             'currentYear' => $currentYear,
+            'existingDates' => $existingDates,
         ]);
 
     }
@@ -63,8 +79,10 @@ class FlashController extends Controller
      */
     public function store(Request $request)
     {
+        // Handle both single date (edit) and multiple dates (create)
         $request->validate([
-            'date' => [
+            'dates' => 'required|array|min:1',
+            'dates.*' => [
                 'required',
                 'date',
                 'before_or_equal:'.now()->addDay()->format('Y-m-d'),
@@ -86,19 +104,26 @@ class FlashController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Check for duplicate date
-        $exists = auth()->user()->flashes()
-            ->whereDate('date', $request->date)
-            ->exists();
+        $dates = $request->dates;
 
-        if ($exists) {
+        // Check for duplicate dates before creating any
+        $existingDates = auth()->user()->flashes()
+            ->get()
+            ->filter(function ($flash) use ($dates) {
+                return in_array($flash->date->format('Y-m-d'), $dates); // @phpstan-ignore-line
+            })
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
+        if (! empty($existingDates)) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['date' => 'You already have an activity logged for this date. Please edit the existing entry or choose a different date.']);
+                ->withErrors(['dates' => 'You already have activities logged for: '.implode(', ', $existingDates).'. Please remove these dates or edit existing entries.']);
         }
 
-        $validated = $request->only([
-            'date',
+        // Prepare common data for all flashes
+        $commonData = $request->only([
             'activity_type',
             'event_type',
             'location',
@@ -106,20 +131,32 @@ class FlashController extends Controller
             'notes',
         ]);
 
-        // Use the authenticated user
-        auth()->user()->flashes()->create($validated);
+        // Use transaction to ensure all-or-nothing
+        \DB::transaction(function () use ($dates, $commonData) {
+            foreach ($dates as $date) {
+                auth()->user()->flashes()->create(array_merge($commonData, ['date' => $date]));
+            }
+        });
 
         // Check if this is a non-sailing activity and if they've reached the limit
+        $hasWarning = false;
         if (in_array($request->activity_type, ['maintenance', 'race_committee'])) {
             $currentYear = now()->year;
             $stats = auth()->user()->flashStatsForYear($currentYear);
 
             if ($stats->nonSailing > 5) {
-                return redirect()->route('flashes.index')->with('warning', "Non-sailing day logged! Heads up: You've already got 5 non-sailing days counting toward awards. Keep logging though—we want to see all your Lightning time!");
+                $hasWarning = true;
             }
         }
 
-        return redirect()->route('flashes.index')->with('success', 'Flash logged successfully!');
+        $count = count($dates);
+        $message = $count === 1 ? 'Flash logged successfully!' : "{$count} flashes logged successfully!";
+
+        if ($hasWarning) {
+            return redirect()->route('flashes.index')->with('warning', "Non-sailing days logged! Heads up: You've already got 5 non-sailing days counting toward awards. Keep logging though—we want to see all your Lightning time!");
+        }
+
+        return redirect()->route('flashes.index')->with('success', $message);
     }
 
     /**

@@ -121,6 +121,7 @@
                 <x-flash-form
                     :action="route('flashes.store')"
                     submit-text="Log Activity"
+                    :existing-dates="$existingDates"
                 />
             </div>
         </div>

@@ -1,4 +1,4 @@
-@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity'])
+@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity', 'existingDates' => []])
 
 <form action="{{ $action }}" method="POST">
     @csrf
@@ -7,13 +7,33 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <!-- Date -->
+        <!-- Date(s) -->
         <div class="mb-6 floating-label-visible">
-            <input type="date" name="date" value="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
-                   max="{{ now()->addDay()->format('Y-m-d') }}"
-                   class="input input-bordered w-full @error('date') input-error @enderror" required>
-            <label>Date</label>
+            @if($flash)
+                {{-- Single date for edit mode --}}
+                <input type="date" name="date" value="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
+                       max="{{ now()->addDay()->format('Y-m-d') }}"
+                       class="input input-bordered w-full @error('date') input-error @enderror" required>
+                <label>Date</label>
+            @else
+                {{-- Multi-date picker for create mode --}}
+                <input type="text" id="date-picker"
+                       data-existing-dates="{{ json_encode($existingDates) }}"
+                       placeholder="Select date(s)"
+                       class="input input-bordered w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
+                <label>Date(s)</label>
+            @endif
             @error('date')
+                <div class="label">
+                    <span class="label-text-alt text-error">{{ $message }}</span>
+                </div>
+            @enderror
+            @error('dates')
+                <div class="label">
+                    <span class="label-text-alt text-error">{{ $message }}</span>
+                </div>
+            @enderror
+            @error('dates.*')
                 <div class="label">
                     <span class="label-text-alt text-error">{{ $message }}</span>
                 </div>

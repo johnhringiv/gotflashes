@@ -30,6 +30,14 @@ District and fleet affiliations are tracked per calendar year rather than as a s
 
 For detailed information on membership logic and year-end processing, see [membership-year-end-logic.md](membership-year-end-logic.md).
 
+**Unaffiliated User Handling:**
+- Users can register without selecting a district or fleet (unaffiliated sailors)
+- System accepts either "none" string or null value for district_id/fleet_id to indicate no affiliation
+- Users can register with only a district (no fleet) or only a fleet (no district)
+- All users receive a membership record, even unaffiliated users (with null district_id and fleet_id)
+- District and fleet data is stored in a separate `members` table, not on the `users` table
+- This architecture maintains clean separation between user identity and organizational affiliation
+
 **Note**: Users do not need to be Lightning owners - crews and anyone who sails on Lightnings can participate.
 
 ### 1.2 User Authentication
@@ -69,7 +77,13 @@ The following activities may count toward your annual total:
 
 ### 2.2 Activity Entry
 Users log activities using a simple form for each day:
-- Date of activity (cannot duplicate an existing entry date)
+- **Date of activity** (cannot duplicate an existing entry date)
+    - **Multi-date selection**: Users can select multiple dates at once using an interactive calendar picker
+    - All selected dates will use the same activity details (type, location, notes, etc.)
+    - Dates with existing entries are visually marked with a lightning logo and cannot be selected
+    - Future dates are grayed out and disabled
+    - Calendar styled with brand colors for consistent user experience
+    - All-or-nothing validation: if any selected date has an error (e.g., duplicate), no entries are created
 - Activity type (always available options):
     - **Sailing on a Lightning**
     - **Boat/Trailer Maintenance (non-sailing day)** - Available until 5 non-sailing days used
@@ -80,6 +94,8 @@ Users log activities using a simple form for each day:
     - **Practice** - Practice sailing sessions
     - **Day Sailing** - Recreational sailing
     - **Purpose**: Helps the Lightning Class understand constituent activities and sailing patterns for analytics and planning
+    - **Important**: Sailing type (event_type) is REQUIRED for sailing activities but PROHIBITED for non-sailing activities (maintenance and race committee)
+    - System will reject attempts to set event_type on non-sailing activities
 - **Optional fields** (enhance tracking and create richer records):
     - Location (city, lake, venue)
     - Sail Number (must be numeric)
@@ -103,6 +119,12 @@ Users log activities using a simple form for each day:
 - Activities from previous years are view-only and cannot be modified
 - Users cannot create multiple activities for the same date
 - All activities must be logged by January 31st of the following year (grace period for logging previous year's activities)
+
+**Grace Period Implementation:**
+- During January, the calendar date picker shows both current year and previous year dates
+- This allows users to select and log activities from the previous year during the grace period
+- Starting February 1st, only current year dates are shown in the date picker
+- This enforces the January 31st deadline for logging previous year activities
 
 **Date Entry Restrictions:**
 - Users cannot log activities with future dates
@@ -137,15 +159,34 @@ Boat Work and Race Committee days count toward awards with these limitations:
     - Optional details when provided (location, sail number, notes)
 - Ability to filter or search activities by optional fields (future enhancement)
 
+**Activity Ordering:**
+- Activities are ordered by the activity date (the date the activity occurred), not by when the entry was created
+- Example: If a user logs last week's sailing trip today, it appears in chronological position based on last week's date, not at the top as today's entry
+
+**"Just Logged" Badge:**
+- Recently created entries display a "Just logged" badge for visibility
+- Badge appears when the entry's creation timestamp (created_at) is today
+- Badge is based on when the entry was logged, not when the activity occurred
+- Example: Logging last week's activity today shows "Just logged" badge even though the activity was last week
+- This helps users quickly identify which entries they just added during the current session
+
 ---
 
 ## 3. Awards & Recognition System
 
 ### 3.1 Award Tiers
 Participants earn recognition at the following annual milestones:
-- **10 days**: First tier award
-- **25 days**: Second tier award
-- **50+ days**: Third tier award (including Burgee eligibility)
+- **10 days**: First tier award (badge image: `got-10-badge.png`)
+- **25 days**: Second tier award (badge image: `got-25-badge.png`)
+- **50+ days**: Third tier award (badge image: `got-50-badge.png`, including Burgee eligibility with burgee image: `burgee-50.jpg`)
+
+**Award Badge Display:**
+- Award badges are displayed as images, not text labels
+- Award badges are displayed cumulatively - earning a higher tier shows all lower tier badges
+- Example: A user with 50 days sees all three badge images (10-day, 25-day, and 50-day)
+- Badges only appear once the threshold is met (no empty/placeholder badges shown below thresholds)
+- At exactly 10, 25, or 50 days, the respective badge image appears immediately
+- The 50-day award includes special "(Burgee)" designation in the display text
 
 ### 3.2 Award Counting Rules
 - Qualifying days = Sailing Days + Logged Non-sailing Days
@@ -167,10 +208,22 @@ Users should see their current annual progress:
     - If non-sailing days remaining: "X of 5 non-sailing days remaining"
     - If all 5 used: "All 5 non-sailing days used this year"
 
+**Progress Display Thresholds:**
+- Below 10 days: No award badges shown (not even empty placeholders)
+- At 10 days: Bronze badge (10-day award) appears
+- At 25 days: Bronze and Silver badges appear
+- At 50+ days: All three badges appear (Bronze, Silver, Gold)
+- "Next Award" indicator shows:
+  - Below 10 days: "10 days" with days remaining countdown (e.g., "3 days to go")
+  - At 10-24 days: "25 days" with days remaining countdown
+  - At 25-49 days: "50 days" with days remaining countdown
+  - At 50+ days: "Achievement" with burgee image and "All tiers completed!" message
+
 **Historical View:**
 - Summary of each previous year's achievements
 - Total days and awards earned per year
 - Complete activity logs from prior years (read-only)
+- Only current year activities count toward current year awards
 
 ### 3.4 Award Administrator Notifications
 Award Administrators need to know when users reach award thresholds to send recognition:
@@ -218,40 +271,61 @@ Display key metrics for current calendar year:
 ### 4.2 Leaderboards
 Public leaderboards to encourage friendly competition and community engagement:
 
-**Individual Leaderboard:**
+**Individual Leaderboard (Sailor Tab):**
 - Rank sailors by total qualifying days for the current year
-- Display: Rank, Name (or username), Days Logged, Fleet (optional), District (optional)
+- Display: Rank, Name, Days Logged, Fleet (optional), District (optional), Yacht Club (optional)
 - Filterable by: All participants, specific district, specific fleet
-- Top performers highlighted (e.g., Top 10, Top 25)
+- Only includes users with at least one flash in the current year
+- Users with only previous year flashes are excluded from current year leaderboard
 - **Tie-breaking rules** (in order of precedence):
   1. Total qualifying flashes (primary sort - descending)
   2. Sailing day count (more sailing days wins - descending)
   3. First entry timestamp (earliest entry wins - ascending)
-  4. Alphabetical by first name, then last name
+  4. Alphabetical by first name, then last name (ascending)
 
-**Fleet Leaderboard:**
-- Rank fleets by average days per member or total days logged by fleet
-- Display: Rank, Fleet Number, Yacht Club, Total Days, Average Days/Member, Member Count
+**Fleet Leaderboard (Fleet Tab):**
+- Rank fleets by total days logged by fleet members
+- Display: Rank, Fleet Number, Fleet Name, Total Days, Member Count
 - Shows which fleets are most active
 - Encourages fleet-level friendly competition
+- Only includes fleets with at least one member who has flashes in current year
+- **Member exclusion**: Users without a fleet (null fleet_id) are excluded from this leaderboard
 - **Tie-breaking rules** (in order of precedence):
   1. Total qualifying flashes (aggregated across all members - descending)
   2. Total sailing days (aggregated across all members - descending)
   3. Earliest first entry across all members (ascending)
 
-**District Leaderboard:**
-- Rank districts by average days per member or total days logged by district
-- Display: Rank, District Name, Total Days, Average Days/Member, Member Count
+**District Leaderboard (District Tab):**
+- Rank districts by total days logged by district members
+- Display: Rank, District Name, Total Days, Member Count
 - Shows which geographic regions are most active
 - Encourages district-level participation
+- Only includes districts with at least one member who has flashes in current year
+- **Member exclusion**: Users without a district (null district_id) are excluded from this leaderboard
 - **Tie-breaking rules** (in order of precedence):
   1. Total qualifying flashes (aggregated across all members - descending)
   2. Total sailing days (aggregated across all members - descending)
   3. Earliest first entry across all members (ascending)
+
+**Leaderboard Display Features:**
+- Non-sailing day cap (5 per year) is enforced in all leaderboard calculations
+- Unlimited sailing days are counted without cap
+- Missing optional data (yacht club, district, fleet) displays as "—" (em dash)
+- Authenticated users see their own row highlighted with special background styling (e.g., `current-user-row` CSS class)
+- Guest users (not logged in) see no highlighting
+- Empty state message when no flashes exist: "No flashes logged yet for [current year]"
+
+**Leaderboard Navigation:**
+- Three tabs: Sailor (Individual), Fleet, District
+- Default tab: Sailor (when no tab parameter provided)
+- Invalid tab parameters default to Sailor tab
+- Tab selection preserved during pagination via URL query parameters
+- Example: `/leaderboard?tab=fleet&page=2`
 
 **Leaderboard Updates:**
 - Up-to-date leaderboards calculated on page load (low expected traffic volume)
-- Historical view: See previous years' final standings
+- Pagination: 15 results per page
+- Historical view: See previous years' final standings (future enhancement)
 
 ### 4.3 Award Administrator Dashboard
 The award administrator view is specifically designed for award fulfillment purposes:

@@ -48,7 +48,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -68,7 +68,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'regatta',
             'location' => 'Lake Example',
@@ -89,6 +89,64 @@ class FlashCrudTest extends TestCase
         $this->assertEquals('Great sailing day!', $flash->notes);
     }
 
+    public function test_users_can_create_multiple_flashes_at_once(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => ['2025-01-01', '2025-01-02', '2025-01-03'],
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+            'location' => 'Lake Example',
+            'sail_number' => 12345,
+            'notes' => 'Three day regatta!',
+        ]);
+
+        $response->assertRedirect(route('flashes.index'));
+        $response->assertSessionHas('success', '3 flashes logged successfully!');
+
+        // Verify all three flashes were created
+        $this->assertCount(3, $user->flashes);
+
+        $dates = $user->flashes->pluck('date')->map(fn ($d) => $d->format('Y-m-d'))->sort()->values();
+        $this->assertEquals(['2025-01-01', '2025-01-02', '2025-01-03'], $dates->toArray());
+
+        // Verify all have the same activity data
+        foreach ($user->flashes as $flash) {
+            $this->assertEquals('sailing', $flash->activity_type);
+            $this->assertEquals('regatta', $flash->event_type);
+            $this->assertEquals('Lake Example', $flash->location);
+            $this->assertEquals(12345, $flash->sail_number);
+            $this->assertEquals('Three day regatta!', $flash->notes);
+        }
+    }
+
+    public function test_single_date_success_message(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => ['2025-01-01'],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertSessionHas('success', 'Flash logged successfully!');
+    }
+
+    public function test_multiple_dates_success_message(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => ['2025-01-01', '2025-01-02'],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertSessionHas('success', '2 flashes logged successfully!');
+    }
+
     public function test_users_cannot_create_duplicate_dates(): void
     {
         $user = User::factory()->create();
@@ -96,12 +154,61 @@ class FlashCrudTest extends TestCase
         Flash::factory()->forUser($user)->onDate('2025-01-01')->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
             'event_type' => 'regatta',
         ]);
 
-        $response->assertSessionHasErrors('date');
+        $response->assertSessionHasErrors('dates');
+        $this->assertStringContainsString('2025-01-01', session()->get('errors')->first('dates'));
+    }
+
+    public function test_all_or_nothing_validation_rejects_entire_batch_if_any_date_is_duplicate(): void
+    {
+        $user = User::factory()->create();
+
+        // Create an existing flash for Jan 2nd
+        Flash::factory()->forUser($user)->onDate('2025-01-02')->create();
+
+        // Try to create 3 flashes, where the middle one is a duplicate
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => ['2025-01-01', '2025-01-02', '2025-01-03'],
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        // Should fail with error mentioning the duplicate date
+        $response->assertSessionHasErrors('dates');
+        $this->assertStringContainsString('2025-01-02', session()->get('errors')->first('dates'));
+
+        // Verify NO new flashes were created (all-or-nothing)
+        $this->assertCount(1, $user->flashes);
+        $this->assertEquals('2025-01-02', $user->flashes->first()->date->format('Y-m-d'));
+    }
+
+    public function test_all_or_nothing_validation_with_multiple_duplicates(): void
+    {
+        $user = User::factory()->create();
+
+        // Create two existing flashes
+        Flash::factory()->forUser($user)->onDate('2025-01-01')->create();
+        Flash::factory()->forUser($user)->onDate('2025-01-03')->create();
+
+        // Try to create 3 flashes, where two are duplicates
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => ['2025-01-01', '2025-01-02', '2025-01-03'],
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        // Should fail with error mentioning both duplicate dates
+        $response->assertSessionHasErrors('dates');
+        $error = session()->get('errors')->first('dates');
+        $this->assertStringContainsString('2025-01-01', $error);
+        $this->assertStringContainsString('2025-01-03', $error);
+
+        // Verify NO new flashes were created (still only 2)
+        $this->assertCount(2, $user->flashes);
     }
 
     public function test_users_cannot_create_future_dates(): void
@@ -111,12 +218,12 @@ class FlashCrudTest extends TestCase
         $futureDate = now()->addDays(2)->format('Y-m-d');
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => $futureDate,
+            'dates' => [$futureDate],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
 
-        $response->assertSessionHasErrors('date');
+        $response->assertSessionHasErrors('dates.0');
     }
 
     public function test_users_can_create_todays_date(): void
@@ -124,7 +231,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->format('Y-m-d'),
+            'dates' => [now()->format('Y-m-d')],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
@@ -138,7 +245,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'sailing',
         ]);
 
@@ -150,7 +257,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'maintenance',
         ]);
 
@@ -163,7 +270,7 @@ class FlashCrudTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => '2025-01-01',
+            'dates' => ['2025-01-01'],
             'activity_type' => 'race_committee',
         ]);
 
@@ -300,7 +407,7 @@ class FlashCrudTest extends TestCase
 
         // Log 6th non-sailing day (this one doesn't count toward awards)
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'dates' => [now()->startOfYear()->addDays(6)->format('Y-m-d')],
             'activity_type' => 'maintenance',
         ]);
 
@@ -328,7 +435,7 @@ class FlashCrudTest extends TestCase
 
         // Log 5th non-sailing day (this one still counts toward awards)
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->startOfYear()->addDays(5)->format('Y-m-d'),
+            'dates' => [now()->startOfYear()->addDays(5)->format('Y-m-d')],
             'activity_type' => 'race_committee',
         ]);
 
@@ -352,7 +459,7 @@ class FlashCrudTest extends TestCase
 
         // Log 6th maintenance day
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'dates' => [now()->startOfYear()->addDays(6)->format('Y-m-d')],
             'activity_type' => 'maintenance',
         ]);
 
@@ -374,7 +481,7 @@ class FlashCrudTest extends TestCase
 
         // Log 6th race committee day
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'dates' => [now()->startOfYear()->addDays(6)->format('Y-m-d')],
             'activity_type' => 'race_committee',
         ]);
 
@@ -396,12 +503,75 @@ class FlashCrudTest extends TestCase
 
         // Log sailing day (should not trigger warning even with 5 non-sailing days)
         $response = $this->actingAs($user)->post(route('flashes.store'), [
-            'date' => now()->startOfYear()->addDays(6)->format('Y-m-d'),
+            'dates' => [now()->startOfYear()->addDays(6)->format('Y-m-d')],
             'activity_type' => 'sailing',
             'event_type' => 'practice',
         ]);
 
         $response->assertSessionHas('success', 'Flash logged successfully!');
         $response->assertSessionMissing('warning');
+    }
+
+    public function test_existing_dates_includes_current_year_only_when_not_january(): void
+    {
+        // Mock now() to be February 15th
+        $this->travelTo(now()->setMonth(2)->setDay(15));
+
+        $user = User::factory()->create();
+
+        // Create flashes from previous year
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => now()->subYear()->startOfYear()->addDays(10),
+            'activity_type' => 'sailing',
+        ]);
+
+        // Create flash from current year
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => now()->startOfYear()->addDays(5),
+            'activity_type' => 'sailing',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('flashes.index'));
+
+        $response->assertStatus(200);
+
+        // existingDates should only include current year (not previous year in Feb)
+        $existingDates = $response->viewData('existingDates');
+        $this->assertCount(1, $existingDates);
+        $this->assertEquals(now()->startOfYear()->addDays(5)->format('Y-m-d'), $existingDates[0]);
+    }
+
+    public function test_existing_dates_includes_previous_year_in_january(): void
+    {
+        // Mock now() to be January 15th
+        $this->travelTo(now()->setMonth(1)->setDay(15));
+
+        $user = User::factory()->create();
+
+        // Create flashes from previous year
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => now()->subYear()->startOfYear()->addDays(10),
+            'activity_type' => 'sailing',
+        ]);
+
+        // Create flash from current year
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => now()->startOfYear()->addDays(5),
+            'activity_type' => 'sailing',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('flashes.index'));
+
+        $response->assertStatus(200);
+
+        // existingDates should include both previous year AND current year in January
+        $existingDates = $response->viewData('existingDates');
+        $this->assertCount(2, $existingDates);
+        $this->assertContains(now()->subYear()->startOfYear()->addDays(10)->format('Y-m-d'), $existingDates);
+        $this->assertContains(now()->startOfYear()->addDays(5)->format('Y-m-d'), $existingDates);
     }
 }

@@ -83,6 +83,15 @@ Example: `feat: add fleet-based leaderboard filtering`
 - Update documentation if needed
 - Be respectful in discussions
 
+### Frontend Dependencies
+
+**Self-Hosted Philosophy**: This project prioritizes self-hosted assets for performance, privacy, and reliability.
+
+- ✅ **Use npm packages** - All dependencies should be installed via npm and bundled with Vite
+- ✅ **Use native browser APIs** - Prefer `fetch()`, Web APIs over libraries when possible
+- ❌ **No CDNs** - Do not add external CDN links (jsdelivr, unpkg, cdnjs, Google Fonts, etc.)
+- ❌ **No external fonts** - Use system fonts or self-hosted font files only
+
 ## Questions?
 
 - Bug reports: Open a GitHub Issue

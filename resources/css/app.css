@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tom-select/dist/css/tom-select.css';
+@import 'flatpickr/dist/flatpickr.min.css';
 
 @plugin "daisyui";
 
@@ -79,21 +80,21 @@
 }
 
 /* Tooltip custom colors - Lighter blue */
-.tooltip:before,
-.tooltip-top:before,
-.tooltip-bottom:before,
-.tooltip-left:before,
-.tooltip-right:before {
+.tooltip::before,
+.tooltip-top::before,
+.tooltip-bottom::before,
+.tooltip-left::before,
+.tooltip-right::before {
     background-color: oklch(55% 0.12 240deg) !important; /* Secondary blue - lighter */
     color: oklch(100% 0 0deg) !important; /* White text */
 }
 
-.tooltip:after,
-.tooltip-top:after,
-.tooltip-bottom:after,
-.tooltip-left:after,
-.tooltip-right:after {
-    border-color: oklch(55% 0.12 240deg) transparent transparent transparent !important;
+.tooltip::after,
+.tooltip-top::after,
+.tooltip-bottom::after,
+.tooltip-left::after,
+.tooltip-right::after {
+    border-color: oklch(55% 0.12 240deg) transparent transparent !important;
 }
 
 /* Floating Label - Always Visible (on border) */
@@ -120,4 +121,119 @@
     background: oklch(96% 0.003 245deg);
     padding: 0 0.25rem;
     z-index: 10;
+}
+
+/* Flatpickr calendar customization with brand colors */
+
+/* Calendar container */
+.flatpickr-calendar {
+    background: oklch(96% 0.003 245deg) !important;
+    border: 1px solid oklch(85% 0.008 245deg) !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%) !important;
+}
+
+/* Month/Year header */
+.flatpickr-months {
+    background: oklch(38% 0.09 245deg) !important;
+}
+
+.flatpickr-current-month {
+    color: oklch(100% 0 0deg) !important;
+}
+
+.flatpickr-month,
+/* stylelint-disable-next-line selector-class-pattern */
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: oklch(100% 0 0deg) !important;
+}
+
+/* Navigation arrows */
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    fill: oklch(100% 0 0deg) !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    fill: oklch(92% 0.005 245deg) !important;
+}
+
+/* Weekday headers */
+.flatpickr-weekdays {
+    background: oklch(92% 0.005 245deg) !important;
+}
+
+span.flatpickr-weekday {
+    color: oklch(38% 0.09 245deg) !important;
+    font-weight: 600 !important;
+}
+
+/* Regular date cells */
+.flatpickr-day {
+    color: oklch(25% 0.02 245deg) !important;
+    border: 1px solid transparent !important;
+}
+
+.flatpickr-day:hover {
+    background: oklch(92% 0.005 245deg) !important;
+    border-color: oklch(85% 0.008 245deg) !important;
+}
+
+/* Selected dates */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: oklch(38% 0.09 245deg) !important;
+    border-color: oklch(38% 0.09 245deg) !important;
+    color: oklch(100% 0 0deg) !important;
+}
+
+/* Today's date */
+.flatpickr-day.today {
+    border-color: oklch(44% 0.21 29deg) !important;
+    background: oklch(96% 0.003 245deg) !important;
+}
+
+.flatpickr-day.today:hover {
+    background: oklch(92% 0.005 245deg) !important;
+    border-color: oklch(44% 0.21 29deg) !important;
+}
+
+/* Future dates (disabled) - grayed out */
+.flatpickr-day.flatpickr-disabled:not(.has-entry) {
+    color: oklch(85% 0.008 245deg) !important;
+    background: oklch(96% 0.003 245deg) !important;
+    cursor: not-allowed !important;
+}
+
+.flatpickr-day.flatpickr-disabled:not(.has-entry):hover {
+    background: oklch(96% 0.003 245deg) !important;
+    border-color: transparent !important;
+}
+
+/* Dates with entries - show lightning logo */
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry,
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry:hover {
+    background-image: url('../../../public/images/lightning_logo.png') !important;
+    background-size: auto 20px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: oklch(92% 0.005 245deg) !important;
+
+    /* border: 1px solid oklch(55% 0.12 240deg) !important; */
+    color: transparent !important;
+    cursor: not-allowed;
+}
+
+/* Today with an entry */
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today,
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:hover,
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:focus {
+    background-image: url('../../../public/images/lightning_logo.png') !important;
+    background-size: auto 20px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: oklch(92% 0.005 245deg) !important;
+    border: 2px solid oklch(44% 0.21 29deg) !important;
+    color: transparent !important;
 }
