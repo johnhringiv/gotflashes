@@ -260,4 +260,86 @@ class FlashValidationTest extends TestCase
         ]);
         $response->assertSessionHasNoErrors();
     }
+
+    public function test_empty_dates_array_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => [],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertSessionHasErrors('dates');
+    }
+
+    public function test_grace_period_allows_previous_year_in_january(): void
+    {
+        $user = User::factory()->create();
+
+        // Freeze time to January 15, 2025
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2025, 1, 15, 12, 0, 0));
+
+        // Try to log a date from previous year (2024)
+        $previousYearDate = '2024-12-15';
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => [$previousYearDate],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertRedirect(route('flashes.index'));
+        $response->assertSessionHasNoErrors();
+
+        \Carbon\Carbon::setTestNow();
+    }
+
+    public function test_grace_period_rejects_previous_year_in_february(): void
+    {
+        $user = User::factory()->create();
+
+        // Freeze time to February 1, 2025
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2025, 2, 1, 12, 0, 0));
+
+        // Try to log a date from previous year (2024) - should be rejected
+        $previousYearDate = '2024-12-15';
+
+        $response = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => [$previousYearDate],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response->assertSessionHasErrors('dates.0');
+
+        \Carbon\Carbon::setTestNow();
+    }
+
+    public function test_concurrent_duplicate_submissions_are_handled(): void
+    {
+        $user = User::factory()->create();
+
+        $date = now()->format('Y-m-d');
+
+        // First submission creates the flash
+        $response1 = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => [$date],
+            'activity_type' => 'sailing',
+            'event_type' => 'practice',
+        ]);
+
+        $response1->assertRedirect(route('flashes.index'));
+        $response1->assertSessionHasNoErrors();
+
+        // Second submission with same date should be rejected
+        $response2 = $this->actingAs($user)->post(route('flashes.store'), [
+            'dates' => [$date],
+            'activity_type' => 'maintenance',
+        ]);
+
+        $response2->assertSessionHasErrors('dates');
+        $this->assertEquals(1, $user->flashes()->whereDate('date', $date)->count());
+    }
 }

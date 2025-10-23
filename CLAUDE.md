@@ -234,9 +234,8 @@ Routes in `routes/web.php`:
 - ✅ Floating label form styling on registration and flash forms
 - ✅ Lightning Class logo on homepage
 - ✅ Favicon integration
-
-**In Progress:**
-- 🔄 Year-end rollover logic (grace period until Jan 31)
+- ✅ Multi-date flash entry (bulk logging)
+- ✅ Grace period enforcement (January allows previous year entries)
 
 **Planned:**
 - 📋 Award administrator dashboard
@@ -293,9 +292,12 @@ When implementing year-based features (award tracking, non-sailing day limits):
 - Arrange-Act-Assert pattern in all tests
 
 **Current Coverage:**
-- 95 tests with 275+ assertions
+- 186 tests with 573+ assertions
 - 100% coverage of existing features
 - Authentication, authorization, CRUD, validation, leaderboards, progress tracking all tested
+- Grace period boundary testing (January vs February)
+- Concurrent duplicate submission handling
+- Empty array validation
 
 **Running Tests:**
 ```bash
@@ -306,6 +308,7 @@ composer check     # Run tests + all quality checks
 ### Common Pitfalls
 - Don't forget the unique constraint on (user_id, date) for flashes
 - Non-sailing day counting must be year-specific, not all-time, and capped at 5 per year
-- Date validation needs timezone tolerance (+1 day max)
+- Date validation needs timezone tolerance (+1 day max) and grace period enforcement
 - Authorization policies must check user ownership
-- Previous year data becomes read-only after grace period
+- Previous year data becomes read-only after grace period (February 1st)
+- When querying dates, use `DB::raw('DATE(date)')` for proper SQLite date comparison in whereIn clauses

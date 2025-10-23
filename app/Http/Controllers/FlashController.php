@@ -79,12 +79,20 @@ class FlashController extends Controller
      */
     public function store(Request $request)
     {
-        // Handle both single date (edit) and multiple dates (create)
+        // Handle multiple dates for bulk creation
+        // Determine minimum allowed date based on grace period
+        $minDate = now()->startOfYear();
+        if (now()->month === 1) {
+            // January: allow previous year entries (grace period)
+            $minDate = now()->subYear()->startOfYear();
+        }
+
         $request->validate([
             'dates' => 'required|array|min:1',
             'dates.*' => [
                 'required',
                 'date',
+                'after_or_equal:'.$minDate->format('Y-m-d'),
                 'before_or_equal:'.now()->addDay()->format('Y-m-d'),
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
@@ -106,12 +114,9 @@ class FlashController extends Controller
 
         $dates = $request->dates;
 
-        // Check for duplicate dates before creating any
+        // Check for duplicate dates before creating any (database-level filtering)
         $existingDates = auth()->user()->flashes()
-            ->get()
-            ->filter(function ($flash) use ($dates) {
-                return in_array($flash->date->format('Y-m-d'), $dates); // @phpstan-ignore-line
-            })
+            ->whereIn(\DB::raw('DATE(date)'), $dates)
             ->pluck('date')
             ->map(fn ($d) => $d->format('Y-m-d'))
             ->toArray();
