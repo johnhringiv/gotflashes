@@ -6,7 +6,7 @@
 
     @php
         $baseUrl = rtrim(config('app.url'), '/');
-        $pageTitle = isset($title) ? $title . ' - GOT-FLASHES' : 'GOT-FLASHES Challenge Tracker';
+        $pageTitle = isset($title) ? $title . ' - G.O.T. Flashes' : 'G.O.T. Flashes Challenge Tracker';
         $pageDescription = $description ?? 'Track your Lightning Class sailing days and earn awards. Get Out There - FLASHES encourages sailors to log sailing activities toward 10, 25, and 50+ day annual awards.';
         $currentPath = request()->getPathInfo();
         $pageUrl = $baseUrl . $currentPath;
@@ -17,6 +17,9 @@
     <meta name="description" content="{{ $pageDescription }}">
     <meta name="author" content="Lightning Class Association">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ $pageUrl }}">
 
@@ -25,7 +28,7 @@
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDescription }}">
     <meta property="og:url" content="{{ $pageUrl }}">
-    <meta property="og:site_name" content="GOT-FLASHES Challenge Tracker">
+    <meta property="og:site_name" content="G.O.T. Flashes Challenge Tracker">
     <meta property="og:locale" content="en_US">
     <meta property="og:image" content="{{ $ogImage }}">
 
@@ -73,7 +76,7 @@
 
         <!-- Logo -->
         <a href="/" class="flex items-center px-2">
-            <img src="/images/got_flashes.png" alt="GOT-FLASHES Challenge Tracker" class="h-12">
+            <img src="/images/got_flashes.png" alt="G.O.T. Flashes Challenge Tracker" class="h-12">
         </a>
     </div>
 
@@ -116,12 +119,24 @@
         </div>
     @endif
 
+    <!-- Warning Toast -->
+    @if (session('warning'))
+        <div class="toast toast-top toast-center z-50" style="top: 5rem;">
+            <div class="alert alert-warning" id="warning-toast">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{{ session('warning') }}</span>
+            </div>
+        </div>
+    @endif
+
     {{ $slot }}
 </main>
 
 <footer class="footer footer-center p-5 bg-base-300 text-base-content text-xs">
     <div>
-        <p>© {{ date('Y') }} Lightning Class Association - GOT-FLASHES Challenge Tracker</p>
+        <p>© {{ date('Y') }} Lightning Class Association - G.O.T. Flashes Challenge Tracker</p>
         <p class="text-xs opacity-70">Track your sailing days • Earn awards • Build the Lightning community</p>
         <p class="text-xs opacity-60 mt-2">
             Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>

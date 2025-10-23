@@ -3,7 +3,7 @@
         Leaderboard
     </x-slot:title>
     <x-slot:description>
-        View the Lightning Class GOT-FLASHES leaderboard rankings. See top sailors, fleets, and districts by sailing days tracked in 2025.
+        View the Lightning Class G.O.T. Flashes leaderboard rankings. See top sailors, fleets, and districts by sailing days tracked in 2025.
     </x-slot:description>
 
     <div class="max-w-6xl mx-auto">
@@ -44,6 +44,18 @@
                         .current-user-row {
                             background-color: oklch(44% 0.21 29 / 0.15);
                         }
+                        .current-user-row td:first-child {
+                            position: relative;
+                        }
+                        .current-user-row td:first-child::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 4px;
+                            background-color: oklch(44% 0.21 29);
+                        }
                         .badge-accent {
                             background-color: oklch(44% 0.21 29);
                             color: oklch(100% 0 0);
@@ -61,7 +73,7 @@
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>
@@ -72,7 +84,7 @@
                                 @php
                                     $isCurrentUser = auth()->check() && auth()->id() === $user->id;
                                 @endphp
-                                <tr class="{{ $isCurrentUser ? 'current-user-row border-l-4 border-accent' : '' }}">
+                                <tr class="{{ $isCurrentUser ? 'current-user-row' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
@@ -108,11 +120,11 @@
                             <tr>
                                 <th class="text-center font-bold">Rank</th>
                                 <th class="font-bold">Fleet #</th>
-                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">Sailors</th>
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>
@@ -124,7 +136,7 @@
                                     $userFleet = auth()->check() ? auth()->user()->currentMembership()?->fleet_id : null;
                                     $isUserFleet = $userFleet && $userFleet === $fleet->id;
                                 @endphp
-                                <tr class="{{ $isUserFleet ? 'current-user-row border-l-4 border-accent' : '' }}">
+                                <tr class="{{ $isUserFleet ? 'current-user-row' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>
@@ -143,11 +155,11 @@
                             <tr>
                                 <th class="text-center font-bold">Rank</th>
                                 <th class="font-bold">District</th>
-                                <th class="text-center font-bold">Members</th>
+                                <th class="text-center font-bold">Sailors</th>
                                 <th class="text-center font-bold">
                                     <div class="tooltip tooltip-left" data-tip="All sailing days + up to 5 non-sailing days (maintenance & race committee)">
                                         <span class="cursor-help border-b border-dotted border-base-content/50">
-                                            Total Flashes
+                                            Days Sailed
                                         </span>
                                     </div>
                                 </th>
@@ -159,7 +171,7 @@
                                     $userDistrict = auth()->check() ? auth()->user()->currentMembership()?->district_id : null;
                                     $isUserDistrict = $userDistrict && $userDistrict === $district->id;
                                 @endphp
-                                <tr class="{{ $isUserDistrict ? 'current-user-row border-l-4 border-accent' : '' }}">
+                                <tr class="{{ $isUserDistrict ? 'current-user-row' : '' }}">
                                     <td class="text-center font-bold">
                                         {{ ($leaderboard->currentPage() - 1) * $leaderboard->perPage() + $index + 1 }}
                                     </td>

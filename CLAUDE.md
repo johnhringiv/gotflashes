@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GOT-FLASHES Challenge Tracker** - A Laravel 12 web application for tracking Lightning Class sailing activity. The goal is to encourage sailors to get on the water by recognizing annual sailing days through awards at 10, 25, and 50+ day milestones.
+**G.O.T. Flashes Challenge Tracker** - A Laravel 12 web application for tracking Lightning Class sailing activity. The goal is to encourage sailors to get on the water by recognizing annual sailing days through awards at 10, 25, and 50+ day milestones.
 
 **Key Concept**: "Get Out There - FLASHES" encourages Lightning sailors to get their boats off the dock. Users log sailing days and optional non-sailing days (boat maintenance, race committee work) toward annual awards. Up to 5 non-sailing days count toward award totals per year.
 
@@ -67,6 +67,7 @@ php artisan tinker
 
 **Activity Types:**
 - `sailing` - Always available, counts toward awards (unlimited)
+  - Event types: `regatta`, `club_race`, `practice`, `leisure` (displays as "Day Sailing")
 - `maintenance` - Boat/trailer work (non-sailing day)
 - `race_committee` - Race committee work (non-sailing day)
 
@@ -75,7 +76,7 @@ php artisan tinker
 - Users can log more than 5 non-sailing days, but only 5 count toward totals
 - No minimum sailing days required to log non-sailing days
 - Non-sailing day limit resets annually on January 1st
-- UI should indicate when 5 counting non-sailing days have been used
+- Warning message displayed when logging 6th+ non-sailing day (days that don't count toward awards)
 
 **Date Restrictions:**
 - Users cannot log future dates (max: today +1 day for timezone handling)
@@ -133,6 +134,9 @@ Routes in `routes/web.php`:
 - Use Tailwind utility classes first
 - Custom CSS only when necessary in `resources/css/app.css`
 - Tailwind v4 uses `@source` and `@theme` directives
+- Custom "lightning" theme with Lightning Class brand colors
+- Floating label form styling (label appears in border outline)
+- Tooltips use lighter blue background (secondary color)
 
 ### Database Schema
 
@@ -140,8 +144,17 @@ Routes in `routes/web.php`:
 - Authentication: email (unique), password, remember_token
 - Personal: first_name, last_name, date_of_birth, gender
 - Address: address_line1, address_line2, city, state, zip_code, country
-- Sailing: district, fleet_number, yacht_club
+- Sailing: district_id (FK to districts), fleet_id (FK to fleets), yacht_club
 - Admin: is_admin (boolean, default false)
+
+**districts table:**
+- Lightning Class districts for geographic organization
+- Used in leaderboard aggregation
+
+**fleets table:**
+- Lightning Class fleets (numbered)
+- Includes fleet_number and fleet_name
+- Used in leaderboard aggregation
 
 **flashes table:**
 - user_id (foreign key to users)
@@ -193,18 +206,20 @@ Routes in `routes/web.php`:
 ## Implementation Status
 
 **Completed:**
-- ✅ User registration and authentication
+- ✅ User registration and authentication with district/fleet selection
 - ✅ Flash CRUD (create, read, update, delete)
 - ✅ Flash authorization policies
 - ✅ Date validation and duplicate prevention
 - ✅ Activity ordering by date (newest first)
 - ✅ "Just logged" badge for entries created today
-- ✅ UI with Tailwind CSS and DaisyUI components
+- ✅ UI with Tailwind CSS v4 and DaisyUI components
 - ✅ Award tier calculations (10, 25, 50 days)
-- ✅ Progress tracking with visual progress bars
-- ✅ Award badges (Bronze/Silver/Gold) with Bootstrap Icons SVG
+- ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
+- ✅ Award badge images (got-10-badge.png, got-25-badge.png, got-50-badge.png, burgee-50.jpg)
+- ✅ Separate earned awards card with gradient background
 - ✅ Non-sailing day cap enforcement (5 per year) in all queries
-- ✅ Three leaderboards with tabs:
+- ✅ Warning toast when logging non-sailing day after reaching 5-day limit
+- ✅ Three leaderboards with tabs (renamed "Days Sailed" and "Sailors"):
   - Sailor leaderboard (individual rankings)
   - Fleet leaderboard (aggregated by fleet_number)
   - District leaderboard (aggregated by district)
@@ -216,10 +231,11 @@ Routes in `routes/web.php`:
 - ✅ User highlighting on leaderboards
 - ✅ Leaderboard pagination (15 per page)
 - ✅ Dashboard with current year progress and earned awards
-
-**In Progress:**
-- 🔄 Year-end rollover logic (grace period until Jan 31)
-- 🔄 Non-sailing day limits UI enforcement (show when 5 used)
+- ✅ Floating label form styling on registration and flash forms
+- ✅ Lightning Class logo on homepage
+- ✅ Favicon integration
+- ✅ Multi-date flash entry (bulk logging)
+- ✅ Grace period enforcement (January allows previous year entries)
 
 **Planned:**
 - 📋 Award administrator dashboard
@@ -231,7 +247,7 @@ Routes in `routes/web.php`:
 ## Key Files
 
 - `docs/prd.md` - Complete product requirements and business rules
-- `docs/CONTRIBUTING.md` - Contribution guidelines
+- `docs/CONTRIBUTING.md` - Contribution guidelines and branching strategy
 - `composer.json` - PHP dependencies and scripts
 - `package.json` - Node dependencies and npm scripts
 - `phpstan.neon` - PHPStan configuration
@@ -239,6 +255,21 @@ Routes in `routes/web.php`:
 - `.stylelintrc.json` - Stylelint configuration
 
 ## Development Notes
+
+### Branching Strategy
+
+**Branch Model**: Two-tier with `main` (production) and `dev` (staging)
+
+**Workflow**:
+1. Create feature branches from `dev`: `feature/your-feature-name`
+2. Submit PRs to `dev` (squash merge)
+3. Release to `main` from `dev` (merge commit with changelog format)
+
+**Commit Messages**:
+- Feature branches: Use conventional commits (`feat:`, `fix:`, etc.)
+- Dev → main merges: Use changelog format (Added/Changed/Fixed/Technical)
+
+See `docs/CONTRIBUTING.md` for complete branching workflow and merge commit examples.
 
 ### Year Calculation Logic
 When implementing year-based features (award tracking, non-sailing day limits):
@@ -276,9 +307,12 @@ When implementing year-based features (award tracking, non-sailing day limits):
 - Arrange-Act-Assert pattern in all tests
 
 **Current Coverage:**
-- 95 tests with 275+ assertions
+- 186 tests with 573+ assertions
 - 100% coverage of existing features
 - Authentication, authorization, CRUD, validation, leaderboards, progress tracking all tested
+- Grace period boundary testing (January vs February)
+- Concurrent duplicate submission handling
+- Empty array validation
 
 **Running Tests:**
 ```bash
@@ -289,6 +323,7 @@ composer check     # Run tests + all quality checks
 ### Common Pitfalls
 - Don't forget the unique constraint on (user_id, date) for flashes
 - Non-sailing day counting must be year-specific, not all-time, and capped at 5 per year
-- Date validation needs timezone tolerance (+1 day max)
+- Date validation needs timezone tolerance (+1 day max) and grace period enforcement
 - Authorization policies must check user ownership
-- Previous year data becomes read-only after grace period
+- Previous year data becomes read-only after grace period (February 1st)
+- When querying dates, use `DB::raw('DATE(date)')` for proper SQLite date comparison in whereIn clauses

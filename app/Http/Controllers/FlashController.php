@@ -38,6 +38,18 @@ class FlashController extends Controller
             }
         }
 
+        // Get existing dates for the user within selectable range (for disabling in date picker)
+        // Current year + previous year (if before Feb 1st grace period)
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+
+        $existingDates = $user->flashes()
+            ->where('date', '>=', $minDate)
+            ->where('date', '<=', $now->copy()->addDay())
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
         return view('flashes.index', [
             'flashes' => $flashes,
             'totalFlashes' => $stats->total,
@@ -46,6 +58,7 @@ class FlashController extends Controller
             'nextMilestone' => $nextMilestone,
             'earnedAwards' => $earnedAwards,
             'currentYear' => $currentYear,
+            'existingDates' => $existingDates,
         ]);
 
     }
@@ -63,11 +76,19 @@ class FlashController extends Controller
      */
     public function store(Request $request)
     {
+        // Handle multiple dates for bulk creation
+        // Determine minimum allowed date based on grace period
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay()->format('Y-m-d');
+
         $request->validate([
-            'date' => [
+            'dates' => 'required|array|min:1',
+            'dates.*' => [
                 'required',
                 'date',
-                'before_or_equal:'.now()->addDay()->format('Y-m-d'),
+                'after_or_equal:'.$minDate->format('Y-m-d'),
+                'before_or_equal:'.$maxDate,
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
@@ -86,19 +107,23 @@ class FlashController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Check for duplicate date
-        $exists = auth()->user()->flashes()
-            ->whereDate('date', $request->date)
-            ->exists();
+        $dates = $request->dates;
 
-        if ($exists) {
+        // Check for duplicate dates before creating any (database-level filtering)
+        $existingDates = auth()->user()->flashes()
+            ->whereIn(\DB::raw('DATE(date)'), $dates)
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->toArray();
+
+        if (! empty($existingDates)) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['date' => 'You already have an activity logged for this date. Please edit the existing entry or choose a different date.']);
+                ->withErrors(['dates' => 'You already have activities logged for: '.implode(', ', $existingDates).'. Please remove these dates or edit existing entries.']);
         }
 
-        $validated = $request->only([
-            'date',
+        // Prepare common data for all flashes
+        $commonData = $request->only([
             'activity_type',
             'event_type',
             'location',
@@ -106,10 +131,32 @@ class FlashController extends Controller
             'notes',
         ]);
 
-        // Use the authenticated user
-        auth()->user()->flashes()->create($validated);
+        // Use transaction to ensure all-or-nothing
+        \DB::transaction(function () use ($dates, $commonData) {
+            foreach ($dates as $date) {
+                auth()->user()->flashes()->create(array_merge($commonData, ['date' => $date]));
+            }
+        });
 
-        return redirect()->route('flashes.index')->with('success', 'Flash logged successfully!');
+        // Check if this is a non-sailing activity and if they've reached the limit
+        $hasWarning = false;
+        if (in_array($request->activity_type, ['maintenance', 'race_committee'])) {
+            $currentYear = now()->year;
+            $stats = auth()->user()->flashStatsForYear($currentYear);
+
+            if ($stats->nonSailing > 5) {
+                $hasWarning = true;
+            }
+        }
+
+        $count = count($dates);
+        $message = $count === 1 ? 'Flash logged successfully!' : "{$count} flashes logged successfully!";
+
+        if ($hasWarning) {
+            return redirect()->route('flashes.index')->with('warning', "Non-sailing days logged! Heads up: You've already got 5 non-sailing days counting toward awards. Keep logging though—we want to see all your Lightning time!");
+        }
+
+        return redirect()->route('flashes.index')->with('success', $message);
     }
 
     /**
@@ -196,5 +243,20 @@ class FlashController extends Controller
         $flash->delete();
 
         return redirect()->route('flashes.index')->with('success', 'Flash deleted!');
+    }
+
+    /**
+     * Calculate the minimum allowed date based on grace period logic.
+     * January allows previous year entries, February onward restricts to current year.
+     */
+    private function getMinAllowedDate(\Carbon\Carbon $now): \Carbon\Carbon
+    {
+        $minDate = $now->copy()->startOfYear();
+        if ($now->month === 1) {
+            // January: allow previous year entries (grace period)
+            $minDate = $now->copy()->subYear()->startOfYear();
+        }
+
+        return $minDate;
     }
 }
