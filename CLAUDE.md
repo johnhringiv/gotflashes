@@ -247,7 +247,7 @@ Routes in `routes/web.php`:
 ## Key Files
 
 - `docs/prd.md` - Complete product requirements and business rules
-- `docs/CONTRIBUTING.md` - Contribution guidelines
+- `docs/CONTRIBUTING.md` - Contribution guidelines and branching strategy
 - `composer.json` - PHP dependencies and scripts
 - `package.json` - Node dependencies and npm scripts
 - `phpstan.neon` - PHPStan configuration
@@ -255,6 +255,21 @@ Routes in `routes/web.php`:
 - `.stylelintrc.json` - Stylelint configuration
 
 ## Development Notes
+
+### Branching Strategy
+
+**Branch Model**: Two-tier with `main` (production) and `dev` (staging)
+
+**Workflow**:
+1. Create feature branches from `dev`: `feature/your-feature-name`
+2. Submit PRs to `dev` (squash merge)
+3. Release to `main` from `dev` (merge commit with changelog format)
+
+**Commit Messages**:
+- Feature branches: Use conventional commits (`feat:`, `fix:`, etc.)
+- Dev → main merges: Use changelog format (Added/Changed/Fixed/Technical)
+
+See `docs/CONTRIBUTING.md` for complete branching workflow and merge commit examples.
 
 ### Year Calculation Logic
 When implementing year-based features (award tracking, non-sailing day limits):

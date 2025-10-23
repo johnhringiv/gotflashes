@@ -40,15 +40,12 @@ class FlashController extends Controller
 
         // Get existing dates for the user within selectable range (for disabling in date picker)
         // Current year + previous year (if before Feb 1st grace period)
-        $minDate = now()->startOfYear();
-        if (now()->month === 1) {
-            // January: allow previous year entries
-            $minDate = now()->subYear()->startOfYear();
-        }
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
 
         $existingDates = $user->flashes()
             ->where('date', '>=', $minDate)
-            ->where('date', '<=', now()->addDay())
+            ->where('date', '<=', $now->copy()->addDay())
             ->pluck('date')
             ->map(fn ($d) => $d->format('Y-m-d'))
             ->toArray();
@@ -81,11 +78,9 @@ class FlashController extends Controller
     {
         // Handle multiple dates for bulk creation
         // Determine minimum allowed date based on grace period
-        $minDate = now()->startOfYear();
-        if (now()->month === 1) {
-            // January: allow previous year entries (grace period)
-            $minDate = now()->subYear()->startOfYear();
-        }
+        $now = now();
+        $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay()->format('Y-m-d');
 
         $request->validate([
             'dates' => 'required|array|min:1',
@@ -93,7 +88,7 @@ class FlashController extends Controller
                 'required',
                 'date',
                 'after_or_equal:'.$minDate->format('Y-m-d'),
-                'before_or_equal:'.now()->addDay()->format('Y-m-d'),
+                'before_or_equal:'.$maxDate,
             ],
             'activity_type' => 'required|in:sailing,maintenance,race_committee',
             'event_type' => [
@@ -248,5 +243,20 @@ class FlashController extends Controller
         $flash->delete();
 
         return redirect()->route('flashes.index')->with('success', 'Flash deleted!');
+    }
+
+    /**
+     * Calculate the minimum allowed date based on grace period logic.
+     * January allows previous year entries, February onward restricts to current year.
+     */
+    private function getMinAllowedDate(\Carbon\Carbon $now): \Carbon\Carbon
+    {
+        $minDate = $now->copy()->startOfYear();
+        if ($now->month === 1) {
+            // January: allow previous year entries (grace period)
+            $minDate = $now->copy()->subYear()->startOfYear();
+        }
+
+        return $minDate;
     }
 }
