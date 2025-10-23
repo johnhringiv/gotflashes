@@ -130,6 +130,13 @@ Routes in `routes/web.php`:
 - Event listeners wrapped in `DOMContentLoaded`
 - Progressive enhancement (form validation, UX improvements)
 
+**Multi-Date Picker** (`resources/js/multi-date-picker.js`):
+- Uses flatpickr for date selection with multiple date support
+- Min/max dates passed from FlashController via data attributes (ensures grace period logic consistency)
+- Year selector converted to dropdown (only shows current year + previous year during grace period)
+- Custom `hideExtraWeeks()` function removes calendar weeks containing only adjacent month dates
+- Existing flash dates are disabled and marked with Lightning logo
+
 **CSS/Tailwind:**
 - Use Tailwind utility classes first
 - Custom CSS only when necessary in `resources/css/app.css`
@@ -137,6 +144,7 @@ Routes in `routes/web.php`:
 - Custom "lightning" theme with Lightning Class brand colors
 - Floating label form styling (label appears in border outline)
 - Tooltips use lighter blue background (secondary color)
+- Flatpickr calendar styled with Lightning Class brand colors (blue header, white text)
 
 ### Database Schema
 
@@ -271,7 +279,13 @@ Routes in `routes/web.php`:
 
 See `docs/CONTRIBUTING.md` for complete branching workflow and merge commit examples.
 
-### Year Calculation Logic
+### Date Validation & Grace Period Logic
+Date validation is centralized in `FlashController::getMinAllowedDate()`:
+- **January (grace period)**: Users can log dates from previous year (Jan 1 of previous year through today +1)
+- **February onwards**: Users can only log dates from current year (Jan 1 of current year through today +1)
+- Min/max dates are passed from controller to frontend via data attributes on the date picker
+- This ensures backend validation and frontend UI constraints are always in sync
+
 When implementing year-based features (award tracking, non-sailing day limits):
 - Use calendar year (Jan 1 - Dec 31) for activity counting
 - Grace period: Users can log previous year until January 31st

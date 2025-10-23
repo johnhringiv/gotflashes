@@ -27,6 +27,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Select multiple dates with the same activity details
   - Existing entries marked with lightning logo (cannot be re-selected)
   - Future dates grayed out and disabled
+  - Year selector dropdown (shows only allowed years based on grace period)
   - All-or-nothing validation (if any date has an error, no entries are created)
   - Calendar styled with Lightning Class brand colors
 - **Activity Management**: Edit and delete your own activity entries with "Just logged" badge for new entries

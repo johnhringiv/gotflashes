@@ -1,4 +1,4 @@
-@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity', 'existingDates' => []])
+@props(['flash' => null, 'action', 'method' => 'POST', 'submitText' => 'Log Activity', 'existingDates' => [], 'minDate' => null, 'maxDate' => null])
 
 <form action="{{ $action }}" method="POST">
     @csrf
@@ -7,8 +7,8 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <!-- Date(s) -->
-        <div class="mb-6 floating-label-visible">
+        <!-- Date(s) - order-1 on mobile, col 1 on desktop -->
+        <div class="mb-6 floating-label-visible order-1">
             @if($flash)
                 {{-- Single date for edit mode --}}
                 <input type="date" name="date" value="{{ old('date', $flash?->date?->format('Y-m-d')) }}"
@@ -19,6 +19,8 @@
                 {{-- Multi-date picker for create mode --}}
                 <input type="text" id="date-picker"
                        data-existing-dates="{{ json_encode($existingDates) }}"
+                       data-min-date="{{ $minDate }}"
+                       data-max-date="{{ $maxDate }}"
                        placeholder="Select date(s)"
                        class="input input-bordered w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
                 <label>Date(s)</label>
@@ -40,16 +42,8 @@
             @enderror
         </div>
 
-        <!-- Location -->
-        <div class="mb-6 floating-label-visible">
-            <input type="text" name="location" value="{{ old('location', $flash?->location) }}"
-                   placeholder="Lake Norman, NC"
-                   class="input input-bordered w-full" maxlength="255">
-            <label>Location (optional)</label>
-        </div>
-
-        <!-- Activity Type -->
-        <div class="mb-6">
+        <!-- Activity Type - order-2 on mobile, col 1 on desktop -->
+        <div class="mb-6 order-2 md:order-3">
             <label class="form-control w-full">
                 <div class="label">
                     <span class="label-text">Activity Type</span>
@@ -68,16 +62,8 @@
             </label>
         </div>
 
-        <!-- Sail Number -->
-        <div class="mb-6 floating-label-visible">
-            <input type="text" inputmode="numeric" pattern="[0-9]*" name="sail_number" value="{{ old('sail_number', $flash?->sail_number) }}"
-                   placeholder="15234"
-                   class="input input-bordered w-full">
-            <label>Sail Number (optional)</label>
-        </div>
-
-        <!-- Sailing Type -->
-        <div class="mb-6 md:col-span-2">
+        <!-- Sailing Type - order-3 on mobile, spans both cols on desktop -->
+        <div class="mb-6 md:col-span-2 order-3 md:order-5">
             <label class="form-control w-full">
                 <div class="label">
                     <span class="label-text flex items-center gap-1" id="sailing-type-label">
@@ -102,6 +88,22 @@
                     </div>
                 @enderror
             </label>
+        </div>
+
+        <!-- Location - order-4 on mobile, col 2 on desktop -->
+        <div class="mb-6 floating-label-visible order-4 md:order-2">
+            <input type="text" name="location" value="{{ old('location', $flash?->location) }}"
+                   placeholder="Lake Norman, NC"
+                   class="input input-bordered w-full" maxlength="255">
+            <label>Location (optional)</label>
+        </div>
+
+        <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
+        <div class="mb-6 floating-label-visible order-5 md:order-4">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" name="sail_number" value="{{ old('sail_number', $flash?->sail_number) }}"
+                   placeholder="15234"
+                   class="input input-bordered w-full">
+            <label>Sail Number (optional)</label>
         </div>
     </div>
 

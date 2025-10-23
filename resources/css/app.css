@@ -159,6 +159,31 @@
     fill: oklch(92% 0.005 245deg) !important;
 }
 
+/* Year dropdown styling (custom select element) */
+.flatpickr-current-month select {
+    background: oklch(38% 0.09 245deg) !important;
+    color: oklch(100% 0 0deg) !important;
+    border: none !important;
+    font-weight: inherit !important;
+    cursor: pointer !important;
+    padding-right: 1rem !important;
+
+    /* Keep native dropdown arrow by not using appearance: none */
+}
+
+/* Hide the spinner controls container that appears on hover */
+/* stylelint-disable-next-line selector-class-pattern */
+.flatpickr-current-month .numInputWrapper {
+    display: inline-block !important;
+}
+
+/* stylelint-disable selector-class-pattern */
+.flatpickr-current-month .numInputWrapper span.arrowUp,
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    display: none !important;
+}
+/* stylelint-enable selector-class-pattern */
+
 /* Weekday headers */
 .flatpickr-weekdays {
     background: oklch(92% 0.005 245deg) !important;

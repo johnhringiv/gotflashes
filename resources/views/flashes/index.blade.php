@@ -122,6 +122,8 @@
                     :action="route('flashes.store')"
                     submit-text="Log Activity"
                     :existing-dates="$existingDates"
+                    :min-date="$minDate"
+                    :max-date="$maxDate"
                 />
             </div>
         </div>

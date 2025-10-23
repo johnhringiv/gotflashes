@@ -42,10 +42,11 @@ class FlashController extends Controller
         // Current year + previous year (if before Feb 1st grace period)
         $now = now();
         $minDate = $this->getMinAllowedDate($now);
+        $maxDate = $now->copy()->addDay();
 
         $existingDates = $user->flashes()
             ->where('date', '>=', $minDate)
-            ->where('date', '<=', $now->copy()->addDay())
+            ->where('date', '<=', $maxDate)
             ->pluck('date')
             ->map(fn ($d) => $d->format('Y-m-d'))
             ->toArray();
@@ -59,6 +60,8 @@ class FlashController extends Controller
             'earnedAwards' => $earnedAwards,
             'currentYear' => $currentYear,
             'existingDates' => $existingDates,
+            'minDate' => $minDate->format('Y-m-d'),
+            'maxDate' => $maxDate->format('Y-m-d'),
         ]);
 
     }
