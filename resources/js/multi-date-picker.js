@@ -44,6 +44,9 @@ function initializeDatePicker(datePickerElement, mode) {
             const minYear = parseInt(minDateStr.split('-')[0], 10);
             const maxYear = parseInt(maxDateStr.split('-')[0], 10);
 
+            // If only one year is available, don't convert to dropdown
+            if (minYear === maxYear) return;
+
             // Create select element
             const select = document.createElement('select');
             select.className = yearInput.className;
@@ -157,6 +160,9 @@ function initializeDatePicker(datePickerElement, mode) {
 
                 // Update display value
                 datePickerElement.value = dateStr;
+
+                // Hide extra weeks after date selection
+                hideExtraWeeks(selectedDates, dateStr, instance);
             };
         } else if (mode === 'single') {
             // For single mode, disable all existing dates except the current one being edited
@@ -168,9 +174,12 @@ function initializeDatePicker(datePickerElement, mode) {
                 config.defaultDate = defaultDate;
             }
 
-            config.onChange = function(selectedDates, dateStr) {
+            config.onChange = function(selectedDates, dateStr, instance) {
                 // For single mode, just update the input value
                 datePickerElement.value = dateStr;
+
+                // Hide extra weeks after date selection
+                hideExtraWeeks(selectedDates, dateStr, instance);
             };
         }
 

@@ -123,6 +123,7 @@ Routes in `routes/web.php`:
 
 **Tech Stack:**
 - Blade templates (server-rendered)
+- Livewire v3 (reactive components for flash form)
 - Tailwind CSS v4 (utility-first CSS)
 - Vanilla JavaScript (minimal, progressive enhancement)
 - Vite for asset bundling
@@ -133,9 +134,16 @@ Routes in `routes/web.php`:
 - Event listeners wrapped in `DOMContentLoaded`
 - Progressive enhancement (form validation, UX improvements)
 
+**Livewire Components:**
+- **FlashForm** (`app/Livewire/FlashForm.php`): Activity entry and edit form
+  - Dynamically calculates min/max dates on every render (always current)
+  - Solves stale date range problem (users leaving page open across grace period boundaries)
+  - Supports both create (multi-date) and edit (single-date) modes
+  - Pre-fills form data when editing existing flash
+
 **Multi-Date Picker** (`resources/js/multi-date-picker.js`):
 - Uses flatpickr for date selection with multiple date support
-- Min/max dates passed from FlashController via data attributes (ensures grace period logic consistency)
+- Min/max dates passed from Livewire component via data attributes
 - Year selector converted to dropdown (only shows current year + previous year during grace period)
 - Custom `hideExtraWeeks()` function removes calendar weeks containing only adjacent month dates
 - Existing flash dates are disabled and marked with Lightning logo

@@ -86,6 +86,7 @@ Users log activities using a simple form for each day:
     - Year selector dropdown shows only allowed years based on grace period
     - Calendar styled with brand colors for consistent user experience
     - All-or-nothing validation: if any selected date has an error (e.g., duplicate), no entries are created
+    - **Dynamic date ranges**: Form uses Livewire for automatic date range refresh (prevents stale boundaries if page left open)
 - Activity type (always available options):
     - **Sailing on a Lightning**
     - **Boat/Trailer Maintenance (non-sailing day)** - Available until 5 non-sailing days used

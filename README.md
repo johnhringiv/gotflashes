@@ -30,6 +30,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Year selector dropdown (shows only allowed years based on grace period)
   - All-or-nothing validation (if any date has an error, no entries are created)
   - Calendar styled with Lightning Class brand colors
+  - **Dynamic date ranges**: Livewire automatically refreshes allowed dates if page left open (prevents stale grace period boundaries)
 - **Activity Management**: Edit and delete your own activity entries (current year + grace period for previous year in January)
   - Edit mode uses same calendar picker in single-date mode
   - Year dropdown and grace period restrictions apply to both create and edit
@@ -61,7 +62,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
-- **Comprehensive Testing**: 182 tests with 560+ assertions including JavaScript unit tests
+- **Comprehensive Testing**: 206 tests with 620+ assertions including JavaScript unit tests
 
 ## Technology Stack
 
@@ -71,6 +72,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Tailwind CSS v4 (self-hosted, no CDN)
   - DaisyUI (component library)
   - Blade templates
+  - Livewire v3 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
   - Flatpickr (multi-date calendar picker)
   - Tom-Select (searchable dropdowns)
@@ -207,10 +209,11 @@ composer test
 ```
 
 **Test Coverage:**
-- 182 tests with 560+ assertions (PHP + JavaScript)
+- 206 tests with 620+ assertions (PHP + JavaScript)
 - Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
-- JavaScript tests: Registration form validation and dynamic fleet selection
+- Livewire tests: FlashForm component with dynamic date range refresh, grace period boundary crossing
+- JavaScript tests: Registration form validation and dynamic fleet selection, multi-date picker logic
 - Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution
 

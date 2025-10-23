@@ -18,6 +18,8 @@
 /public/build
 /public/hot
 /public/storage
+/public/vendor
+/bootstrap/cache
 /storage/*.key
 /storage/pail
 /vendor

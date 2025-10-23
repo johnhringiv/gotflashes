@@ -39,6 +39,7 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="min-h-screen flex flex-col bg-base-200 font-sans">
 <nav class="navbar shadow-md" style="background-color: var(--color-primary); color: var(--color-primary-content);">
@@ -143,5 +144,6 @@
         </p>
     </div>
 </footer>
+@livewireScripts
 </body>
 </html>

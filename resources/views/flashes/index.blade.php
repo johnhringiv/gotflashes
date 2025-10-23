@@ -118,13 +118,10 @@
         <div class="card bg-base-100 shadow mb-6">
             <div class="card-body">
                 <h2 class="card-title text-xl mb-4">Log a New Activity</h2>
-                <x-flash-form
-                    :action="route('flashes.store')"
-                    submit-text="Log Activity"
-                    :existing-dates="$existingDates"
-                    :min-date="$minDate"
-                    :max-date="$maxDate"
-                />
+                @livewire('flash-form', [
+                    'action' => route('flashes.store'),
+                    'submitText' => 'Log Activity'
+                ])
             </div>
         </div>
 
