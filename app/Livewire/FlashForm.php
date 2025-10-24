@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Flash;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class FlashForm extends Component
@@ -211,6 +212,20 @@ class FlashForm extends Component
 
         // Close the edit modal
         $this->dispatch('close-edit-modal');
+    }
+
+    #[On('flash-saved')]
+    public function refreshExistingDates()
+    {
+        // This method triggers a re-render, which will fetch fresh existingDates
+        // This ensures the calendar updates after a flash is saved
+    }
+
+    #[On('flash-deleted')]
+    public function refreshAfterDelete()
+    {
+        // This method triggers a re-render after a flash is deleted
+        // This ensures the calendar updates when dates are removed
     }
 
     public function render()

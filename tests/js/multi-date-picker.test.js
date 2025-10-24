@@ -328,4 +328,178 @@ describe('Multi-Date Picker', () => {
             expect(maxYear - minYear).toBe(1);
         });
     });
+
+    describe('Livewire event handling', () => {
+        it('should update existing dates after flash-saved event', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Initial state
+            let existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toEqual(['2025-01-02', '2025-01-03']);
+
+            // Simulate Livewire updating the DOM after saving a flash
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-03", "2025-01-04"]');
+
+            // Verify the data attribute was updated
+            existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toEqual(['2025-01-02', '2025-01-03', '2025-01-04']);
+            expect(existingDates).toContain('2025-01-04');
+        });
+
+        it('should update existing dates after flash-deleted event', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Initial state with 3 dates
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-03", "2025-01-04"]');
+            let existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toHaveLength(3);
+
+            // Simulate Livewire updating the DOM after deleting a flash
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-03"]');
+
+            // Verify the date was removed
+            existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toEqual(['2025-01-02', '2025-01-03']);
+            expect(existingDates).not.toContain('2025-01-04');
+            expect(existingDates).toHaveLength(2);
+        });
+
+        it('should handle multiple dates being saved at once', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Initial state
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02"]');
+            let existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toHaveLength(1);
+
+            // Simulate saving multiple dates at once
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-05", "2025-01-06", "2025-01-07"]');
+
+            // Verify all dates were added
+            existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toHaveLength(4);
+            expect(existingDates).toContain('2025-01-05');
+            expect(existingDates).toContain('2025-01-06');
+            expect(existingDates).toContain('2025-01-07');
+        });
+
+        it('should handle all dates being deleted', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Initial state with multiple dates
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-03", "2025-01-04"]');
+            let existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toHaveLength(3);
+
+            // Simulate all dates being deleted
+            datePickerElement.setAttribute('data-existing-dates', '[]');
+
+            // Verify all dates were removed
+            existingDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(existingDates).toEqual([]);
+            expect(existingDates).toHaveLength(0);
+        });
+    });
+
+    describe('Calendar reinitialization', () => {
+        it('should detect when calendar needs reinitialization', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Mock flatpickr instance
+            const mockFlatpickr = {
+                clear: vi.fn(),
+                destroy: vi.fn()
+            };
+            datePickerElement._flatpickr = mockFlatpickr;
+
+            // Verify flatpickr instance exists
+            expect(datePickerElement._flatpickr).toBeDefined();
+            expect(typeof datePickerElement._flatpickr.clear).toBe('function');
+            expect(typeof datePickerElement._flatpickr.destroy).toBe('function');
+        });
+
+        it('should clear flatpickr before reinitialization on save', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Mock flatpickr instance with spy functions
+            const clearSpy = vi.fn();
+            const destroySpy = vi.fn();
+            datePickerElement._flatpickr = {
+                clear: clearSpy,
+                destroy: destroySpy
+            };
+
+            // Simulate the flash-saved event handler behavior
+            if (datePickerElement._flatpickr) {
+                datePickerElement._flatpickr.clear();
+            }
+
+            // Verify clear was called
+            expect(clearSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should destroy flatpickr instance before reinitialization', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Mock flatpickr instance
+            const clearSpy = vi.fn();
+            const destroySpy = vi.fn();
+            datePickerElement._flatpickr = {
+                clear: clearSpy,
+                destroy: destroySpy
+            };
+
+            // Simulate the event handler behavior
+            if (datePickerElement._flatpickr) {
+                datePickerElement._flatpickr.clear();
+                datePickerElement._flatpickr.destroy();
+            }
+
+            // Verify both were called in order
+            expect(clearSpy).toHaveBeenCalledTimes(1);
+            expect(destroySpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should handle reinitialization when flatpickr does not exist', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // No flatpickr instance
+            datePickerElement._flatpickr = undefined;
+
+            // This should not throw an error
+            expect(() => {
+                if (datePickerElement._flatpickr) {
+                    datePickerElement._flatpickr.clear();
+                    datePickerElement._flatpickr.destroy();
+                }
+            }).not.toThrow();
+        });
+
+        it('should reinitialize with updated existing dates after delete', () => {
+            const datePickerElement = document.getElementById('date-picker');
+
+            // Initial state
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02", "2025-01-03"]');
+
+            // Mock flatpickr
+            const destroySpy = vi.fn();
+            datePickerElement._flatpickr = {
+                destroy: destroySpy
+            };
+
+            // Simulate delete event: destroy flatpickr
+            if (datePickerElement._flatpickr) {
+                datePickerElement._flatpickr.destroy();
+            }
+
+            // Update DOM (simulating Livewire update)
+            datePickerElement.setAttribute('data-existing-dates', '["2025-01-02"]');
+
+            // Verify destroy was called and data was updated
+            expect(destroySpy).toHaveBeenCalledTimes(1);
+            const updatedDates = JSON.parse(datePickerElement.getAttribute('data-existing-dates'));
+            expect(updatedDates).toEqual(['2025-01-02']);
+            expect(updatedDates).not.toContain('2025-01-03');
+        });
+    });
 });

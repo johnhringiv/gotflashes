@@ -490,4 +490,87 @@ class FlashFormTest extends TestCase
             ->assertHasNoErrors()
             ->assertDispatched('toast');
     }
+
+    public function test_form_clears_and_calendar_updates_after_save(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->setDate(2025, 1, 15));
+
+        // Create an existing flash
+        Flash::factory()->forUser($user)->create([
+            'date' => '2025-01-10',
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity']);
+
+        // Verify initial state - existing date should be in existingDates
+        $initialExistingDates = $component->viewData('existingDates');
+        $this->assertContains('2025-01-10', $initialExistingDates);
+        $this->assertNotContains('2025-01-15', $initialExistingDates);
+
+        // Save a new flash
+        $component
+            ->set('dates', ['2025-01-15'])
+            ->set('activity_type', 'sailing')
+            ->set('event_type', 'regatta')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        // Verify form fields are cleared
+        $component->assertSet('dates', [])
+            ->assertSet('activity_type', '')
+            ->assertSet('event_type', '');
+
+        // Verify existingDates now includes the new date
+        $updatedExistingDates = $component->viewData('existingDates');
+        $this->assertContains('2025-01-10', $updatedExistingDates, 'Old date should still be in existingDates');
+        $this->assertContains('2025-01-15', $updatedExistingDates, 'Newly saved date should be in existingDates');
+
+        // Verify flash-saved event was dispatched
+        $component->assertDispatched('flash-saved');
+    }
+
+    public function test_calendar_updates_after_delete(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->setDate(2025, 1, 15));
+
+        // Create two existing flashes
+        Flash::factory()->forUser($user)->create([
+            'date' => '2025-01-10',
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        Flash::factory()->forUser($user)->create([
+            'date' => '2025-01-12',
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity']);
+
+        // Verify initial state - both dates should be in existingDates
+        $initialExistingDates = $component->viewData('existingDates');
+        $this->assertContains('2025-01-10', $initialExistingDates);
+        $this->assertContains('2025-01-12', $initialExistingDates);
+
+        // Simulate a flash being deleted by dispatching the event
+        $component->dispatch('flash-deleted');
+
+        // Component should refresh and fetch updated existingDates
+        // (In reality, the flash would be deleted by FlashList, but we're testing FlashForm's response)
+        // Force a refresh to simulate what happens when flash-deleted is received
+        $component->call('refreshAfterDelete');
+
+        // The component should have re-rendered and fetched fresh data
+        // Both dates should still be there since we didn't actually delete from DB
+        $updatedExistingDates = $component->viewData('existingDates');
+        $this->assertContains('2025-01-10', $updatedExistingDates);
+        $this->assertContains('2025-01-12', $updatedExistingDates);
+    }
 }

@@ -140,6 +140,19 @@ Routes in `routes/web.php`:
   - Solves stale date range problem (users leaving page open across grace period boundaries)
   - Supports both create (multi-date) and edit (single-date) modes
   - Pre-fills form data when editing existing flash
+- **FlashList** (`app/Livewire/FlashList.php`): Displays user's activity list with pagination
+  - Real-time edit and delete functionality
+  - Grace period enforcement for edit/delete operations
+  - Responds to flash-saved and flash-deleted events
+- **ProgressCard** (`app/Livewire/ProgressCard.php`): Shows user's progress toward award tiers
+  - Calculates total flashes with non-sailing day cap (5 per year)
+  - Displays current progress and next milestone
+  - Responds to flash-saved and flash-deleted events for real-time updates
+- **Leaderboard** (`app/Livewire/Leaderboard.php`): Public leaderboard with three tabs
+  - Sailor, Fleet, and District leaderboards with instant tab switching (no page reload)
+  - URL query parameter support via `#[Url]` attribute for bookmarking
+  - Pagination resets automatically when switching tabs
+  - Uses Livewire pagination theme for consistent styling
 
 **Multi-Date Picker** (`resources/js/multi-date-picker.js`):
 - Uses flatpickr for date selection with multiple date support
@@ -255,6 +268,11 @@ Routes in `routes/web.php`:
 - ✅ Favicon integration
 - ✅ Multi-date flash entry (bulk logging)
 - ✅ Grace period enforcement (January allows previous year entries)
+- ✅ Full Livewire integration for interactive features (no page reloads):
+  - Flash form with real-time validation
+  - Flash list with instant edit/delete
+  - Progress card with live updates
+  - Leaderboard with instant tab switching
 
 **Planned:**
 - 📋 Award administrator dashboard

@@ -23,13 +23,44 @@ function initializePickers() {
     }
 }
 
-// Listen for flash-saved event to clear the date picker
+function reinitializeDatePicker(datePickerElement, mode) {
+    if (!datePickerElement) return;
+
+    // Destroy existing instance if it exists
+    if (datePickerElement._flatpickr) {
+        datePickerElement._flatpickr.destroy();
+    }
+
+    // Reinitialize
+    initializeDatePicker(datePickerElement, mode);
+}
+
+// Listen for flash-saved event to reinitialize the date picker with updated dates
 document.addEventListener('livewire:init', () => {
+    // Listen for flash-saved event
     window.Livewire.on('flash-saved', () => {
-        const datePickerElement = document.getElementById('date-picker');
-        if (datePickerElement && datePickerElement._flatpickr) {
-            datePickerElement._flatpickr.clear();
-        }
+        // Wait for Livewire to finish updating the DOM
+        setTimeout(() => {
+            const datePickerElement = document.getElementById('date-picker');
+            if (datePickerElement) {
+                // Clear and reinitialize to pick up updated data attributes
+                if (datePickerElement._flatpickr) {
+                    datePickerElement._flatpickr.clear();
+                }
+                reinitializeDatePicker(datePickerElement, 'multiple');
+            }
+        }, 300);
+    });
+
+    // Listen for flash-deleted event
+    window.Livewire.on('flash-deleted', () => {
+        // Wait for Livewire to finish updating the DOM
+        setTimeout(() => {
+            const datePickerElement = document.getElementById('date-picker');
+            if (datePickerElement) {
+                reinitializeDatePicker(datePickerElement, 'multiple');
+            }
+        }, 300);
     });
 });
 
