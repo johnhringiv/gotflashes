@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FleetController;
 use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FlashController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\SitemapController;
@@ -36,6 +37,11 @@ Route::resource('flashes', FlashController::class)
 Route::view('/profile', 'profile')
     ->middleware('auth')
     ->name('profile');
+
+// Export route
+Route::get('/export/user-data', [ExportController::class, 'exportUserData'])
+    ->middleware('auth')
+    ->name('export.user-data');
 
 // Registration routes
 Route::view('/register', 'auth.register')
