@@ -6,8 +6,11 @@
 export function initializeDateOfBirthValidator(dobInput, onInputCallback = null) {
     if (!dobInput) return;
 
-    // Auto-format as user types (add hyphens only)
+    // Auto-format as user types (add hyphens only) and clear custom validity
     dobInput.addEventListener('input', function(e) {
+        // Clear custom validity to allow revalidation
+        e.target.setCustomValidity('');
+
         const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
         let formatted = '';
 
@@ -96,10 +99,5 @@ export function initializeDateOfBirthValidator(dobInput, onInputCallback = null)
         } else {
             e.target.setCustomValidity('');
         }
-    });
-
-    // Clear custom validity on input to allow revalidation
-    dobInput.addEventListener('input', function(e) {
-        e.target.setCustomValidity('');
     });
 }

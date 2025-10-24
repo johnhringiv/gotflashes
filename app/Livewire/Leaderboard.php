@@ -47,12 +47,7 @@ class Leaderboard extends Component
 
     public function render()
     {
-        $leaderboard = match ($this->tab) {
-            'sailor' => $this->getSailorLeaderboard($this->currentYear),
-            'fleet' => $this->getFleetLeaderboard($this->currentYear),
-            'district' => $this->getDistrictLeaderboard($this->currentYear),
-            default => $this->getSailorLeaderboard($this->currentYear),
-        };
+        $leaderboard = $this->getLeaderboard($this->tab, $this->currentYear);
 
         return view('livewire.leaderboard', [
             'leaderboard' => $leaderboard,
@@ -60,82 +55,14 @@ class Leaderboard extends Component
     }
 
     /**
-     * Get individual sailor leaderboard.
-     * Uses members table to get year-end district/fleet affiliations.
+     * Get leaderboard for the specified tab.
+     * All three tabs use optimized JOIN-based queries with pre-aggregated flash counts.
      */
-    private function getSailorLeaderboard(int $year): LengthAwarePaginator
+    private function getLeaderboard(string $tab, int $year): LengthAwarePaginator
     {
-        return User::select('users.*', 'members.district_id', 'members.fleet_id')
-            ->leftJoin('members', function ($join) use ($year) {
-                $join->on('users.id', '=', 'members.user_id')
-                    ->where('members.year', '=', $year);
-            })
-            ->withFlashesCount($year)
-            ->whereExists(function ($query) use ($year) {
-                $query->from('flashes')
-                    ->whereColumn('users.id', 'flashes.user_id')
-                    ->whereYear('date', $year);
-            })
-            ->orderByDesc('flashes_count')      // Primary: Most total flashes
-            ->orderByDesc('sailing_count')      // Tie-breaker 1: Most sailing days
-            ->orderBy('first_entry_date')       // Tie-breaker 2: Earliest entry
-            ->orderBy('first_name')             // Tie-breaker 3: Alphabetical
-            ->orderBy('last_name')
-            ->paginate(15);
-    }
-
-    /**
-     * Get fleet leaderboard (grouped by fleet).
-     * Uses members table to determine year-end fleet affiliations.
-     * Optimized with JOIN and pre-aggregation instead of correlated subqueries.
-     */
-    private function getFleetLeaderboard(int $year): LengthAwarePaginator
-    {
-        return $this->getAggregatedLeaderboard(
-            table: 'fleets',
-            selectColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
-            joinColumn: 'members.fleet_id',
-            groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
-            year: $year
-        );
-    }
-
-    /**
-     * Get district leaderboard (grouped by district).
-     * Uses members table to determine year-end district affiliations.
-     * Optimized with JOIN and pre-aggregation instead of correlated subqueries.
-     */
-    private function getDistrictLeaderboard(int $year): LengthAwarePaginator
-    {
-        return $this->getAggregatedLeaderboard(
-            table: 'districts',
-            selectColumns: ['districts.id', 'districts.name'],
-            joinColumn: 'members.district_id',
-            groupByColumns: ['districts.id', 'districts.name'],
-            year: $year
-        );
-    }
-
-    /**
-     * Generic aggregated leaderboard query builder.
-     * Handles both fleet and district leaderboards with pre-aggregated flash counts.
-     *
-     * @param  string  $table  The main table to query (fleets or districts)
-     * @param  array  $selectColumns  Base columns to select (id, name/number fields)
-     * @param  string  $joinColumn  The members table column to join on
-     * @param  array  $groupByColumns  Columns to group by
-     * @param  int  $year  The year to filter by
-     */
-    private function getAggregatedLeaderboard(
-        string $table,
-        array $selectColumns,
-        string $joinColumn,
-        array $groupByColumns,
-        int $year
-    ): LengthAwarePaginator {
         $yearString = (string) $year;
 
-        // Build the user flash aggregation subquery once (shared across all aggregations)
+        // Build the user flash aggregation subquery (shared across all tabs)
         $userFlashesSubquery = DB::table('flashes')
             ->select([
                 'user_id',
@@ -146,7 +73,69 @@ class Leaderboard extends Component
             ->whereRaw("strftime('%Y', date) = ?", [$yearString])
             ->groupBy('user_id');
 
-        // Build aggregated counts (same logic for fleet and district)
+        return match ($tab) {
+            'sailor' => $this->buildSailorQuery($userFlashesSubquery, $year),
+            'fleet' => $this->buildGroupedQuery(
+                table: 'fleets',
+                selectColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+                joinColumn: 'members.fleet_id',
+                groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+                userFlashesSubquery: $userFlashesSubquery,
+                year: $year
+            ),
+            'district' => $this->buildGroupedQuery(
+                table: 'districts',
+                selectColumns: ['districts.id', 'districts.name'],
+                joinColumn: 'members.district_id',
+                groupByColumns: ['districts.id', 'districts.name'],
+                userFlashesSubquery: $userFlashesSubquery,
+                year: $year
+            ),
+            default => $this->buildSailorQuery($userFlashesSubquery, $year),
+        };
+    }
+
+    /**
+     * Build individual sailor leaderboard query.
+     * Uses pre-aggregated flash counts with JOIN (no correlated subqueries).
+     */
+    private function buildSailorQuery($userFlashesSubquery, int $year): LengthAwarePaginator
+    {
+        return DB::table('users')
+            ->select([
+                'users.*',
+                'members.district_id',
+                'members.fleet_id',
+                DB::raw("first_name || ' ' || last_name as name"),  // Computed name accessor
+                DB::raw('sailing_count + CASE WHEN non_sailing_count > 5 THEN 5 ELSE non_sailing_count END as flashes_count'),
+                'user_flashes.sailing_count',
+                'user_flashes.first_entry_date',
+            ])
+            ->joinSub($userFlashesSubquery, 'user_flashes', 'users.id', '=', 'user_flashes.user_id')
+            ->leftJoin('members', function ($join) use ($year) {
+                $join->on('users.id', '=', 'members.user_id')
+                    ->where('members.year', '=', $year);
+            })
+            ->orderByDesc('flashes_count')      // Primary: Most total flashes
+            ->orderByDesc('sailing_count')      // Tie-breaker 1: Most sailing days
+            ->orderBy('first_entry_date')       // Tie-breaker 2: Earliest entry
+            ->orderBy('first_name')             // Tie-breaker 3: Alphabetical
+            ->orderBy('last_name')
+            ->paginate(15);
+    }
+
+    /**
+     * Build grouped leaderboard query for fleet or district.
+     * Aggregates flash counts across multiple users.
+     */
+    private function buildGroupedQuery(
+        string $table,
+        array $selectColumns,
+        string $joinColumn,
+        array $groupByColumns,
+        $userFlashesSubquery,
+        int $year
+    ): LengthAwarePaginator {
         $aggregatedColumns = [
             DB::raw('COUNT(DISTINCT members.user_id) as member_count'),
             // Total flashes: sailing (unlimited) + MIN(non-sailing, 5) per user
