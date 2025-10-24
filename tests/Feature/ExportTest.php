@@ -236,6 +236,7 @@ class ExportTest extends TestCase
         foreach ($lines as $line) {
             if (str_contains($line, '"Date","Activity Type"')) {
                 $dataStarted = true;
+
                 continue;
             }
 

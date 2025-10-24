@@ -23,7 +23,7 @@ class FleetFactory extends Factory
         return [
             'district_id' => District::factory(),
             'fleet_number' => fake()->numberBetween(1, 999),
-            'fleet_name' => fake()->city() . ' Fleet',
+            'fleet_name' => fake()->city().' Fleet',
         ];
     }
 }

@@ -20,7 +20,7 @@ class ExportController extends Controller
         // Join flashes with members table based on the year of the flash
         // This ensures we get the correct district/fleet for each flash's year
         $data = $user->flashes()
-            ->leftJoin('members', function ($join) use ($user) {
+            ->leftJoin('members', function ($join) {
                 $join->on('members.user_id', '=', 'flashes.user_id')
                     ->whereRaw('members.year = strftime(\'%Y\', flashes.date)');
             })
@@ -46,11 +46,11 @@ class ExportController extends Controller
         $csv = $this->generateCsv($user, $data);
 
         // Return as downloadable file
-        $filename = 'got-flashes-export-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'got-flashes-export-'.now()->format('Y-m-d').'.csv';
 
         return Response::make($csv, 200, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -63,24 +63,24 @@ class ExportController extends Controller
 
         // Header section with user info
         $csv .= "G.O.T. Flashes Data Export\n";
-        $csv .= "Export Date: " . now()->format('Y-m-d') . "\n";
+        $csv .= 'Export Date: '.now()->format('Y-m-d')."\n";
         $csv .= "\n";
         $csv .= "User Information\n";
         $csv .= "Name:,{$user->name}\n";
         $csv .= "Email:,{$user->email}\n";
-        $csv .= "Date of Birth:," . ($user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : '') . "\n";
+        $csv .= 'Date of Birth:,'.($user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : '')."\n";
         $csv .= "Gender:,{$user->gender}\n";
-        $csv .= "Address:,\"{$user->address_line1}" . ($user->address_line2 ? ', ' . $user->address_line2 : '') . "\"\n";
+        $csv .= "Address:,\"{$user->address_line1}".($user->address_line2 ? ', '.$user->address_line2 : '')."\"\n";
         $csv .= "City:,{$user->city}\n";
         $csv .= "State:,{$user->state}\n";
         $csv .= "Zip:,{$user->zip_code}\n";
         $csv .= "Country:,{$user->country}\n";
-        $csv .= "Yacht Club:," . ($user->yacht_club ?: '') . "\n";
+        $csv .= 'Yacht Club:,'.($user->yacht_club ?: '')."\n";
         $csv .= "\n";
 
         // Flashes data section
         $csv .= "Activity Log\n";
-        $csv .= '"Date","Activity Type","Event Type","Location","Sail Number","District","Fleet Number","Fleet Name","Notes","Created At","Updated At"' . "\n";
+        $csv .= '"Date","Activity Type","Event Type","Location","Sail Number","District","Fleet Number","Fleet Name","Notes","Created At","Updated At"'."\n";
 
         foreach ($data as $flash) {
             // Format date as Y-m-d without time
@@ -89,16 +89,16 @@ class ExportController extends Controller
                 : $flash->date;
 
             $csv .= $this->escapeCsvValue($dateValue);
-            $csv .= ',' . $this->escapeCsvValue($flash->activity_type);
-            $csv .= ',' . $this->escapeCsvValue($flash->event_type);
-            $csv .= ',' . $this->escapeCsvValue($flash->location);
-            $csv .= ',' . $this->escapeCsvValue($flash->sail_number);
-            $csv .= ',' . $this->escapeCsvValue($flash->district_name);
-            $csv .= ',' . $this->escapeCsvValue($flash->fleet_number);
-            $csv .= ',' . $this->escapeCsvValue($flash->fleet_name);
-            $csv .= ',' . $this->escapeCsvValue($flash->notes);
-            $csv .= ',' . $this->escapeCsvValue($flash->created_at);
-            $csv .= ',' . $this->escapeCsvValue($flash->updated_at);
+            $csv .= ','.$this->escapeCsvValue($flash->activity_type);
+            $csv .= ','.$this->escapeCsvValue($flash->event_type);
+            $csv .= ','.$this->escapeCsvValue($flash->location);
+            $csv .= ','.$this->escapeCsvValue($flash->sail_number);
+            $csv .= ','.$this->escapeCsvValue($flash->district_name);
+            $csv .= ','.$this->escapeCsvValue($flash->fleet_number);
+            $csv .= ','.$this->escapeCsvValue($flash->fleet_name);
+            $csv .= ','.$this->escapeCsvValue($flash->notes);
+            $csv .= ','.$this->escapeCsvValue($flash->created_at);
+            $csv .= ','.$this->escapeCsvValue($flash->updated_at);
             $csv .= "\n";
         }
 
@@ -118,9 +118,9 @@ class ExportController extends Controller
 
         // If value contains comma, quote, or newline, wrap in quotes and escape quotes
         if (str_contains($value, ',') || str_contains($value, '"') || str_contains($value, "\n")) {
-            $value = '"' . str_replace('"', '""', $value) . '"';
+            $value = '"'.str_replace('"', '""', $value).'"';
         } else {
-            $value = '"' . $value . '"';
+            $value = '"'.$value.'"';
         }
 
         return $value;
