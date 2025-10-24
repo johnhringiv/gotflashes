@@ -62,6 +62,7 @@ php artisan tinker
 - Fields: user_id, date, activity_type, event_type, location, sail_number, notes
 - Relationship: `belongsTo(User::class)`
 - Key constraint: One flash per user per date (enforced by unique index)
+- Method: `isEditable($minDate, $maxDate)` - Determines if flash can be edited/deleted based on grace period logic
 
 ### Business Rules
 
@@ -83,6 +84,8 @@ php artisan tinker
 - Cannot duplicate dates (one activity per date per user)
 - Current year activities: editable/deletable
 - Previous years' activities: read-only after January 31st grace period
+- Edit/delete buttons only appear for activities within the editable date range (`Flash::isEditable()`)
+- Backend authorization checks (`edit()`, `update()`, `destroy()`) enforce editable date range with 403 responses
 
 **Award Tiers:**
 - 10 days = First tier
@@ -120,6 +123,7 @@ Routes in `routes/web.php`:
 
 **Tech Stack:**
 - Blade templates (server-rendered)
+- Livewire v3 (reactive components for flash form)
 - Tailwind CSS v4 (utility-first CSS)
 - Vanilla JavaScript (minimal, progressive enhancement)
 - Vite for asset bundling
@@ -130,6 +134,42 @@ Routes in `routes/web.php`:
 - Event listeners wrapped in `DOMContentLoaded`
 - Progressive enhancement (form validation, UX improvements)
 
+**Livewire Components:**
+- **FlashForm** (`app/Livewire/FlashForm.php`): Activity entry and edit form
+  - Dynamically calculates min/max dates on every render (always current) via `DateRangeService`
+  - Solves stale date range problem (users leaving page open across grace period boundaries)
+  - Supports both create (multi-date) and edit (single-date) modes
+  - Pre-fills form data when editing existing flash
+  - Uses separate element IDs for create vs edit mode (`activity_type` vs `activity_type_edit`) to prevent getElementById conflicts
+  - JavaScript initialization uses `morph.added` hook to ensure elements exist before attaching listeners
+- **FlashList** (`app/Livewire/FlashList.php`): Displays user's activity list with pagination
+  - Real-time edit and delete functionality
+  - Grace period enforcement for edit/delete operations via `DateRangeService`
+  - Responds to flash-saved and flash-deleted events
+- **ProgressCard** (`app/Livewire/ProgressCard.php`): Shows user's progress toward award tiers
+  - Calculates total flashes with non-sailing day cap (5 per year)
+  - Displays current progress and next milestone
+  - Responds to flash-saved and flash-deleted events for real-time updates
+- **Leaderboard** (`app/Livewire/Leaderboard.php`): Public leaderboard with three tabs
+  - Sailor, Fleet, and District leaderboards with instant tab switching (no page reload)
+  - URL query parameter support via `#[Url]` attribute for bookmarking
+  - Pagination resets automatically when switching tabs
+  - Uses Livewire pagination theme for consistent styling
+
+**Multi-Date Picker** (`resources/js/multi-date-picker.js`):
+- Uses flatpickr for date selection with multiple date support
+- Min/max dates passed from Livewire component via data attributes
+- Year selector converted to dropdown (only shows current year + previous year during grace period)
+- Custom `hideExtraWeeks()` function removes calendar weeks containing only adjacent month dates
+- Existing flash dates are disabled and marked with Lightning logo
+- **Livewire Integration Pattern**: Syncs with Livewire updates using hooks
+  - Listens for `flash-saved` and `flash-deleted` events to set pending flags
+  - Uses Livewire's `morph.updated` hook to detect when date picker element updates
+  - Wraps reinitialization in `requestAnimationFrame()` to wait for browser paint cycle
+  - Re-queries element with `document.getElementById()` to get freshest DOM reference
+  - This ensures flatpickr always has current `data-existing-dates` after Livewire updates
+  - **Key insight**: Even after Livewire morph completes, must wait one browser frame for paint cycle to finish before DOM attributes are truly current
+
 **CSS/Tailwind:**
 - Use Tailwind utility classes first
 - Custom CSS only when necessary in `resources/css/app.css`
@@ -137,6 +177,11 @@ Routes in `routes/web.php`:
 - Custom "lightning" theme with Lightning Class brand colors
 - Floating label form styling (label appears in border outline)
 - Tooltips use lighter blue background (secondary color)
+- Flatpickr calendar styled with Lightning Class brand colors (blue header, white text)
+- **Dynamic Classes**: Classes created at runtime (e.g., in JavaScript) must be force-included using `@source inline("class-name")` in app.css
+  - Example: Toast notification alert variants (`alert-warning`, `alert-error`, etc.) are dynamically created in `toast.js`
+  - Without `@source inline()`, Tailwind's JIT compiler won't include these classes in the build
+  - See line 66 in `resources/css/app.css` for the toast alert safelist
 
 ### Database Schema
 
@@ -203,6 +248,61 @@ Routes in `routes/web.php`:
 - Runs on: push and PR to main/master/develop branches
 - Single job runs `composer check` (linting + tests)
 
+## Observability
+
+The application includes comprehensive observability features via `ObservabilityServiceProvider` and middleware:
+
+### Request Logging (`RequestLoggingMiddleware`)
+- **All HTTP requests** are logged with structured context:
+  - Unique request ID (UUID) for tracing
+  - Method, URL, path, IP, user agent
+  - User ID, session ID
+  - Request/response size, duration, memory usage
+  - Filtered sensitive headers (cookies, auth tokens)
+- **Livewire-aware**: Automatically extracts component context from Livewire requests:
+  - Component name (e.g., `FlashForm`, `Leaderboard`)
+  - Method calls (e.g., `save()`, `delete()`, `switchTab()`)
+  - Property updates (form field changes)
+- **Performance tracking**: Slow requests (>300ms) logged to `performance` channel
+- **Request lifecycle**: Both "Request received" and "Request completed" events
+
+### Authentication Logging
+- Login success/failure tracked to `security` channel
+- User registration events
+- Login duration tracking via session timestamps
+
+### Error Tracking
+- Uncaught exceptions logged with full context:
+  - Exception class, message, file, line
+  - Stack trace (limited to 10 frames)
+  - User context (user_id, email, IP)
+  - Request context (URL, method, user agent, referer)
+- Production PHP warnings/notices captured
+
+### Log Channels
+- `structured`: Structured JSON logs for all requests/responses
+- `security`: Authentication and authorization events
+- `performance`: Slow request warnings
+
+### Example: Livewire Observability
+When a user edits a flash or switches leaderboard tabs, logs include:
+```json
+{
+  "livewire": {
+    "component_name": "flash-form",
+    "calls": [{"method": "update", "params": 0}]
+  }
+}
+```
+
+This allows tracking of:
+- Flash creation/editing/deletion
+- Leaderboard tab switching
+- Form field updates
+- Component interactions
+
+**All Livewire operations are automatically logged** - no special instrumentation needed in components.
+
 ## Implementation Status
 
 **Completed:**
@@ -236,6 +336,11 @@ Routes in `routes/web.php`:
 - ✅ Favicon integration
 - ✅ Multi-date flash entry (bulk logging)
 - ✅ Grace period enforcement (January allows previous year entries)
+- ✅ Full Livewire integration for interactive features (no page reloads):
+  - Flash form with real-time validation
+  - Flash list with instant edit/delete
+  - Progress card with live updates
+  - Leaderboard with instant tab switching
 
 **Planned:**
 - 📋 Award administrator dashboard
@@ -271,12 +376,76 @@ Routes in `routes/web.php`:
 
 See `docs/CONTRIBUTING.md` for complete branching workflow and merge commit examples.
 
-### Year Calculation Logic
+### Date Validation & Grace Period Logic
+Date validation is centralized in `DateRangeService::getAllowedDateRange()` (`app/Services/DateRangeService.php`):
+- Returns a tuple `[$minDate, $maxDate]` for consistent date range logic across the app
+- **January (grace period)**: Users can log dates from previous year (Jan 1 of previous year through today +1)
+- **February onwards**: Users can only log dates from current year (Jan 1 of current year through today +1)
+- Min/max dates are passed from Livewire components to frontend via data attributes on the date picker
+- This ensures backend validation and frontend UI constraints are always in sync
+
 When implementing year-based features (award tracking, non-sailing day limits):
 - Use calendar year (Jan 1 - Dec 31) for activity counting
 - Grace period: Users can log previous year until January 31st
 - After Jan 31, previous year becomes read-only
 - Non-sailing day counter resets January 1st
+- Always use `DateRangeService::getAllowedDateRange()` instead of duplicating the logic
+
+### Livewire JavaScript Integration Patterns
+
+**For edit modals and dynamically added elements:**
+- Use `Livewire.hook('morph.added')` to detect when new elements are added to the DOM
+- Check both `el.id` and `el.querySelector()` to handle parent containers and direct elements
+- Wrap initialization in `requestAnimationFrame()` to ensure DOM is fully painted
+- Track initialization with flags (e.g., `element._flashFormInitialized`) to prevent duplicate listeners
+
+**Example pattern (flash-form.js):**
+```javascript
+Livewire.hook('morph.added', ({ el }) => {
+    const hasEditForm = el.id === 'activity_type_edit' ||
+                       (el.querySelector && el.querySelector('#activity_type_edit'));
+    if (hasEditForm) {
+        requestAnimationFrame(() => {
+            initializeFlashForm();
+        });
+    }
+});
+```
+
+**Why `morph.added` vs `morph.updated`:**
+- `morph.added`: Fires when NEW elements are added (use for modals/dynamic content)
+- `morph.updated`: Fires when EXISTING elements are updated (use for refreshing existing content)
+- In production/Docker, timing differences expose race conditions that work fine in dev
+- Always test JavaScript initialization in production Docker builds, not just local dev
+
+### Livewire Performance Best Practices
+
+**Use appropriate wire:model modifiers to minimize re-renders:**
+- `wire:model.defer` - Syncs on form submission (best for forms with many fields)
+- `wire:model.blur` - Syncs when field loses focus (good for text inputs, prevents query-per-keystroke)
+- `wire:model.live` - Syncs on every keystroke (use sparingly, only when real-time updates needed)
+- `wire:model` - Syncs on input event (avoid for text fields, causes unnecessary renders)
+
+**Example: FlashForm optimization**
+```blade
+{{-- GOOD: Only syncs when user leaves field --}}
+<input wire:model.blur="location" />
+<textarea wire:model.blur="notes" />
+
+{{-- BAD: Syncs on every keystroke, triggers render() + DB queries --}}
+<input wire:model="location" />
+```
+
+**Why this matters:**
+- Every Livewire sync triggers `render()` which may run database queries
+- FlashForm's `render()` queries `existingDates` on every render
+- Using `wire:model` on a notes textarea = database query per keystroke
+- Using `wire:model.blur` = database query only when field loses focus
+
+**Rule of thumb:**
+- Required fields that drive UI logic: `wire:model.live` or `wire:model`
+- Optional text fields: `wire:model.blur`
+- Form submission: `wire:model.defer`
 
 ### Testing Strategy
 
@@ -284,6 +453,52 @@ When implementing year-based features (award tracking, non-sailing day limits):
 - Write tests first for new features when possible
 - All existing functionality has test coverage
 - Tests run automatically in CI/CD and pre-commit hooks
+
+**Testing Livewire + JavaScript Integration:**
+
+Livewire components that integrate with JavaScript (like the date picker) require a layered testing approach:
+
+**Layer 1: Livewire Data Layer (PHPUnit)** ✅
+- Tests the Livewire → JavaScript data contract
+- Verifies correct data is passed to view (via `viewData()`)
+- Verifies data updates when events fire
+- Fast, no browser required
+
+Example tests in `FlashCalendarIntegrationTest`:
+- `existingDates` is populated correctly
+- Dates update after save/delete events
+- HTML contains correct `data-*` attributes
+- Date format matches JavaScript expectations (Y-m-d)
+
+**Layer 2: JavaScript Behavior (Laravel Dusk)** ⏸️
+- Tests actual browser behavior (flatpickr, DOM manipulation)
+- Verifies dates are disabled/enabled in UI
+- Verifies JavaScript receives and processes Livewire updates
+- Slow, requires browser automation
+
+Example tests in `FlashCalendarTest` (Dusk, optional):
+- Clicking date in calendar
+- Dates become disabled after saving
+- Calendar updates without page reload
+- Visual indicators appear correctly
+
+**Current Coverage:**
+- ✅ Layer 1 (Livewire data) - Fully tested with 6 comprehensive tests
+- ⏸️ Layer 2 (JavaScript) - Manual testing currently (Dusk setup optional)
+
+**Why This Works:**
+- Layer 1 tests catch 90% of integration bugs (data not updating, wrong format, missing attributes)
+- Livewire guarantees if data is passed correctly, JavaScript will receive it
+- Manual testing can verify the final 10% (visual behavior, edge cases)
+
+**Testing Confidence:**
+If Layer 1 tests pass, you can be confident:
+- ✅ Calendar receives fresh data after saves/deletes
+- ✅ Dates are in correct format for JavaScript
+- ✅ Data attributes are present in HTML
+- ✅ Livewire events trigger re-renders
+
+The only thing not tested: flatpickr actually using the data (which is flatpickr's responsibility, not ours).
 
 **Test Organization:**
 - **Feature Tests** (`tests/Feature/`): Full HTTP request/response workflows

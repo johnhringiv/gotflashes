@@ -21,8 +21,11 @@ class RequestLoggingMiddleware
         // Add request ID to the request for tracing
         $request->headers->set('X-Request-ID', $requestId);
 
+        // Parse Livewire component details if present
+        $livewireContext = $this->extractLivewireContext($request);
+
         // Log the incoming request
-        Log::channel('structured')->debug('Request received', [
+        Log::channel('structured')->debug('Request received', array_filter([
             'request_id' => $requestId,
             'method' => $request->method(),
             'url' => $request->fullUrl(),
@@ -34,7 +37,8 @@ class RequestLoggingMiddleware
             'headers' => $this->filterSensitiveHeaders($request->headers->all()),
             'query_params' => $request->query(),
             'body_size' => strlen($request->getContent()),
-        ]);
+            'livewire' => $livewireContext, // Only present for Livewire requests
+        ]));
 
         // Process the request
         $response = $next($request);
@@ -84,5 +88,53 @@ class RequestLoggingMiddleware
         }
 
         return $headers;
+    }
+
+    /**
+     * Extract Livewire component context from request
+     */
+    private function extractLivewireContext(Request $request): ?array
+    {
+        // Check if this is a Livewire request
+        if (! $request->hasHeader('X-Livewire')) {
+            return null;
+        }
+
+        try {
+            $payload = json_decode($request->getContent(), true);
+
+            if (! $payload) {
+                return null;
+            }
+
+            $context = [
+                'component' => $payload['components'][0]['snapshot']['data']['__livewireId'] ?? $payload['components'][0]['snapshot']['memo']['name'] ?? 'unknown',
+                'component_name' => $payload['components'][0]['snapshot']['memo']['name'] ?? 'unknown',
+            ];
+
+            // Extract method calls if present
+            if (isset($payload['components'][0]['calls'])) {
+                $context['calls'] = array_map(function ($call) {
+                    return [
+                        'method' => $call['method'] ?? 'unknown',
+                        'params' => isset($call['params']) ? count($call['params']) : 0,
+                    ];
+                }, $payload['components'][0]['calls']);
+            }
+
+            // Extract updated properties if present
+            if (isset($payload['components'][0]['updates'])) {
+                $context['updates'] = array_map(function ($update) {
+                    return [
+                        'type' => $update['type'] ?? 'unknown',
+                        'payload' => isset($update['payload']['value']) ? 'value_updated' : 'unknown',
+                    ];
+                }, $payload['components'][0]['updates']);
+            }
+
+            return $context;
+        } catch (\Exception $e) {
+            return ['error' => 'Failed to parse Livewire payload'];
+        }
     }
 }

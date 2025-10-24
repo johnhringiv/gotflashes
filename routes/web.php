@@ -26,8 +26,10 @@ Route::prefix('api')->middleware(['throttle:60,1', 'cache.headers:public;max_age
     Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
 });
 
+// Flash routes - Note: store/update/destroy are handled by Livewire components
+// Only index and edit use traditional routes
 Route::resource('flashes', FlashController::class)
-    ->only(['index', 'store', 'edit', 'update', 'destroy'])
+    ->only(['index', 'edit'])
     ->middleware('auth');
 
 // Registration routes

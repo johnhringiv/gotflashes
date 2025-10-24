@@ -63,6 +63,7 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source inline("alert-warning alert-error alert-success alert-info");
 
 @theme {
     --animate-fade-out: fade-out 4s ease-in-out forwards;
@@ -159,6 +160,31 @@
     fill: oklch(92% 0.005 245deg) !important;
 }
 
+/* Year dropdown styling (custom select element) */
+.flatpickr-current-month select {
+    background: oklch(38% 0.09 245deg) !important;
+    color: oklch(100% 0 0deg) !important;
+    border: none !important;
+    font-weight: inherit !important;
+    cursor: pointer !important;
+    padding-right: 1rem !important;
+
+    /* Keep native dropdown arrow by not using appearance: none */
+}
+
+/* Hide the spinner controls container that appears on hover */
+/* stylelint-disable-next-line selector-class-pattern */
+.flatpickr-current-month .numInputWrapper {
+    display: inline-block !important;
+}
+
+/* stylelint-disable selector-class-pattern */
+.flatpickr-current-month .numInputWrapper span.arrowUp,
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    display: none !important;
+}
+/* stylelint-enable selector-class-pattern */
+
 /* Weekday headers */
 .flatpickr-weekdays {
     background: oklch(92% 0.005 245deg) !important;
@@ -188,15 +214,23 @@ span.flatpickr-weekday {
     color: oklch(100% 0 0deg) !important;
 }
 
-/* Today's date */
-.flatpickr-day.today {
+/* Today's date - ONLY when not selected */
+.flatpickr-day.today:not(.selected) {
     border-color: oklch(44% 0.21 29deg) !important;
     background: oklch(96% 0.003 245deg) !important;
 }
 
-.flatpickr-day.today:hover {
+.flatpickr-day.today:not(.selected):hover {
     background: oklch(92% 0.005 245deg) !important;
     border-color: oklch(44% 0.21 29deg) !important;
+}
+
+/* Today's date when selected - blue background with red border */
+.flatpickr-day.today.selected,
+.flatpickr-day.today.selected:hover {
+    background: oklch(38% 0.09 245deg) !important;
+    border-color: oklch(44% 0.21 29deg) !important;
+    color: oklch(100% 0 0deg) !important;
 }
 
 /* Future dates (disabled) - grayed out */

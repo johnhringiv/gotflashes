@@ -39,6 +39,7 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="min-h-screen flex flex-col bg-base-200 font-sans">
 <nav class="navbar shadow-md" style="background-color: var(--color-primary); color: var(--color-primary-content);">
@@ -107,28 +108,38 @@
 </nav>
 
 <main class="flex-1 container mx-auto px-4 py-8">
-    <!-- Success Toast -->
-    @if (session('success'))
-        <div class="toast toast-top toast-center z-50" style="top: 5rem;">
-            <div class="alert alert-success" id="success-toast">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{{ session('success') }}</span>
+    <!-- JavaScript Required Notice -->
+    <noscript>
+        <div class="alert alert-error shadow-lg mb-6 max-w-2xl mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <h3 class="font-bold">JavaScript Required</h3>
+                <p class="text-sm">This application requires JavaScript to function properly. Please enable JavaScript in your browser settings and reload the page.</p>
             </div>
         </div>
+    </noscript>
+
+    <!-- Toast Container (for both session and Livewire toasts) -->
+    <div id="toast-container" class="toast toast-top toast-center z-50" style="top: 5rem;"></div>
+
+    <!-- Success Toast (Session-based - for page reloads) -->
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast('success', {{ Js::from(session('success')) }});
+            });
+        </script>
     @endif
 
-    <!-- Warning Toast -->
+    <!-- Warning Toast (Session-based - for page reloads) -->
     @if (session('warning'))
-        <div class="toast toast-top toast-center z-50" style="top: 5rem;">
-            <div class="alert alert-warning" id="warning-toast">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>{{ session('warning') }}</span>
-            </div>
-        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast('warning', {{ Js::from(session('warning')) }});
+            });
+        </script>
     @endif
 
     {{ $slot }}
@@ -143,5 +154,6 @@
         </p>
     </div>
 </footer>
+@livewireScripts
 </body>
 </html>

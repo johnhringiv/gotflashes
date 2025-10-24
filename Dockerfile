@@ -39,9 +39,12 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy composer files
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production only, optimized)
-# Note: We'll regenerate caches in the runtime container with proper .env
+# Install PHP dependencies (production only, optimized, skip scripts)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --no-cache
+
+# Manually copy Livewire assets to public directory
+RUN mkdir -p public/vendor && \
+    cp -r vendor/livewire/livewire/dist public/vendor/livewire
 
 # Stage 3: Production runtime image
 FROM php:8.4-fpm-alpine
@@ -93,6 +96,7 @@ COPY docker/.env.docker ./.env
 
 # Copy dependencies (owned by appuser since USER is set)
 COPY --from=php-builder /app/vendor ./vendor
+COPY --from=php-builder /app/public/vendor/livewire ./public/vendor/livewire
 COPY --from=frontend /app/public/build ./public/build
 
 # Switch back to root to copy config files
