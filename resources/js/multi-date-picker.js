@@ -37,16 +37,22 @@ function reinitializeDatePicker(datePickerElement, mode) {
 
 // Listen for flash-saved and flash-deleted events to reinitialize the date picker
 document.addEventListener('livewire:init', () => {
-    let pendingClearAndReinit = false;
-    let pendingReinitOnly = false;
+    let pendingAction = null; // null | 'clearAndReinit' | 'reinitOnly'
 
-    // Set flags when events fire
+    // Set action when events fire (most recent action wins)
     window.Livewire.on('flash-saved', () => {
-        pendingClearAndReinit = true;
+        pendingAction = 'clearAndReinit';
     });
 
     window.Livewire.on('flash-deleted', () => {
-        pendingReinitOnly = true;
+        pendingAction = 'reinitOnly';
+    });
+
+    // Cleanup flatpickr instances when elements are removed from DOM
+    window.Livewire.hook('morph.removing', ({ el }) => {
+        if (el._flatpickr) {
+            el._flatpickr.destroy();
+        }
     });
 
     // Use Livewire's morph.updated hook to detect date picker DOM updates (main form)
@@ -54,22 +60,21 @@ document.addEventListener('livewire:init', () => {
         // Wait for browser paint cycle to complete, then reinitialize main picker
         requestAnimationFrame(() => {
             // Check for multi-date picker (main form)
-            if (pendingClearAndReinit || pendingReinitOnly) {
+            if (pendingAction) {
                 const hasDatePicker = el.id === 'date-picker' || (el.querySelector && el.querySelector('#date-picker'));
                 if (hasDatePicker) {
                     const datePickerElement = document.getElementById('date-picker');
                     if (datePickerElement) {
                         // Clear the picker if this was a save operation
-                        if (pendingClearAndReinit && datePickerElement._flatpickr) {
+                        if (pendingAction === 'clearAndReinit' && datePickerElement._flatpickr) {
                             datePickerElement._flatpickr.clear();
                         }
 
                         // Reinitialize with fresh data from DOM
                         reinitializeDatePicker(datePickerElement, 'multiple');
 
-                        // Reset flags
-                        pendingClearAndReinit = false;
-                        pendingReinitOnly = false;
+                        // Reset action
+                        pendingAction = null;
                     }
                 }
             }

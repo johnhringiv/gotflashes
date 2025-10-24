@@ -94,19 +94,10 @@ class FlashForm extends Component
             return;
         }
 
-        // Prepare common data for all flashes
-        $commonData = [
-            'activity_type' => $this->activity_type,
-            'event_type' => $this->event_type ?: null,
-            'location' => $this->location ?: null,
-            'sail_number' => $this->sail_number ?: null,
-            'notes' => $this->notes ?: null,
-        ];
-
         // Use transaction to ensure all-or-nothing
-        DB::transaction(function () use ($dates, $commonData) {
+        DB::transaction(function () use ($dates) {
             foreach ($dates as $date) {
-                auth()->user()->flashes()->create(array_merge($commonData, ['date' => $date]));
+                auth()->user()->flashes()->create(array_merge($this->getFlashData(), ['date' => $date]));
             }
         });
 
@@ -145,10 +136,12 @@ class FlashForm extends Component
 
     public function update()
     {
-        // Authorization check
-        if (! $this->flash || auth()->id() !== $this->flash->user_id) {
+        // Authorization check using Laravel's authorize method
+        if (! $this->flash) {
             abort(403);
         }
+
+        $this->authorize('update', $this->flash);
 
         // Get allowed date range based on grace period
         [$minDate, $maxDate] = DateRangeService::getAllowedDateRange();
@@ -189,14 +182,9 @@ class FlashForm extends Component
         }
 
         // Update the flash
-        $this->flash->update([
+        $this->flash->update(array_merge($this->getFlashData(), [
             'date' => $this->date,
-            'activity_type' => $this->activity_type,
-            'event_type' => $this->event_type ?: null,
-            'location' => $this->location ?: null,
-            'sail_number' => $this->sail_number ?: null,
-            'notes' => $this->notes ?: null,
-        ]);
+        ]));
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -222,6 +210,22 @@ class FlashForm extends Component
     {
         // This method triggers a re-render after a flash is deleted
         // This ensures the calendar updates when dates are removed
+    }
+
+    /**
+     * Get flash data array for create/update operations.
+     *
+     * @return array<string, mixed>
+     */
+    private function getFlashData(): array
+    {
+        return [
+            'activity_type' => $this->activity_type,
+            'event_type' => $this->event_type ?: null,
+            'location' => $this->location ?: null,
+            'sail_number' => $this->sail_number ?: null,
+            'notes' => $this->notes ?: null,
+        ];
     }
 
     public function render()

@@ -52,10 +52,8 @@ class FlashList extends Component
 
         $flash = \App\Models\Flash::findOrFail($this->deletingFlashId);
 
-        // Authorization check
-        if (auth()->id() !== $flash->user_id) {
-            abort(403);
-        }
+        // Authorization check using Laravel's authorize method
+        $this->authorize('delete', $flash);
 
         // Check if flash is within editable date range
         [$minDate, $maxDate] = DateRangeService::getAllowedDateRange();

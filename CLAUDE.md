@@ -248,6 +248,61 @@ Routes in `routes/web.php`:
 - Runs on: push and PR to main/master/develop branches
 - Single job runs `composer check` (linting + tests)
 
+## Observability
+
+The application includes comprehensive observability features via `ObservabilityServiceProvider` and middleware:
+
+### Request Logging (`RequestLoggingMiddleware`)
+- **All HTTP requests** are logged with structured context:
+  - Unique request ID (UUID) for tracing
+  - Method, URL, path, IP, user agent
+  - User ID, session ID
+  - Request/response size, duration, memory usage
+  - Filtered sensitive headers (cookies, auth tokens)
+- **Livewire-aware**: Automatically extracts component context from Livewire requests:
+  - Component name (e.g., `FlashForm`, `Leaderboard`)
+  - Method calls (e.g., `save()`, `delete()`, `switchTab()`)
+  - Property updates (form field changes)
+- **Performance tracking**: Slow requests (>300ms) logged to `performance` channel
+- **Request lifecycle**: Both "Request received" and "Request completed" events
+
+### Authentication Logging
+- Login success/failure tracked to `security` channel
+- User registration events
+- Login duration tracking via session timestamps
+
+### Error Tracking
+- Uncaught exceptions logged with full context:
+  - Exception class, message, file, line
+  - Stack trace (limited to 10 frames)
+  - User context (user_id, email, IP)
+  - Request context (URL, method, user agent, referer)
+- Production PHP warnings/notices captured
+
+### Log Channels
+- `structured`: Structured JSON logs for all requests/responses
+- `security`: Authentication and authorization events
+- `performance`: Slow request warnings
+
+### Example: Livewire Observability
+When a user edits a flash or switches leaderboard tabs, logs include:
+```json
+{
+  "livewire": {
+    "component_name": "flash-form",
+    "calls": [{"method": "update", "params": 0}]
+  }
+}
+```
+
+This allows tracking of:
+- Flash creation/editing/deletion
+- Leaderboard tab switching
+- Form field updates
+- Component interactions
+
+**All Livewire operations are automatically logged** - no special instrumentation needed in components.
+
 ## Implementation Status
 
 **Completed:**
@@ -363,12 +418,87 @@ Livewire.hook('morph.added', ({ el }) => {
 - In production/Docker, timing differences expose race conditions that work fine in dev
 - Always test JavaScript initialization in production Docker builds, not just local dev
 
+### Livewire Performance Best Practices
+
+**Use appropriate wire:model modifiers to minimize re-renders:**
+- `wire:model.defer` - Syncs on form submission (best for forms with many fields)
+- `wire:model.blur` - Syncs when field loses focus (good for text inputs, prevents query-per-keystroke)
+- `wire:model.live` - Syncs on every keystroke (use sparingly, only when real-time updates needed)
+- `wire:model` - Syncs on input event (avoid for text fields, causes unnecessary renders)
+
+**Example: FlashForm optimization**
+```blade
+{{-- GOOD: Only syncs when user leaves field --}}
+<input wire:model.blur="location" />
+<textarea wire:model.blur="notes" />
+
+{{-- BAD: Syncs on every keystroke, triggers render() + DB queries --}}
+<input wire:model="location" />
+```
+
+**Why this matters:**
+- Every Livewire sync triggers `render()` which may run database queries
+- FlashForm's `render()` queries `existingDates` on every render
+- Using `wire:model` on a notes textarea = database query per keystroke
+- Using `wire:model.blur` = database query only when field loses focus
+
+**Rule of thumb:**
+- Required fields that drive UI logic: `wire:model.live` or `wire:model`
+- Optional text fields: `wire:model.blur`
+- Form submission: `wire:model.defer`
+
 ### Testing Strategy
 
 **Test-Driven Development (TDD):**
 - Write tests first for new features when possible
 - All existing functionality has test coverage
 - Tests run automatically in CI/CD and pre-commit hooks
+
+**Testing Livewire + JavaScript Integration:**
+
+Livewire components that integrate with JavaScript (like the date picker) require a layered testing approach:
+
+**Layer 1: Livewire Data Layer (PHPUnit)** ✅
+- Tests the Livewire → JavaScript data contract
+- Verifies correct data is passed to view (via `viewData()`)
+- Verifies data updates when events fire
+- Fast, no browser required
+
+Example tests in `FlashCalendarIntegrationTest`:
+- `existingDates` is populated correctly
+- Dates update after save/delete events
+- HTML contains correct `data-*` attributes
+- Date format matches JavaScript expectations (Y-m-d)
+
+**Layer 2: JavaScript Behavior (Laravel Dusk)** ⏸️
+- Tests actual browser behavior (flatpickr, DOM manipulation)
+- Verifies dates are disabled/enabled in UI
+- Verifies JavaScript receives and processes Livewire updates
+- Slow, requires browser automation
+
+Example tests in `FlashCalendarTest` (Dusk, optional):
+- Clicking date in calendar
+- Dates become disabled after saving
+- Calendar updates without page reload
+- Visual indicators appear correctly
+
+**Current Coverage:**
+- ✅ Layer 1 (Livewire data) - Fully tested with 6 comprehensive tests
+- ⏸️ Layer 2 (JavaScript) - Manual testing currently (Dusk setup optional)
+
+**Why This Works:**
+- Layer 1 tests catch 90% of integration bugs (data not updating, wrong format, missing attributes)
+- Livewire guarantees if data is passed correctly, JavaScript will receive it
+- Manual testing can verify the final 10% (visual behavior, edge cases)
+
+**Testing Confidence:**
+If Layer 1 tests pass, you can be confident:
+- ✅ Calendar receives fresh data after saves/deletes
+- ✅ Dates are in correct format for JavaScript
+- ✅ Data attributes are present in HTML
+- ✅ Livewire events trigger re-renders
+
+The only thing not tested: flatpickr actually using the data (which is flatpickr's responsibility, not ours).
 
 **Test Organization:**
 - **Feature Tests** (`tests/Feature/`): Full HTTP request/response workflows

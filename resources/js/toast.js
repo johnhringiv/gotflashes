@@ -4,7 +4,22 @@ let toastTimeout;
 
 window.showToast = function(type, message) {
     const container = document.getElementById('toast-container');
-    if (!container) return;
+    if (!container) {
+        console.warn('Toast container not found');
+        return;
+    }
+
+    if (!message) {
+        console.warn('Toast message is empty');
+        return;
+    }
+
+    // Validate type
+    const validTypes = ['success', 'warning', 'error', 'info'];
+    if (!validTypes.includes(type)) {
+        console.warn(`Invalid toast type: ${type}, defaulting to 'info'`);
+        type = 'info';
+    }
 
     // Clear any existing timeout
     if (toastTimeout) {
@@ -21,6 +36,9 @@ window.showToast = function(type, message) {
         </svg>`,
         error: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>`,
+        info: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>`,
     };
 

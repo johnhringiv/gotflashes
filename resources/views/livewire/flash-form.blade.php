@@ -99,7 +99,7 @@
 
             <!-- Location - order-4 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-4 md:order-2">
-                <input type="text" wire:model="location"
+                <input type="text" wire:model.blur="location"
                        placeholder="Lake Norman, NC"
                        class="input input-bordered w-full" maxlength="255">
                 <label>Location (optional)</label>
@@ -107,7 +107,7 @@
 
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-5 md:order-4">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model="sail_number"
+                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.blur="sail_number"
                        id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}"
                        placeholder="15234"
                        class="input input-bordered w-full">
@@ -117,7 +117,7 @@
 
         <!-- Notes -->
         <div class="mb-6 floating-label-visible">
-            <textarea wire:model="notes" rows="3"
+            <textarea wire:model.blur="notes" rows="3"
                       placeholder="Tell us about your day on the water..."
                       class="textarea textarea-bordered w-full"></textarea>
             <label>Notes (optional)</label>
