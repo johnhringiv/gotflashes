@@ -32,6 +32,11 @@ Route::resource('flashes', FlashController::class)
     ->only(['index', 'edit'])
     ->middleware('auth');
 
+// Profile route
+Route::view('/profile', 'profile')
+    ->middleware('auth')
+    ->name('profile');
+
 // Registration routes
 Route::view('/register', 'auth.register')
     ->middleware('guest')

@@ -3,58 +3,6 @@
         Register
     </x-slot:title>
 
-    <style>
-        /* Fix Tom Select dropdown visibility */
-        .ts-dropdown {
-            position: absolute;
-            z-index: 9999 !important;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .ts-dropdown .option {
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            color: #1f2937;
-        }
-
-        .ts-dropdown .option:hover,
-        .ts-dropdown .option.active {
-            background-color: #f3f4f6;
-        }
-
-        .ts-dropdown .optgroup-header {
-            padding: 0.5rem 0.75rem;
-            font-weight: 600;
-            color: #6b7280;
-        }
-
-        .ts-control {
-            min-height: 3rem;
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 0.75rem;
-        }
-
-        .ts-wrapper.single .ts-control {
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-        }
-
-        .ts-wrapper.single .ts-control input {
-            color: #1f2937;
-        }
-
-        .ts-wrapper .item {
-            line-height: normal;
-        }
-    </style>
-
     <div class="hero min-h-[calc(100vh-16rem)]">
         <div class="hero-content flex-col">
             <div class="card w-full max-w-2xl bg-base-100">
@@ -160,24 +108,20 @@
                             </div>
 
                             <!-- Gender -->
-                            <div class="mb-6">
-                                <label class="form-control w-full">
+                            <div class="mb-6 floating-label-visible">
+                                <select name="gender" class="select select-bordered w-full @error('gender') select-error @enderror" required>
+                                    <option value="" disabled {{ old('gender') ? '' : 'selected' }}>Select gender</option>
+                                    <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                                    <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                                    <option value="non_binary" {{ old('gender') == 'non_binary' ? 'selected' : '' }}>Non-binary</option>
+                                    <option value="prefer_not_to_say" {{ old('gender') == 'prefer_not_to_say' ? 'selected' : '' }}>Prefer not to say</option>
+                                </select>
+                                <label>Gender</label>
+                                @error('gender')
                                     <div class="label">
-                                        <span class="label-text">Gender</span>
+                                        <span class="label-text-alt text-error">{{ $message }}</span>
                                     </div>
-                                    <select name="gender" class="select select-bordered @error('gender') select-error @enderror" required>
-                                        <option value="" disabled {{ old('gender') ? '' : 'selected' }}>Select gender</option>
-                                        <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
-                                        <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
-                                        <option value="non_binary" {{ old('gender') == 'non_binary' ? 'selected' : '' }}>Non-binary</option>
-                                        <option value="prefer_not_to_say" {{ old('gender') == 'prefer_not_to_say' ? 'selected' : '' }}>Prefer not to say</option>
-                                    </select>
-                                    @error('gender')
-                                        <div class="label">
-                                            <span class="label-text-alt text-error">{{ $message }}</span>
-                                        </div>
-                                    @enderror
-                                </label>
+                                @enderror
                             </div>
                         </div>
 

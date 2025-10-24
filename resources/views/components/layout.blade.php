@@ -60,7 +60,7 @@
 
                 @auth
                     <li class="menu-title mt-2 text-xs opacity-70">Account</li>
-                    <li class="text-sm px-4 py-2 text-warning font-semibold">{{ auth()->user()->name }}</li>
+                    <li><a href="/profile" class="text-base py-3 text-warning font-semibold {{ request()->path() === 'profile' ? 'active font-bold text-accent' : '' }}">{{ auth()->user()->name }}</a></li>
                     <li>
                         <form method="POST" action="/logout">
                             @csrf
@@ -95,7 +95,7 @@
     <!-- Auth buttons (desktop only) -->
     <div class="navbar-end gap-2 hidden lg:flex">
         @auth
-            <span class="text-sm text-warning font-semibold">{{ auth()->user()->name }}</span>
+            <a href="/profile" class="text-sm text-warning font-semibold hover:underline {{ request()->path() === 'profile' ? 'underline decoration-error decoration-2' : '' }}">{{ auth()->user()->name }}</a>
             <form method="POST" action="/logout" class="inline">
                 @csrf
                 <button type="submit" class="btn btn-error btn-sm">Logout</button>
