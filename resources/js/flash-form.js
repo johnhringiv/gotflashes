@@ -5,10 +5,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Reinitialize after Livewire updates (for edit modal)
 document.addEventListener('livewire:init', () => {
-    Livewire.hook('commit', () => {
-        requestAnimationFrame(() => {
-            initializeFlashForm();
-        });
+    Livewire.hook('morph.added', ({ el }) => {
+        // Check if this element is or contains the edit form
+        const hasEditForm = el.id === 'activity_type_edit' ||
+                           el.id === 'sail_number_edit' ||
+                           (el.querySelector && (el.querySelector('#activity_type_edit') || el.querySelector('#sail_number_edit')));
+
+        // Only initialize if the modal or form was added
+        if (hasEditForm) {
+            requestAnimationFrame(() => {
+                initializeFlashForm();
+            });
+        }
     });
 });
 
@@ -39,6 +47,9 @@ function initializeFormFields(activityTypeId, sailingTypeId, sailNumberId) {
                 sailingType.value = '';
                 sailingType.classList.add('select-disabled');
                 if (placeholderOption) placeholderOption.textContent = 'Not applicable';
+
+                // Dispatch input event to notify Livewire of the value change
+                sailingType.dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
 

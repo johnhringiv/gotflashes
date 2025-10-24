@@ -136,13 +136,15 @@ Routes in `routes/web.php`:
 
 **Livewire Components:**
 - **FlashForm** (`app/Livewire/FlashForm.php`): Activity entry and edit form
-  - Dynamically calculates min/max dates on every render (always current)
+  - Dynamically calculates min/max dates on every render (always current) via `DateRangeService`
   - Solves stale date range problem (users leaving page open across grace period boundaries)
   - Supports both create (multi-date) and edit (single-date) modes
   - Pre-fills form data when editing existing flash
+  - Uses separate element IDs for create vs edit mode (`activity_type` vs `activity_type_edit`) to prevent getElementById conflicts
+  - JavaScript initialization uses `morph.added` hook to ensure elements exist before attaching listeners
 - **FlashList** (`app/Livewire/FlashList.php`): Displays user's activity list with pagination
   - Real-time edit and delete functionality
-  - Grace period enforcement for edit/delete operations
+  - Grace period enforcement for edit/delete operations via `DateRangeService`
   - Responds to flash-saved and flash-deleted events
 - **ProgressCard** (`app/Livewire/ProgressCard.php`): Shows user's progress toward award tiers
   - Calculates total flashes with non-sailing day cap (5 per year)
@@ -320,10 +322,11 @@ Routes in `routes/web.php`:
 See `docs/CONTRIBUTING.md` for complete branching workflow and merge commit examples.
 
 ### Date Validation & Grace Period Logic
-Date validation is centralized in `FlashController::getMinAllowedDate()`:
+Date validation is centralized in `DateRangeService::getAllowedDateRange()` (`app/Services/DateRangeService.php`):
+- Returns a tuple `[$minDate, $maxDate]` for consistent date range logic across the app
 - **January (grace period)**: Users can log dates from previous year (Jan 1 of previous year through today +1)
 - **February onwards**: Users can only log dates from current year (Jan 1 of current year through today +1)
-- Min/max dates are passed from controller to frontend via data attributes on the date picker
+- Min/max dates are passed from Livewire components to frontend via data attributes on the date picker
 - This ensures backend validation and frontend UI constraints are always in sync
 
 When implementing year-based features (award tracking, non-sailing day limits):
@@ -331,6 +334,34 @@ When implementing year-based features (award tracking, non-sailing day limits):
 - Grace period: Users can log previous year until January 31st
 - After Jan 31, previous year becomes read-only
 - Non-sailing day counter resets January 1st
+- Always use `DateRangeService::getAllowedDateRange()` instead of duplicating the logic
+
+### Livewire JavaScript Integration Patterns
+
+**For edit modals and dynamically added elements:**
+- Use `Livewire.hook('morph.added')` to detect when new elements are added to the DOM
+- Check both `el.id` and `el.querySelector()` to handle parent containers and direct elements
+- Wrap initialization in `requestAnimationFrame()` to ensure DOM is fully painted
+- Track initialization with flags (e.g., `element._flashFormInitialized`) to prevent duplicate listeners
+
+**Example pattern (flash-form.js):**
+```javascript
+Livewire.hook('morph.added', ({ el }) => {
+    const hasEditForm = el.id === 'activity_type_edit' ||
+                       (el.querySelector && el.querySelector('#activity_type_edit'));
+    if (hasEditForm) {
+        requestAnimationFrame(() => {
+            initializeFlashForm();
+        });
+    }
+});
+```
+
+**Why `morph.added` vs `morph.updated`:**
+- `morph.added`: Fires when NEW elements are added (use for modals/dynamic content)
+- `morph.updated`: Fires when EXISTING elements are updated (use for refreshing existing content)
+- In production/Docker, timing differences expose race conditions that work fine in dev
+- Always test JavaScript initialization in production Docker builds, not just local dev
 
 ### Testing Strategy
 

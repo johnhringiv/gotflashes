@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use Carbon\Carbon;
+use App\Services\DateRangeService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -58,9 +58,7 @@ class FlashList extends Component
         }
 
         // Check if flash is within editable date range
-        $now = now();
-        $minDate = $this->getMinAllowedDate($now);
-        $maxDate = $now->copy()->addDay();
+        [$minDate, $maxDate] = DateRangeService::getAllowedDateRange();
 
         if (! $flash->isEditable($minDate, $maxDate)) {
             abort(403, 'This activity is outside the editable date range.');
@@ -88,29 +86,12 @@ class FlashList extends Component
             ->paginate(15);
 
         // Calculate min/max dates for edit/delete authorization
-        $now = now();
-        $minDate = $this->getMinAllowedDate($now);
-        $maxDate = $now->copy()->addDay();
+        [$minDate, $maxDate] = DateRangeService::getAllowedDateRange();
 
         return view('livewire.flash-list', [
             'flashes' => $flashes,
             'minDate' => $minDate,
             'maxDate' => $maxDate,
         ]);
-    }
-
-    /**
-     * Calculate the minimum allowed date based on grace period logic.
-     * January allows previous year entries, February onward restricts to current year.
-     */
-    private function getMinAllowedDate(Carbon $now): Carbon
-    {
-        $minDate = $now->copy()->startOfYear();
-        if ($now->month === 1) {
-            // January: allow previous year entries (grace period)
-            $minDate = $now->copy()->subYear()->startOfYear();
-        }
-
-        return $minDate;
     }
 }

@@ -49,13 +49,13 @@ document.addEventListener('livewire:init', () => {
         pendingReinitOnly = true;
     });
 
-    // Use Livewire's morph.updated hook to detect date picker DOM updates
+    // Use Livewire's morph.updated hook to detect date picker DOM updates (main form)
     window.Livewire.hook('morph.updated', ({ el }) => {
-        // Wait for browser paint cycle to complete, then reinitialize any pickers
+        // Wait for browser paint cycle to complete, then reinitialize main picker
         requestAnimationFrame(() => {
             // Check for multi-date picker (main form)
             if (pendingClearAndReinit || pendingReinitOnly) {
-                const hasDatePicker = el.id === 'date-picker' || el.querySelector('#date-picker');
+                const hasDatePicker = el.id === 'date-picker' || (el.querySelector && el.querySelector('#date-picker'));
                 if (hasDatePicker) {
                     const datePickerElement = document.getElementById('date-picker');
                     if (datePickerElement) {
@@ -73,16 +73,21 @@ document.addEventListener('livewire:init', () => {
                     }
                 }
             }
+        });
+    });
 
-            // Check for single-date picker (edit modal) - initialize if not already present
-            const hasDatePickerSingle = el.id === 'date-picker-single' || el.querySelector('#date-picker-single');
-            if (hasDatePickerSingle) {
+    // Use Livewire's morph.added hook for single-date picker (edit modal)
+    window.Livewire.hook('morph.added', ({ el }) => {
+        // Check for single-date picker being added
+        const hasDatePickerSingle = el.id === 'date-picker-single' || (el.querySelector && el.querySelector('#date-picker-single'));
+        if (hasDatePickerSingle) {
+            requestAnimationFrame(() => {
                 const datePickerSingleElement = document.getElementById('date-picker-single');
                 if (datePickerSingleElement && !datePickerSingleElement._flatpickr) {
                     initializeDatePicker(datePickerSingleElement, 'single');
                 }
-            }
-        });
+            });
+        }
     });
 });
 
@@ -105,6 +110,11 @@ function initializeDatePicker(datePickerElement, mode) {
             // Failed to parse existing dates - use empty array
             // eslint-disable-next-line no-console
             console.error('Failed to parse existing dates:', e);
+
+            // Show user-facing error toast if available
+            if (window.showToast) {
+                window.showToast('error', 'Failed to load calendar dates. Please refresh the page.');
+            }
         }
 
         const convertYearToDropdown = function(instance) {
