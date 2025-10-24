@@ -78,4 +78,65 @@ class FlashModelTest extends TestCase
         $this->assertNull($flash->sail_number);
         $this->assertNull($flash->notes);
     }
+
+    public function test_flash_is_editable_when_within_date_range(): void
+    {
+        $user = User::factory()->create();
+        $minDate = now()->startOfYear();
+        $maxDate = now()->addDay();
+
+        // Flash within range
+        $flash = Flash::factory()->forUser($user)->create([
+            'date' => now()->format('Y-m-d'),
+        ]);
+
+        $this->assertTrue($flash->isEditable($minDate, $maxDate));
+    }
+
+    public function test_flash_is_not_editable_when_before_min_date(): void
+    {
+        $user = User::factory()->create();
+        $minDate = now()->startOfYear();
+        $maxDate = now()->addDay();
+
+        // Flash before minDate (previous year)
+        $flash = Flash::factory()->forUser($user)->create([
+            'date' => now()->subYear()->format('Y-m-d'),
+        ]);
+
+        $this->assertFalse($flash->isEditable($minDate, $maxDate));
+    }
+
+    public function test_flash_is_not_editable_when_after_max_date(): void
+    {
+        $user = User::factory()->create();
+        $minDate = now()->startOfYear();
+        $maxDate = now()->addDay();
+
+        // Flash after maxDate (future)
+        $flash = Flash::factory()->forUser($user)->create([
+            'date' => now()->addDays(2)->format('Y-m-d'),
+        ]);
+
+        $this->assertFalse($flash->isEditable($minDate, $maxDate));
+    }
+
+    public function test_flash_is_editable_at_boundary_dates(): void
+    {
+        $user = User::factory()->create();
+        $minDate = now()->startOfYear();
+        $maxDate = now()->addDay();
+
+        // Flash exactly at minDate
+        $flashAtMin = Flash::factory()->forUser($user)->create([
+            'date' => $minDate->format('Y-m-d'),
+        ]);
+        $this->assertTrue($flashAtMin->isEditable($minDate, $maxDate));
+
+        // Flash exactly at maxDate
+        $flashAtMax = Flash::factory()->forUser($user)->create([
+            'date' => $maxDate->format('Y-m-d'),
+        ]);
+        $this->assertTrue($flashAtMax->isEditable($minDate, $maxDate));
+    }
 }

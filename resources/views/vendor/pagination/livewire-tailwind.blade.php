@@ -4,11 +4,11 @@
             @if ($paginator->onFirstPage())
                 <span class="btn btn-disabled">Previous</span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}" class="btn btn-primary">Previous</a>
+                <button wire:click="previousPage" wire:loading.attr="disabled" class="btn btn-primary">Previous</button>
             @endif
 
             @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" class="btn btn-primary">Next</a>
+                <button wire:click="nextPage" wire:loading.attr="disabled" class="btn btn-primary">Next</button>
             @else
                 <span class="btn btn-disabled">Next</span>
             @endif
@@ -23,9 +23,9 @@
                             <span aria-hidden="true">&laquo;</span>
                         </button>
                     @else
-                        <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="join-item btn">
+                        <button wire:click="previousPage" wire:loading.attr="disabled" rel="prev" class="join-item btn">
                             <span aria-hidden="true">&laquo;</span>
-                        </a>
+                        </button>
                     @endif
 
                     {{-- Pagination Elements --}}
@@ -45,9 +45,9 @@
                                         <span>{{ $page }}</span>
                                     </button>
                                 @else
-                                    <a href="{{ $url }}" class="join-item btn">
+                                    <button wire:click="gotoPage({{ $page }})" wire:loading.attr="disabled" class="join-item btn">
                                         {{ $page }}
-                                    </a>
+                                    </button>
                                 @endif
                             @endforeach
                         @endif
@@ -55,9 +55,9 @@
 
                     {{-- Next Page Link --}}
                     @if ($paginator->hasMorePages())
-                        <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="join-item btn">
+                        <button wire:click="nextPage" wire:loading.attr="disabled" rel="next" class="join-item btn">
                             <span aria-hidden="true">&raquo;</span>
-                        </a>
+                        </button>
                     @else
                         <button class="join-item btn btn-disabled" aria-disabled="true">
                             <span aria-hidden="true">&raquo;</span>
