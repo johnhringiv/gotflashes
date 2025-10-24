@@ -87,108 +87,82 @@ class Leaderboard extends Component
     /**
      * Get fleet leaderboard (grouped by fleet).
      * Uses members table to determine year-end fleet affiliations.
+     * Optimized with JOIN and pre-aggregation instead of correlated subqueries.
      */
     private function getFleetLeaderboard(int $year): LengthAwarePaginator
     {
-        $yearString = (string) $year;
-
-        // Join members table to get year-end fleet affiliations
-        return DB::table('fleets')
-            ->select([
-                'fleets.id',
-                'fleets.fleet_number',
-                'fleets.fleet_name',
-                DB::raw('COUNT(DISTINCT members.user_id) as member_count'),
-                DB::raw("SUM(
-                    (SELECT count(*) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?
-                     AND activity_type = 'sailing')
-                    +
-                    MIN(
-                        (SELECT count(*) FROM flashes
-                         WHERE members.user_id = flashes.user_id
-                         AND strftime('%Y', date) = ?
-                         AND activity_type IN ('maintenance', 'race_committee')),
-                        5
-                    )
-                ) as total_flashes"),
-                DB::raw("SUM(
-                    (SELECT count(*) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?
-                     AND activity_type = 'sailing')
-                ) as total_sailing"),
-                DB::raw("MIN(
-                    (SELECT MIN(created_at) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?)
-                ) as first_entry_date"),
-            ])
-            ->join('members', 'fleets.id', '=', 'members.fleet_id')
-            ->where('members.year', $year)
-            ->addBinding([$yearString, $yearString, $yearString, $yearString], 'select')
-            ->whereExists(function ($query) use ($yearString) {
-                $query->from('flashes')
-                    ->whereColumn('members.user_id', 'flashes.user_id')
-                    ->whereRaw("strftime('%Y', date) = ?", [$yearString]);
-            })
-            ->groupBy('fleets.id', 'fleets.fleet_number', 'fleets.fleet_name')
-            ->orderByDesc('total_flashes')
-            ->orderByDesc('total_sailing')
-            ->orderBy('first_entry_date')
-            ->paginate(15);
+        return $this->getAggregatedLeaderboard(
+            table: 'fleets',
+            selectColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+            joinColumn: 'members.fleet_id',
+            groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+            year: $year
+        );
     }
 
     /**
      * Get district leaderboard (grouped by district).
      * Uses members table to determine year-end district affiliations.
+     * Optimized with JOIN and pre-aggregation instead of correlated subqueries.
      */
     private function getDistrictLeaderboard(int $year): LengthAwarePaginator
     {
+        return $this->getAggregatedLeaderboard(
+            table: 'districts',
+            selectColumns: ['districts.id', 'districts.name'],
+            joinColumn: 'members.district_id',
+            groupByColumns: ['districts.id', 'districts.name'],
+            year: $year
+        );
+    }
+
+    /**
+     * Generic aggregated leaderboard query builder.
+     * Handles both fleet and district leaderboards with pre-aggregated flash counts.
+     *
+     * @param  string  $table  The main table to query (fleets or districts)
+     * @param  array  $selectColumns  Base columns to select (id, name/number fields)
+     * @param  string  $joinColumn  The members table column to join on
+     * @param  array  $groupByColumns  Columns to group by
+     * @param  int  $year  The year to filter by
+     */
+    private function getAggregatedLeaderboard(
+        string $table,
+        array $selectColumns,
+        string $joinColumn,
+        array $groupByColumns,
+        int $year
+    ): LengthAwarePaginator {
         $yearString = (string) $year;
 
-        // Join members table to get year-end district affiliations
-        return DB::table('districts')
+        // Build the user flash aggregation subquery once (shared across all aggregations)
+        $userFlashesSubquery = DB::table('flashes')
             ->select([
-                'districts.id',
-                'districts.name',
-                DB::raw('COUNT(DISTINCT members.user_id) as member_count'),
-                DB::raw("SUM(
-                    (SELECT count(*) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?
-                     AND activity_type = 'sailing')
-                    +
-                    MIN(
-                        (SELECT count(*) FROM flashes
-                         WHERE members.user_id = flashes.user_id
-                         AND strftime('%Y', date) = ?
-                         AND activity_type IN ('maintenance', 'race_committee')),
-                        5
-                    )
-                ) as total_flashes"),
-                DB::raw("SUM(
-                    (SELECT count(*) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?
-                     AND activity_type = 'sailing')
-                ) as total_sailing"),
-                DB::raw("MIN(
-                    (SELECT MIN(created_at) FROM flashes
-                     WHERE members.user_id = flashes.user_id
-                     AND strftime('%Y', date) = ?)
-                ) as first_entry_date"),
+                'user_id',
+                DB::raw("SUM(CASE WHEN activity_type = 'sailing' THEN 1 ELSE 0 END) as sailing_count"),
+                DB::raw("SUM(CASE WHEN activity_type IN ('maintenance', 'race_committee') THEN 1 ELSE 0 END) as non_sailing_count"),
+                DB::raw('MIN(created_at) as first_entry_date'),
             ])
-            ->join('members', 'districts.id', '=', 'members.district_id')
+            ->whereRaw("strftime('%Y', date) = ?", [$yearString])
+            ->groupBy('user_id');
+
+        // Build aggregated counts (same logic for fleet and district)
+        $aggregatedColumns = [
+            DB::raw('COUNT(DISTINCT members.user_id) as member_count'),
+            // Total flashes: sailing (unlimited) + MIN(non-sailing, 5) per user
+            DB::raw('SUM(
+                sailing_count + CASE WHEN non_sailing_count > 5 THEN 5 ELSE non_sailing_count END
+            ) as total_flashes'),
+            DB::raw('SUM(sailing_count) as total_sailing'),
+            DB::raw('MIN(first_entry_date) as first_entry_date'),
+        ];
+
+        return DB::table($table)
+            ->select(array_merge($selectColumns, $aggregatedColumns))
+            ->join('members', "{$table}.id", '=', $joinColumn)
+            ->joinSub($userFlashesSubquery, 'user_flashes', 'members.user_id', '=', 'user_flashes.user_id')
             ->where('members.year', $year)
-            ->addBinding([$yearString, $yearString, $yearString, $yearString], 'select')
-            ->whereExists(function ($query) use ($yearString) {
-                $query->from('flashes')
-                    ->whereColumn('members.user_id', 'flashes.user_id')
-                    ->whereRaw("strftime('%Y', date) = ?", [$yearString]);
-            })
-            ->groupBy('districts.id', 'districts.name')
+            ->groupBy($groupByColumns)
             ->orderByDesc('total_flashes')
             ->orderByDesc('total_sailing')
             ->orderBy('first_entry_date')
