@@ -48,7 +48,12 @@
 
                 <div class="mt-2 text-sm text-base-content/80 space-y-1">
                     @if($flash->location)
-                        <div>📍 {{ $flash->location }}</div>
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            {{ $flash->location }}
+                        </div>
                     @endif
 
                     @if($flash->sail_number)
@@ -95,17 +100,54 @@
 
     <!-- Delete Confirmation Modal -->
     @if($deletingFlashId)
-        <div class="modal modal-open" role="dialog">
-            <div class="modal-box">
-                <button wire:click="cancelDelete" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                <h3 class="font-bold text-lg mb-4">Delete Activity</h3>
-                <p class="py-4">Are you sure you want to delete this activity? This action cannot be undone.</p>
-                <div class="modal-action">
-                    <button wire:click="cancelDelete" class="btn">Cancel</button>
-                    <button wire:click="delete" class="btn btn-error">Delete</button>
+        @php
+            $deletingFlash = \App\Models\Flash::find($deletingFlashId);
+        @endphp
+        @if($deletingFlash)
+            <div class="modal modal-open" role="dialog">
+                <div class="modal-box">
+                    <button wire:click="cancelDelete" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                    <h3 class="font-bold text-lg mb-4">Delete Activity</h3>
+                    <p class="py-4">Are you sure you want to delete this activity? This action cannot be undone.</p>
+
+                    <!-- Flash Details -->
+                    <div class="bg-base-200 rounded-lg p-4 mb-4">
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-semibold">Date:</span> {{ $deletingFlash->date->format('M j, Y') }}</div>
+                            <div>
+                                <span class="font-semibold">Activity:</span>
+                                @if($deletingFlash->activity_type === 'sailing' && $deletingFlash->event_type)
+                                    @php
+                                        $eventTypeLabel = match($deletingFlash->event_type) {
+                                            'leisure' => 'Day Sailing',
+                                            'club_race' => 'Club Race',
+                                            default => ucfirst(str_replace('_', ' ', $deletingFlash->event_type))
+                                        };
+                                    @endphp
+                                    Sailing - {{ $eventTypeLabel }}
+                                @else
+                                    {{ ucfirst(str_replace('_', ' ', $deletingFlash->activity_type)) }}
+                                @endif
+                            </div>
+                            @if($deletingFlash->location)
+                                <div><span class="font-semibold">Location:</span> {{ $deletingFlash->location }}</div>
+                            @endif
+                            @if($deletingFlash->sail_number)
+                                <div><span class="font-semibold">Sail Number:</span> {{ $deletingFlash->sail_number }}</div>
+                            @endif
+                            @if($deletingFlash->notes)
+                                <div><span class="font-semibold">Notes:</span> <span class="text-base-content/70">{{ Str::limit($deletingFlash->notes, 100) }}</span></div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="modal-action">
+                        <button wire:click="cancelDelete" class="btn">Cancel</button>
+                        <button wire:click="delete" class="btn btn-error">Delete</button>
+                    </div>
                 </div>
+                <div class="modal-backdrop" wire:click="cancelDelete"></div>
             </div>
-            <div class="modal-backdrop" wire:click="cancelDelete"></div>
-        </div>
+        @endif
     @endif
 </div>

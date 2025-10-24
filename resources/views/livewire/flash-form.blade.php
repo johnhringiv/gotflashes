@@ -51,7 +51,7 @@
                     <div class="label">
                         <span class="label-text">Activity Type</span>
                     </div>
-                    <select wire:model.defer="activity_type" id="activity_type" class="select select-bordered @error('activity_type') select-error @enderror" required>
+                    <select wire:model.defer="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
                         <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
                         <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
@@ -78,7 +78,7 @@
                             </div>
                         </span>
                     </div>
-                    <select wire:model="event_type" id="sailing_type"
+                    <select wire:model.defer="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
                             class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
                             {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
                         <option value="" disabled {{ $event_type ? '' : 'selected' }}>
@@ -108,7 +108,7 @@
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-5 md:order-4">
                 <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model="sail_number"
-                       id="sail_number"
+                       id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}"
                        placeholder="15234"
                        class="input input-bordered w-full">
                 <label>Sail Number (optional)</label>

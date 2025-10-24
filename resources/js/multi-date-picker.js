@@ -35,32 +35,54 @@ function reinitializeDatePicker(datePickerElement, mode) {
     initializeDatePicker(datePickerElement, mode);
 }
 
-// Listen for flash-saved event to reinitialize the date picker with updated dates
+// Listen for flash-saved and flash-deleted events to reinitialize the date picker
 document.addEventListener('livewire:init', () => {
-    // Listen for flash-saved event
+    let pendingClearAndReinit = false;
+    let pendingReinitOnly = false;
+
+    // Set flags when events fire
     window.Livewire.on('flash-saved', () => {
-        // Wait for Livewire to finish updating the DOM
-        setTimeout(() => {
-            const datePickerElement = document.getElementById('date-picker');
-            if (datePickerElement) {
-                // Clear and reinitialize to pick up updated data attributes
-                if (datePickerElement._flatpickr) {
-                    datePickerElement._flatpickr.clear();
-                }
-                reinitializeDatePicker(datePickerElement, 'multiple');
-            }
-        }, 300);
+        pendingClearAndReinit = true;
     });
 
-    // Listen for flash-deleted event
     window.Livewire.on('flash-deleted', () => {
-        // Wait for Livewire to finish updating the DOM
-        setTimeout(() => {
-            const datePickerElement = document.getElementById('date-picker');
-            if (datePickerElement) {
-                reinitializeDatePicker(datePickerElement, 'multiple');
+        pendingReinitOnly = true;
+    });
+
+    // Use Livewire's morph.updated hook to detect date picker DOM updates
+    window.Livewire.hook('morph.updated', ({ el }) => {
+        // Wait for browser paint cycle to complete, then reinitialize any pickers
+        requestAnimationFrame(() => {
+            // Check for multi-date picker (main form)
+            if (pendingClearAndReinit || pendingReinitOnly) {
+                const hasDatePicker = el.id === 'date-picker' || el.querySelector('#date-picker');
+                if (hasDatePicker) {
+                    const datePickerElement = document.getElementById('date-picker');
+                    if (datePickerElement) {
+                        // Clear the picker if this was a save operation
+                        if (pendingClearAndReinit && datePickerElement._flatpickr) {
+                            datePickerElement._flatpickr.clear();
+                        }
+
+                        // Reinitialize with fresh data from DOM
+                        reinitializeDatePicker(datePickerElement, 'multiple');
+
+                        // Reset flags
+                        pendingClearAndReinit = false;
+                        pendingReinitOnly = false;
+                    }
+                }
             }
-        }, 300);
+
+            // Check for single-date picker (edit modal) - initialize if not already present
+            const hasDatePickerSingle = el.id === 'date-picker-single' || el.querySelector('#date-picker-single');
+            if (hasDatePickerSingle) {
+                const datePickerSingleElement = document.getElementById('date-picker-single');
+                if (datePickerSingleElement && !datePickerSingleElement._flatpickr) {
+                    initializeDatePicker(datePickerSingleElement, 'single');
+                }
+            }
+        });
     });
 });
 
@@ -252,8 +274,21 @@ function initializeDatePicker(datePickerElement, mode) {
             }
 
             config.onChange = function(selectedDates, dateStr, instance) {
-                // For single mode, just update the input value
+                // For single mode, update the input value
                 datePickerElement.value = dateStr;
+
+                // Sync with Livewire if present
+                const livewireComponent = datePickerElement.closest('[wire\\:id]');
+                if (livewireComponent) {
+                    // Livewire v3 API - use Livewire.find()
+                    const componentId = livewireComponent.getAttribute('wire:id');
+                    if (window.Livewire && componentId) {
+                        const component = window.Livewire.find(componentId);
+                        if (component) {
+                            component.set('date', dateStr);
+                        }
+                    }
+                }
 
                 // Hide extra weeks after date selection
                 hideExtraWeeks(selectedDates, dateStr, instance);

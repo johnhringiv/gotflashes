@@ -160,6 +160,13 @@ Routes in `routes/web.php`:
 - Year selector converted to dropdown (only shows current year + previous year during grace period)
 - Custom `hideExtraWeeks()` function removes calendar weeks containing only adjacent month dates
 - Existing flash dates are disabled and marked with Lightning logo
+- **Livewire Integration Pattern**: Syncs with Livewire updates using hooks
+  - Listens for `flash-saved` and `flash-deleted` events to set pending flags
+  - Uses Livewire's `morph.updated` hook to detect when date picker element updates
+  - Wraps reinitialization in `requestAnimationFrame()` to wait for browser paint cycle
+  - Re-queries element with `document.getElementById()` to get freshest DOM reference
+  - This ensures flatpickr always has current `data-existing-dates` after Livewire updates
+  - **Key insight**: Even after Livewire morph completes, must wait one browser frame for paint cycle to finish before DOM attributes are truly current
 
 **CSS/Tailwind:**
 - Use Tailwind utility classes first
@@ -169,6 +176,10 @@ Routes in `routes/web.php`:
 - Floating label form styling (label appears in border outline)
 - Tooltips use lighter blue background (secondary color)
 - Flatpickr calendar styled with Lightning Class brand colors (blue header, white text)
+- **Dynamic Classes**: Classes created at runtime (e.g., in JavaScript) must be force-included using `@source inline("class-name")` in app.css
+  - Example: Toast notification alert variants (`alert-warning`, `alert-error`, etc.) are dynamically created in `toast.js`
+  - Without `@source inline()`, Tailwind's JIT compiler won't include these classes in the build
+  - See line 66 in `resources/css/app.css` for the toast alert safelist
 
 ### Database Schema
 

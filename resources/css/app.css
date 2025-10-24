@@ -63,6 +63,7 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source inline("alert-warning alert-error alert-success alert-info");
 
 @theme {
     --animate-fade-out: fade-out 4s ease-in-out forwards;

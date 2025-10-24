@@ -1,11 +1,30 @@
 // Flash form JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Enable/disable sailing_type based on activity_type
-    const activityType = document.getElementById('activity_type');
-    const sailingType = document.getElementById('sailing_type');
+    initializeFlashForm();
+});
 
-    // Only run if elements exist on the page
-    if (activityType && sailingType) {
+// Reinitialize after Livewire updates (for edit modal)
+document.addEventListener('livewire:init', () => {
+    Livewire.hook('commit', () => {
+        requestAnimationFrame(() => {
+            initializeFlashForm();
+        });
+    });
+});
+
+function initializeFlashForm() {
+    // Initialize both main form and edit form
+    initializeFormFields('activity_type', 'sailing_type', 'sail_number');
+    initializeFormFields('activity_type_edit', 'sailing_type_edit', 'sail_number_edit');
+}
+
+function initializeFormFields(activityTypeId, sailingTypeId, sailNumberId) {
+    // Enable/disable sailing_type based on activity_type
+    const activityType = document.getElementById(activityTypeId);
+    const sailingType = document.getElementById(sailingTypeId);
+
+    // Only run if elements exist and not already initialized
+    if (activityType && sailingType && !activityType._flashFormInitialized) {
         function updateSailingTypeState() {
             const placeholderOption = sailingType.querySelector('option[value=""][disabled]');
 
@@ -24,16 +43,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         activityType.addEventListener('change', updateSailingTypeState);
-        // Run on page load to set initial state
+        activityType._flashFormInitialized = true;
+        // Run immediately to set initial state
         updateSailingTypeState();
     }
 
     // Restrict numeric inputs to integers only
-    const sailNumberInput = document.getElementById('sail_number');
-    if (sailNumberInput) {
+    const sailNumberInput = document.getElementById(sailNumberId);
+    if (sailNumberInput && !sailNumberInput._flashFormInitialized) {
         sailNumberInput.addEventListener('input', function() {
             // Remove any non-digit characters
             this.value = this.value.replace(/[^0-9]/g, '');
         });
+        sailNumberInput._flashFormInitialized = true;
     }
-});
+}
