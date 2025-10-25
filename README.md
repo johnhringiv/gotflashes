@@ -34,6 +34,13 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Activity Management**: Edit and delete your own activity entries (current year + grace period for previous year in January)
   - Edit mode uses same calendar picker in single-date mode
   - Year dropdown and grace period restrictions apply to both create and edit
+- **Profile Management**: Edit your profile information and Lightning Class affiliations
+  - Update personal details (name, date of birth, gender)
+  - Update mailing address
+  - Change district and fleet affiliations (updates current year membership)
+  - Email address is read-only after registration
+  - Real-time validation ensures data quality
+- **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
@@ -62,7 +69,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
 - **Code Quality**: Automated linting with Laravel Pint, PHPStan, ESLint, and Stylelint
 - **Pre-commit Hooks**: Automatically runs code quality checks before commits
-- **Comprehensive Testing**: 206 tests with 620+ assertions including JavaScript unit tests
+- **Comprehensive Testing**: Full test suite covering PHP and JavaScript with TDD practices
 
 ## Technology Stack
 
@@ -150,53 +157,6 @@ See **[DOCKER.md](DOCKER.md)** for complete Docker deployment guide including:
 
 ---
 
-## Local Development (Traditional)
-
-### Manual Setup (Alternative)
-
-If you prefer step-by-step setup:
-
-```bash
-# Install PHP dependencies
-composer install
-
-# Copy environment file
-cp .env.example .env
-
-# Generate application key
-php artisan key:generate
-
-# Create SQLite database
-touch database/database.sqlite
-
-# Run migrations
-php artisan migrate
-
-# Install Node dependencies
-npm install
-
-# Build assets
-npm run build
-
-# Start development server
-php artisan serve
-```
-
-### Creating an Admin User (When Implemented)
-
-Admin functionality is planned but not yet implemented. Once available, you'll be able to grant admin privileges using Laravel Tinker:
-
-```bash
-php artisan tinker
-```
-
-Then run:
-```php
-$user = User::where('email', 'your@email.com')->first();
-$user->is_admin = true;
-$user->save();
-```
-
 ## Development Workflow
 
 ### Testing
@@ -209,10 +169,10 @@ composer test
 ```
 
 **Test Coverage:**
-- 206 tests with 620+ assertions (PHP + JavaScript)
-- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships
+- Comprehensive test suite covering PHP and JavaScript
+- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships, profile management
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
-- Livewire tests: FlashForm component with dynamic date range refresh, grace period boundary crossing
+- Livewire tests: FlashForm and ProfileForm components with dynamic date range refresh, grace period boundary crossing, membership updates
 - JavaScript tests: Registration form validation and dynamic fleet selection, multi-date picker logic
 - Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution
@@ -244,7 +204,7 @@ composer fix
 - **PHPStan** - PHP static analysis (type safety, bug detection)
 - **ESLint** - JavaScript linting
 - **Stylelint** - CSS linting
-- **PHPUnit** - PHP test suite (175 tests)
+- **PHPUnit** - PHP test suite
 - **Vitest** - JavaScript test suite (via npm test)
 
 **`composer fix`** runs:

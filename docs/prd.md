@@ -9,36 +9,31 @@ A standalone web-based application to replace the current web form for tracking 
 ## 1. User Management
 
 ### 1.1 User Registration
-New users can create accounts with the following information:
-- Email address (serves as unique username/identifier)
-- Password (secure authentication)
-- First Name
-- Last Name
-- Date of Birth (for demographics and membership growth analytics, particularly tracking participation of sailors under 32)
-- Gender (optional - options: Male, Female, Non-binary, Prefer not to say)
-- Physical mailing address
-- District (optional)
-- Yacht Club (optional)
-- Fleet Number (optional - dynamically filtered by selected district)
+New users create accounts with the following information:
+
+**Required Fields:**
+- Email address (unique username/identifier)
+- Password
+- First name and last name
+- Date of birth (for demographics tracking, especially sailors under 32)
+- Gender (Male, Female, Non-binary, Prefer not to say)
+- Physical mailing address (for award fulfillment)
+
+**Optional Fields:**
+- District (Lightning Class geographic region)
+- Fleet (dynamically filtered by selected district)
+- Yacht Club
 
 **Year-Specific Memberships:**
-District and fleet affiliations are tracked per calendar year rather than as a single static value. When users register, a membership record is created for the current year with their selected district and fleet. This system allows:
-- Users to change districts or fleets over time while maintaining historical accuracy
-- Leaderboards to reflect year-end affiliations (the district/fleet users belonged to during each specific year)
-- Automatic carry-forward of memberships from previous years when not explicitly updated
-- Support for unaffiliated sailors (those without a district or fleet)
+District and fleet affiliations are tracked per calendar year. When users register, their current year membership is created. Benefits:
+- Users can change districts/fleets over time while preserving historical accuracy
+- Leaderboards reflect year-end affiliations for each specific year
+- Automatic carry-forward from previous years when not updated
+- Unaffiliated sailors supported (no district or fleet required)
 
-For detailed information on membership logic and year-end processing, see [membership-year-end-logic.md](membership-year-end-logic.md).
+*For detailed membership logic, see [membership-year-end-logic.md](membership-year-end-logic.md).*
 
-**Unaffiliated User Handling:**
-- Users can register without selecting a district or fleet (unaffiliated sailors)
-- System accepts either "none" string or null value for district_id/fleet_id to indicate no affiliation
-- Users can register with only a district (no fleet) or only a fleet (no district)
-- All users receive a membership record, even unaffiliated users (with null district_id and fleet_id)
-- District and fleet data is stored in a separate `members` table, not on the `users` table
-- This architecture maintains clean separation between user identity and organizational affiliation
-
-**Note**: Users do not need to be Lightning owners - crews and anyone who sails on Lightnings can participate.
+**Note**: Users don't need to own a Lightning - crews and anyone who sails on Lightnings can participate.
 
 ### 1.2 User Authentication
 - Secure login system using email and password
@@ -47,9 +42,26 @@ For detailed information on membership logic and year-end processing, see [membe
 - Password reset capability
 
 ### 1.3 Profile Management
-- Users can view their profile information
-- Users can update their address, district, yacht club, fleet number, gender, and date of birth
-- Email address should remain fixed after registration (serves as permanent identifier)
+Users can view and edit their profile information through a dedicated profile page:
+
+**Editable Information:**
+- Personal details: First name, last name, date of birth, gender
+- Mailing address: Address line 1, address line 2 (optional), city, state, ZIP code, country
+- Lightning Class affiliations: District, fleet, yacht club (optional)
+
+**Profile Management Features:**
+- Dedicated "Edit Profile" page accessible from user navigation
+- Form automatically displays current information for easy updates
+- Updates both personal information and Lightning Class affiliations for the current year
+- Real-time validation ensures data quality (e.g., prevents invalid dates, validates district/fleet selections)
+- Success confirmation message after saving changes
+- Email address remains fixed after registration (serves as permanent account identifier)
+- Secure access - users can only view and edit their own profile
+
+### 1.5 Data Export
+Users can export their complete profile and activity history:
+- CSV format download with user profile data and all flash entries
+- Includes year-appropriate district/fleet affiliations for each activity
 
 ### 1.4 User Roles
 - **Regular Users**: Can track their own activities and view their progress
@@ -76,81 +88,50 @@ The following activities may count toward your annual total:
 - **Limitation**: Maximum 5 "non-sailing day" days total per calendar year
 
 ### 2.2 Activity Entry
-Users log activities using a simple form for each day:
-- **Date of activity** (cannot duplicate an existing entry date)
-    - **Multi-date selection**: Users can select multiple dates at once using an interactive calendar picker
-    - **Edit mode**: Same calendar picker in single-date mode (prevents duplicates, respects grace period)
-    - All selected dates will use the same activity details (type, location, notes, etc.)
-    - Dates with existing entries are visually marked with a lightning logo and cannot be selected
-    - Future dates are grayed out and disabled
-    - Year selector dropdown shows only allowed years based on grace period
-    - Calendar styled with brand colors for consistent user experience
-    - All-or-nothing validation: if any selected date has an error (e.g., duplicate), no entries are created
-    - **Dynamic date ranges**: Form uses Livewire for automatic date range refresh (prevents stale boundaries if page left open)
-- Activity type (always available options):
-    - **Sailing on a Lightning**
-    - **Boat/Trailer Maintenance (non-sailing day)** - Available until 5 non-sailing days used
-    - **Race Committee Work (non-sailing day)** - Available until 5 non-sailing days used
-- **Sailing Type** (required when activity type is "Sailing"):
-    - **Regatta** - Competitive racing events
-    - **Club Race** - Local club racing
-    - **Practice** - Practice sailing sessions
-    - **Day Sailing** - Recreational sailing
-    - **Purpose**: Helps the Lightning Class understand constituent activities and sailing patterns for analytics and planning
-    - **Important**: Sailing type (event_type) is REQUIRED for sailing activities but PROHIBITED for non-sailing activities (maintenance and race committee)
-    - System will reject attempts to set event_type on non-sailing activities
-- **Optional fields** (enhance tracking and create richer records):
-    - Location (city, lake, venue)
-    - Sail Number (must be numeric)
-    - Notes (free-form text)
+Users log activities using a simple form:
 
-**Non-sailing day Entry Behavior:**
-- All users have 5 non-sailing day slots per calendar year that count toward awards
-- Users can log non-sailing day activities at any time (no restrictions)
-- After 5 non-sailing days are logged, additional non-sailing days can still be logged but won't count toward awards
-- Warning message displayed when logging 6th+ non-sailing day to inform user it won't count toward awards
-- Users are encouraged to continue logging all Lightning-related activity for complete records
+**Date Selection:**
+- Multi-date selection: Users can select multiple dates at once using an interactive calendar
+- Single-date edit mode available for editing existing entries
+- All selected dates share the same activity details (type, location, notes)
+- Duplicate prevention: existing entries cannot be re-selected
+- Date restrictions: No future dates, respects grace period boundaries
+- All-or-nothing validation: if any selected date has an error, no entries are created
 
-**Benefits of this approach:**
-- Simple, straightforward rules - just a maximum of 5 non-sailing days per year count toward awards
-- Users can log all their Lightning activity without restrictions
-- Clear warning messaging when logging non-counting days
+**Activity Type (Required):**
+- **Sailing on a Lightning** (always available, unlimited)
+- **Boat/Trailer Maintenance** (non-sailing day - up to 5 per year count toward awards)
+- **Race Committee Work** (non-sailing day - up to 5 per year count toward awards)
+
+**Sailing Type (Required for sailing activities only):**
+- Regatta, Club Race, Practice, or Day Sailing
+- Purpose: Helps Lightning Class understand activity patterns for planning
+- Cannot be specified for non-sailing activities
+
+**Optional Fields:**
+- Location (city, lake, venue)
+- Sail Number (numeric)
+- Notes (free-form text)
+
+**Non-sailing Day Rules:**
+- Maximum 5 non-sailing days per year count toward awards (resets January 1st)
+- No minimum sailing days required to log non-sailing days
+- Users can log unlimited non-sailing days, but only first 5 count toward awards
+- System displays remaining non-sailing days counter (e.g., "3 of 5 remaining")
+- Warning shown when logging 6th+ non-sailing day that won't count toward awards
 - Encourages complete activity tracking while maintaining award integrity
 
 **Edit Restrictions:**
-- Users can edit or delete activities from the current calendar year
-- During January, users can also edit or delete activities from the previous year (grace period)
-- Starting February 1st, previous year activities become read-only and cannot be modified
-- Users cannot create multiple activities for the same date
-- All activities must be logged by January 31st of the following year (grace period for logging previous year's activities)
+- Current year activities: editable/deletable anytime
+- Previous year activities: editable/deletable during January only (grace period)
+- Starting February 1st: previous year becomes read-only
+- Grace period deadline: All activities must be logged by January 31st of following year
 
-**Grace Period Implementation:**
-- During January, the calendar date picker shows both current year and previous year dates
-- This allows users to select, log, edit, and delete activities from the previous year during the grace period
-- Starting February 1st, only current year dates are shown in the date picker
-- This enforces the January 31st deadline for logging and editing previous year activities
-- Edit/delete buttons are hidden for activities outside the editable date range
-
-**Date Entry Restrictions:**
-- Users cannot log activities with future dates
-- System allows dates up to +1 day from server time to accommodate timezone differences
-- This ensures users in any timezone can log today's activities without restriction
-- Browser date picker enforces maximum date before submission
-- Server-side validation prevents circumventing browser restrictions
-
-### 2.3 Non-sailing Day Rules
-Boat Work and Race Committee days count toward awards with these limitations:
-
-**Eligibility Requirements:**
-- Maximum 5 non-sailing days per calendar year
-- These 5 non-sailing day slots reset annually on January 1st
-- No minimum sailing days required to use non-sailing days
-
-**System Behavior:**
-- Non-sailing day options are available to all users from the start of the year
-- System displays clear messaging about remaining non-sailing days (e.g., "3 of 5 non-sailing days remaining")
-- After 5 non-sailing days are used, non-sailing day options are hidden/disabled until next year
-- Users can delete non-sailing day entries if needed, freeing up slots for new entries
+**Date Restrictions:**
+- No future dates allowed (tolerance: +1 day for timezone handling)
+- No duplicate dates per user
+- During January: can select current year + previous year dates
+- Starting February 1st: can only select current year dates
 
 ### 2.4 Activity History
 - Users can view all their previously entered activities
@@ -247,93 +228,40 @@ Award Administrators need to know when users reach award thresholds to send reco
 ## 4. Dashboard & Reporting
 
 ### 4.1 User Dashboard
-Display key metrics for current calendar year:
-- Total qualifying days (toward awards)
-- Number of sailing days
-- Number of non-sailing days logged
-- Non-sailing days remaining (X of 5 available)
-- Progress bars showing advancement toward each tier (10, 25, 50 days)
-- Awards earned this year
-- Recent activity history with optional details displayed
-- Reminder: "You must log your days by January 31st of the following year"
-
-**Activity Entry Form:**
-- Date picker (with duplicate date prevention)
-- Activity type dropdown:
-    - "Sailing on a Lightning" (always available)
-    - "Boat/Trailer Maintenance - X of 5 remaining" (available while non-sailing days remain)
-    - "Race Committee Work - X of 5 remaining" (available while non-sailing days remain)
-- Helper text explaining when all non-sailing days have been used
-- Optional fields section (collapsed/expandable for cleaner UX):
-    - Location
-    - Sail Number
-    - Notes (free-form text area)
-
-**Historical View:**
-- Access to view previous years' data
-- During January grace period, previous year activities can be edited or deleted
-- After January 31st, previous years' data becomes read-only (cannot be edited or deleted)
-- Annual summary for each past year (total days, awards earned)
-- Complete activity log from prior years
+The user dashboard is the main landing page after login, displaying:
+- Current year progress metrics (see Section 3.3 Progress Tracking for details)
+- Activity entry form (see Section 2.2 Activity Entry for form details)
+- Recent activity history with edit/delete capabilities (see Section 2.4 Activity History)
+- Grace period reminder: "You must log your days by January 31st of the following year"
 
 ### 4.2 Leaderboards
-Public leaderboards to encourage friendly competition and community engagement:
+Public leaderboards to encourage friendly competition and community engagement.
 
-**Individual Leaderboard (Sailor Tab):**
-- Rank sailors by total qualifying days for the current year
-- Display: Rank, Name, Days Logged, Fleet (optional), District (optional), Yacht Club (optional)
-- Filterable by: All participants, specific district, specific fleet
-- Only includes users with at least one flash in the current year
-- Users with only previous year flashes are excluded from current year leaderboard
-- **Tie-breaking rules** (in order of precedence):
-  1. Total qualifying flashes (primary sort - descending)
-  2. Sailing day count (more sailing days wins - descending)
-  3. First entry timestamp (earliest entry wins - ascending)
-  4. Alphabetical by first name, then last name (ascending)
+**Three Leaderboard Types:**
+1. **Sailor (Individual)**: Rank sailors by total qualifying days
+   - Display: Rank, Name, Days Logged, Fleet, District, Yacht Club
+   - Only includes users with at least one activity in current year
+2. **Fleet**: Rank fleets by total days logged by fleet members
+   - Display: Rank, Fleet Number, Fleet Name, Total Days, Member Count
+   - Only includes fleets with at least one member who has activities in current year
+   - Unaffiliated users (no fleet) are excluded
+3. **District**: Rank districts by total days logged by district members
+   - Display: Rank, District Name, Total Days, Member Count
+   - Only includes districts with at least one member who has activities in current year
+   - Unaffiliated users (no district) are excluded
 
-**Fleet Leaderboard (Fleet Tab):**
-- Rank fleets by total days logged by fleet members
-- Display: Rank, Fleet Number, Fleet Name, Total Days, Member Count
-- Shows which fleets are most active
-- Encourages fleet-level friendly competition
-- Only includes fleets with at least one member who has flashes in current year
-- **Member exclusion**: Users without a fleet (null fleet_id) are excluded from this leaderboard
-- **Tie-breaking rules** (in order of precedence):
-  1. Total qualifying flashes (aggregated across all members - descending)
-  2. Total sailing days (aggregated across all members - descending)
-  3. Earliest first entry across all members (ascending)
+**Tie-Breaking Logic (applies to all leaderboards):**
+1. Total qualifying flashes (primary sort)
+2. Total sailing days (tie-breaker #1 - more sailing days wins)
+3. First entry timestamp (tie-breaker #2 - earliest entry wins)
+4. Alphabetical by name (tie-breaker #3 - for individual leaderboard)
 
-**District Leaderboard (District Tab):**
-- Rank districts by total days logged by district members
-- Display: Rank, District Name, Total Days, Member Count
-- Shows which geographic regions are most active
-- Encourages district-level participation
-- Only includes districts with at least one member who has flashes in current year
-- **Member exclusion**: Users without a district (null district_id) are excluded from this leaderboard
-- **Tie-breaking rules** (in order of precedence):
-  1. Total qualifying flashes (aggregated across all members - descending)
-  2. Total sailing days (aggregated across all members - descending)
-  3. Earliest first entry across all members (ascending)
-
-**Leaderboard Display Features:**
-- Non-sailing day cap (5 per year) is enforced in all leaderboard calculations
-- Unlimited sailing days are counted without cap
-- Missing optional data (yacht club, district, fleet) displays as "—" (em dash)
-- Authenticated users see their own row highlighted with special background styling (e.g., `current-user-row` CSS class)
-- Guest users (not logged in) see no highlighting
-- Empty state message when no flashes exist: "No flashes logged yet for [current year]"
-
-**Leaderboard Navigation:**
-- Three tabs: Sailor (Individual), Fleet, District
-- Default tab: Sailor (when no tab parameter provided)
-- Invalid tab parameters default to Sailor tab
-- Tab selection preserved during pagination via URL query parameters
-- Example: `/leaderboard?tab=fleet&page=2`
-
-**Leaderboard Updates:**
-- Up-to-date leaderboards calculated on page load (low expected traffic volume)
+**Display Features:**
+- Non-sailing day cap (5 per year) enforced in all calculations
+- Authenticated users see their own row highlighted
+- Three tabs with instant switching (Sailor, Fleet, District)
 - Pagination: 15 results per page
-- Historical view: See previous years' final standings (future enhancement)
+- Missing optional data displays as "—"
 
 ### 4.3 Award Administrator Dashboard
 The award administrator view is specifically designed for award fulfillment purposes:
@@ -353,48 +281,24 @@ The award administrator view is specifically designed for award fulfillment purp
 
 ---
 
-## 5. Technical Requirements
+## 5. System Requirements
 
 ### 5.1 Platform
-- Standalone web-based application (no external integrations required)
-- Self-hosted on VPS or similar infrastructure
-- Accessible via browser on desktop and mobile devices
+- Web-based application accessible on desktop and mobile devices
+- Self-hosted deployment
 - Responsive design for various screen sizes
 
-### 5.2 Data Persistence
-- User accounts and data must persist across sessions
-- Secure storage of user credentials (bcrypt password hashing)
-- Historical data retained indefinitely but locked from editing after year-end
-- Single SQLite database file contains all application data
+### 5.2 Data Management
+- User accounts and activity data persist across sessions
+- Historical data retained indefinitely (read-only after grace period)
+- One activity per date per user (duplicate prevention enforced)
 
-### 5.3 Data Integrity
-- **One activity per date rule**: Users cannot log multiple activities on the same calendar date
-- System must prevent duplicate date entries
-- If user attempts to log an activity on a date that already has an entry, system should:
-    - Alert the user that an activity already exists for that date
-    - Allow user to view or edit the existing entry
-    - Prevent creation of a duplicate entry
+### 5.3 Security
+- Secure user authentication and password protection
+- Role-based access control (regular users and award administrators)
+- Industry-standard security practices
 
-**Non-sailing day Eligibility Enforcement:**
-- System calculates in real-time whether user has non-sailing days remaining
-- Non-sailing day options are only shown/enabled when user has not used all 5 non-sailing day slots for current year
-- If all 5 non-sailing days are used, non-sailing day options are hidden or disabled with clear explanation
-
-### 5.4 Year-End Rollover
-- Activity counts automatically reset to zero on January 1st
-- Prior year data becomes read-only on February 1st (one-month grace period for late entries)
-- Users can view and edit the previous year's activities until January 31st
-- After January 31st, previous year data becomes view-only
-- System maintains complete activity history across all years
-
-### 5.5 Security
-- Password protection for user accounts with secure hashing
-- Secure authentication system
-- Role-based access control (user vs. award administrator)
-- HTTPS/SSL encryption for data transmission
-- CSRF protection
-- SQL injection prevention
-- XSS protection
+*For technical architecture and implementation details, see [README.md](../README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).*
 
 ---
 

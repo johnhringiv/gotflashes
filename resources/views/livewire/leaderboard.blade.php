@@ -21,31 +21,6 @@
     @if($leaderboard->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto">
             <table class="table">
-                <style>
-                    .table tbody tr:nth-child(even):not(.current-user-row) {
-                        background-color: oklch(38% 0.09 245 / 0.1);
-                    }
-                    .current-user-row {
-                        background-color: oklch(44% 0.21 29 / 0.15);
-                    }
-                    .current-user-row td:first-child {
-                        position: relative;
-                    }
-                    .current-user-row td:first-child::before {
-                        content: '';
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        bottom: 0;
-                        width: 4px;
-                        background-color: oklch(44% 0.21 29);
-                    }
-                    .badge-accent {
-                        background-color: oklch(44% 0.21 29);
-                        color: oklch(100% 0 0);
-                        border-color: oklch(44% 0.21 29);
-                    }
-                </style>
                 @if($tab === 'sailor')
                     <thead class="bg-base-300 border-b-2 border-base-content/20">
                         <tr>

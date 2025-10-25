@@ -10,6 +10,8 @@
   prefersdark: false;
   color-scheme: light;
 
+  /*  https://daisyui.com/theme-generator/#theme=eJx9keFugyAURl_FuCzZkmqAasW9DcKlulIwoFm7Ze8-RNcx14m_uOfw-aEfqWZnSF9SxoeRKXV9HfVRQbpLs8wy0Y0uc6CAD8Z6CeWktHCOqexAifuoMZcAbnPXvcN_cYHdC2uMFTDZuL-EgYB-aKd92GnTuak_8jtulLGZ4y2EK6nu2A5BmkHDHGQYIY8eZCkrydaQzBAocInWcD9DgQUVcg250QPoYRKI2FcFjQQN42CZ2mLxeRlW5HRaGg_MSfH2qUKPCcrxoUxIWeQHUjxHphs5B-d-5HqSCaoTXOK8wjiW35jVnT7eZEpCMq0TWuQFqWMXrA1_bInFcyxJ9kWdV4dfsVPbzessJTedpVvsYDY9606bKb3tzsxew4dnJaU8bgH-pFho2VDexCeZrziHMkB-_Q3dvuJ3-KY1v-SuIkCyUfmZZMrBLu0tSLDOR56W2ecXflAjlw */
+
   /* Base colors - Soft off-white with blue undertone */
   --color-base-100: oklch(96% 0.003 245deg);
   --color-base-200: oklch(92% 0.005 245deg);
@@ -122,6 +124,76 @@
     background: oklch(96% 0.003 245deg);
     padding: 0 0.25rem;
     z-index: 10;
+}
+
+/* TomSelect customization with Lightning Class theme colors */
+.ts-dropdown {
+    position: absolute;
+    z-index: 9999 !important;
+    background: var(--color-base-100);
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-selector);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.ts-dropdown .option {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--color-base-content);
+    transition: background-color 0.15s ease;
+}
+
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+}
+
+.ts-dropdown .optgroup-header {
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+}
+
+.ts-control {
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+}
+
+.ts-wrapper .item {
+    line-height: normal;
+}
+
+.ts-wrapper.single .ts-control {
+    background: var(--color-base-100) !important;
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-selector);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ts-wrapper.single .ts-control input {
+    color: var(--color-base-content) !important;
+}
+
+.ts-wrapper.focus .ts-control {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
+    outline: none;
+    background: var(--color-base-100) !important;
+}
+
+.ts-wrapper.disabled .ts-control,
+.ts-wrapper.disabled .ts-control * {
+    cursor: not-allowed !important;
+    opacity: 0.5;
+}
+
+.ts-wrapper.single .ts-control:hover {
+    border-color: var(--color-primary);
 }
 
 /* Flatpickr calendar customization with brand colors */
@@ -270,4 +342,38 @@ span.flatpickr-weekday {
     background-color: oklch(92% 0.005 245deg) !important;
     border: 2px solid oklch(44% 0.21 29deg) !important;
     color: transparent !important;
+}
+
+/* Leaderboard table styling */
+
+/* Alternating row colors (primary blue with transparency) */
+.table tbody tr:nth-child(even):not(.current-user-row) {
+    background-color: oklch(from var(--color-primary) l c h / 10%);
+}
+
+/* Current user/fleet/district highlighting */
+.current-user-row {
+    background-color: oklch(from var(--color-accent) l c h / 15%);
+}
+
+/* Red indicator bar on left side of current user row */
+.current-user-row td:first-child {
+    position: relative;
+}
+
+.current-user-row td:first-child::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--color-accent);
+}
+
+/* Accent badge styling (red) */
+.badge-accent {
+    background-color: var(--color-accent);
+    color: var(--color-accent-content);
+    border-color: var(--color-accent);
 }
