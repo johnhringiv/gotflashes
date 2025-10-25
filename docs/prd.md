@@ -58,6 +58,11 @@ Users can view and edit their profile information through a dedicated profile pa
 - Email address remains fixed after registration (serves as permanent account identifier)
 - Secure access - users can only view and edit their own profile
 
+### 1.5 Data Export
+Users can export their complete profile and activity history:
+- CSV format download with user profile data and all flash entries
+- Includes year-appropriate district/fleet affiliations for each activity
+
 ### 1.4 User Roles
 - **Regular Users**: Can track their own activities and view their progress
 - **Award Administrators**: Responsible for viewing award eligibility and mailing physical awards to participants

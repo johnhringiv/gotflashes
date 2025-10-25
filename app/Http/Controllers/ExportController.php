@@ -18,7 +18,7 @@ class ExportController extends Controller
 
         $filename = 'got-flashes-export-'.now()->format('Y-m-d').'.csv';
 
-        return response()->stream(function () use ($user) {
+        $callback = function () use ($user) {
             $handle = fopen('php://output', 'w');
 
             // Write UTF-8 BOM for Excel compatibility
@@ -49,6 +49,20 @@ class ExportController extends Controller
                 'Updated At',
             ]);
 
+            // Pre-build user data array (avoid repeated property access in loop)
+            $userData = [
+                $user->name,
+                $user->email,
+                $user->date_of_birth ? (string) $user->date_of_birth : '',
+                $user->gender ?? '',
+                $user->address_line1.($user->address_line2 ? ', '.$user->address_line2 : ''),
+                $user->city ?? '',
+                $user->state ?? '',
+                $user->zip_code ?? '',
+                $user->country ?? '',
+                $user->yacht_club ?? '',
+            ];
+
             // Stream flashes data in chunks
             $user->flashes()
                 ->leftJoin('members', function ($join) {
@@ -71,7 +85,7 @@ class ExportController extends Controller
                     'fleets.fleet_name',
                 ])
                 ->orderBy('flashes.date', 'desc')
-                ->chunk(100, function ($flashes) use ($handle, $user) {
+                ->chunk(100, function ($flashes) use ($handle, $userData) {
                     foreach ($flashes as $flash) {
                         // Format date as Y-m-d without time
                         // @phpstan-ignore-next-line
@@ -79,18 +93,8 @@ class ExportController extends Controller
                             ? $flash->date->format('Y-m-d')
                             : $flash->date;
 
-                        // Duplicate user info on every row for true flat structure
-                        fputcsv($handle, [
-                            $user->name,
-                            $user->email,
-                            $user->date_of_birth ? (string) $user->date_of_birth : '',
-                            $user->gender ?? '',
-                            $user->address_line1.($user->address_line2 ? ', '.$user->address_line2 : ''),
-                            $user->city ?? '',
-                            $user->state ?? '',
-                            $user->zip_code ?? '',
-                            $user->country ?? '',
-                            $user->yacht_club ?? '',
+                        // Merge pre-built user data with flash data
+                        fputcsv($handle, array_merge($userData, [
                             $dateValue,
                             $flash->activity_type ?? '',
                             $flash->event_type ?? '',
@@ -102,14 +106,17 @@ class ExportController extends Controller
                             $flash->notes ?? '',
                             $flash->created_at ?? '',
                             $flash->updated_at ?? '',
-                        ]);
+                        ]));
                     }
                 });
 
             fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Download-Options' => 'noopen',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',

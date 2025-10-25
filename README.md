@@ -40,6 +40,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Change district and fleet affiliations (updates current year membership)
   - Email address is read-only after registration
   - Real-time validation ensures data quality
+- **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
