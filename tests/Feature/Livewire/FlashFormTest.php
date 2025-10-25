@@ -99,6 +99,9 @@ class FlashFormTest extends TestCase
     {
         $user = User::factory()->create();
 
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
+
         // Mock time to January 15, 2025
         $this->travelTo(now()->setDate(2025, 1, 15));
 
@@ -132,6 +135,9 @@ class FlashFormTest extends TestCase
     public function test_date_ranges_recalculate_on_rerender(): void
     {
         $user = User::factory()->create();
+
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
 
         // Start in January - grace period active
         $this->travelTo(now()->setDate(2025, 1, 31, 23, 50));
@@ -185,6 +191,9 @@ class FlashFormTest extends TestCase
     public function test_existing_dates_include_previous_year_in_january(): void
     {
         $user = User::factory()->create();
+
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
 
         // Create flashes in different years
         Flash::factory()->forUser($user)->create(['date' => '2023-06-15']); // Too old
@@ -285,6 +294,9 @@ class FlashFormTest extends TestCase
     {
         $user = User::factory()->create();
 
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
+
         // Start in January - should show 2024 and 2025 in year dropdown
         $this->travelTo(now()->setDate(2025, 1, 31, 23, 50));
 
@@ -309,6 +321,10 @@ class FlashFormTest extends TestCase
     public function test_component_passes_data_attributes_to_view(): void
     {
         $user = User::factory()->create();
+
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
+
         Flash::factory()->forUser($user)->create(['date' => '2025-01-10']);
 
         $this->travelTo(now()->setDate(2025, 1, 15));
