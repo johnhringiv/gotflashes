@@ -27,9 +27,9 @@ Route::prefix('api')->middleware(['throttle:60,1', 'cache.headers:public;max_age
     Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
 });
 
-// Flash routes - Note: store/update/destroy are handled by Livewire components
+// Logbook routes - Note: store/update/destroy are handled by Livewire components
 // Only index and edit use traditional routes
-Route::resource('flashes', FlashController::class)
+Route::resource('logbook', FlashController::class)
     ->only(['index', 'edit'])
     ->middleware('auth');
 
@@ -59,7 +59,18 @@ Route::view('/login', 'auth.login')
 Route::post('/login', Login::class)
     ->middleware('guest');
 
-// Logout route
+// Logout routes
 Route::post('/logout', Logout::class)
     ->middleware('auth')
     ->name('logout');
+
+// Handle GET requests to logout (redirect to home)
+Route::get('/logout', function () {
+    return redirect('/');
+});
+
+// Fallback route for 404 errors - must be last
+// This ensures 404 pages go through the web middleware stack (session, auth, etc.)
+Route::fallback(function () {
+    return response()->view('errors.404', [], 404);
+});

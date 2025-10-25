@@ -22,7 +22,7 @@ class Login extends Controller
             $request->session()->regenerate();
 
             // Redirect to intended page or home
-            return redirect()->intended(route('flashes.index'))->with('success', 'Welcome back!');
+            return redirect()->intended(route('logbook.index'))->with('success', 'Welcome back!');
         }
 
         // If login fails, redirect back with error

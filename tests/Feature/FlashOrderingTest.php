@@ -34,7 +34,7 @@ class FlashOrderingTest extends TestCase
             'activity_type' => 'sailing',
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
 
@@ -66,7 +66,7 @@ class FlashOrderingTest extends TestCase
             'activity_type' => 'sailing',
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
 
@@ -113,7 +113,7 @@ class FlashOrderingTest extends TestCase
             'activity_type' => 'sailing',
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
 
@@ -139,7 +139,7 @@ class FlashOrderingTest extends TestCase
             'created_at' => now(), // But logged today
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Just logged');
@@ -157,7 +157,7 @@ class FlashOrderingTest extends TestCase
             'created_at' => now()->subDay(), // Logged yesterday
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertDontSee('Just logged');
@@ -189,7 +189,7 @@ class FlashOrderingTest extends TestCase
             'created_at' => now()->subDays(2),
         ]);
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
 

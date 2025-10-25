@@ -28,4 +28,24 @@ class LogoutTest extends TestCase
 
         $response->assertRedirect('/login');
     }
+
+    public function test_get_logout_redirects_to_home(): void
+    {
+        // GET request to /logout should redirect to home (no error)
+        $response = $this->get('/logout');
+
+        $response->assertRedirect('/');
+    }
+
+    public function test_authenticated_user_get_logout_redirects_to_home(): void
+    {
+        $user = User::factory()->create();
+
+        // Even authenticated users hitting GET /logout should be redirected
+        // (they should use POST for actual logout)
+        $response = $this->actingAs($user)->get('/logout');
+
+        $response->assertRedirect('/');
+        $this->assertAuthenticated(); // Still authenticated (didn't logout)
+    }
 }

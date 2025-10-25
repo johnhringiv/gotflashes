@@ -17,7 +17,7 @@ class FlashController extends Controller
     public function index()
     {
         // All data now handled by Livewire components
-        return view('flashes.index');
+        return view('logbook.index');
     }
 
     /**
@@ -46,7 +46,7 @@ class FlashController extends Controller
             ->map(fn ($d) => $d->format('Y-m-d'))
             ->toArray();
 
-        return view('flashes.edit', compact('flash', 'minDate', 'maxDate', 'existingDates'));
+        return view('logbook.edit', compact('flash', 'minDate', 'maxDate', 'existingDates'));
     }
 
     /**
