@@ -228,24 +228,43 @@ class FlashForm extends Component
         ];
     }
 
-    public function render()
+    /**
+     * Get allowed date range (cached per request).
+     * Computed properties are recalculated on new requests (e.g., after $refresh).
+     */
+    #[\Livewire\Attributes\Computed]
+    public function dateRange(): array
     {
-        // These are calculated fresh on every render - always current!
-        [$minDate, $maxDate] = DateRangeService::getAllowedDateRange();
+        return DateRangeService::getAllowedDateRange();
+    }
 
-        // Get existing dates for the user within selectable range
-        $user = auth()->user();
-        $existingDates = $user->flashes()
+    /**
+     * Get existing flash dates for the user within selectable range (cached per request).
+     * This query only runs once per request, even if render() is called multiple times
+     * (e.g., during wire:model.blur syncs). After save/delete, $refresh creates a new
+     * request which recalculates this property with fresh data.
+     */
+    #[\Livewire\Attributes\Computed]
+    public function existingDates(): array
+    {
+        [$minDate, $maxDate] = $this->dateRange();
+
+        return auth()->user()->flashes()
             ->where('date', '>=', $minDate)
             ->where('date', '<=', $maxDate)
             ->pluck('date')
             ->map(fn ($d) => $d->format('Y-m-d'))
             ->toArray();
+    }
+
+    public function render()
+    {
+        [$minDate, $maxDate] = $this->dateRange();
 
         return view('livewire.flash-form', [
             'minDate' => $minDate,
             'maxDate' => $maxDate,
-            'existingDates' => $existingDates,
+            'existingDates' => $this->existingDates(),
         ]);
     }
 }
