@@ -9,7 +9,7 @@
     <div class="max-w-6xl mx-auto">
         <div class="mb-6">
             <h1 class="text-3xl font-bold">
-                <span class="text-primary">2025</span>
+                <span class="text-primary">{{ now()->year }}</span>
                 <span class="text-accent">Leaderboard</span>
             </h1>
             <p class="text-base-content/70 mt-2">Top Lightning sailors by total flashes this year</p>
