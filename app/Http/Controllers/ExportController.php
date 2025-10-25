@@ -53,7 +53,7 @@ class ExportController extends Controller
             $user->flashes()
                 ->leftJoin('members', function ($join) {
                     $join->on('members.user_id', '=', 'flashes.user_id')
-                        ->whereRaw('members.year = strftime(\'%Y\', flashes.date)');
+                        ->whereRaw("members.year = CAST(strftime('%Y', flashes.date) AS INTEGER)");
                 })
                 ->leftJoin('districts', 'members.district_id', '=', 'districts.id')
                 ->leftJoin('fleets', 'members.fleet_id', '=', 'fleets.id')
