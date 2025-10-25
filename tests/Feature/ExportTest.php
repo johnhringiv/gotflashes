@@ -54,11 +54,18 @@ class ExportTest extends TestCase
             'yacht_club' => 'San Diego Yacht Club',
         ]);
 
+        // Create a flash so user info appears in data rows
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2024-06-15',
+            'activity_type' => 'sailing',
+        ]);
+
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
-        // Check for user information in CSV
+        // Check for user information in CSV (duplicated on each row)
         $this->assertStringContainsString('Jane Smith', $content);
         $this->assertStringContainsString('jane@example.com', $content);
         $this->assertStringContainsString('123 Main St', $content);
@@ -90,7 +97,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Check for flash data
         $this->assertStringContainsString('2024-06-15', $content);
@@ -118,23 +125,13 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Check date of birth is YYYY-MM-DD format
         $this->assertStringContainsString('1990-05-15', $content);
 
         // Check flash date is YYYY-MM-DD format (not datetime)
-        $this->assertStringContainsString('"2024-06-15"', $content);
-
-        // Check export date header is YYYY-MM-DD format
-        $lines = explode("\n", $content);
-        foreach ($lines as $line) {
-            if (str_contains($line, 'Export Date:')) {
-                // Should be YYYY-MM-DD format, not include time
-                $this->assertMatchesRegularExpression('/Export Date: \d{4}-\d{2}-\d{2}$/', $line);
-                break;
-            }
-        }
+        $this->assertStringContainsString('2024-06-15', $content);
     }
 
     public function test_export_includes_membership_data_for_flash_year(): void
@@ -165,7 +162,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Check that district and fleet info is included
         $this->assertStringContainsString('District 5', $content);
@@ -223,7 +220,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Parse CSV to check specific rows
         $lines = explode("\n", $content);
@@ -234,7 +231,7 @@ class ExportTest extends TestCase
         $flash2025Found = false;
 
         foreach ($lines as $line) {
-            if (str_contains($line, '"Date","Activity Type"')) {
+            if (str_contains($line, 'Date') && str_contains($line, 'Activity Type')) {
                 $dataStarted = true;
 
                 continue;
@@ -280,7 +277,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user1)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Should include user1's data
         $this->assertStringContainsString('User 1 Location', $content);
@@ -301,7 +298,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Should properly escape quotes (doubled)
         $this->assertStringContainsString('""quotes""', $content);
@@ -322,7 +319,7 @@ class ExportTest extends TestCase
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
         $response->assertOk();
-        $content = $response->getContent();
+        $content = $response->streamedContent();
 
         // Should still include flash data
         $this->assertStringContainsString('2024-06-15', $content);
@@ -356,7 +353,7 @@ class ExportTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('export.user-data'));
 
-        $content = $response->getContent();
+        $content = $response->streamedContent();
         $lines = explode("\n", $content);
 
         // Find positions of each month in the output
