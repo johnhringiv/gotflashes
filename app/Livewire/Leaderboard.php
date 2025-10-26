@@ -73,37 +73,8 @@ class Leaderboard extends Component
             ->whereRaw("strftime('%Y', date) = ?", [$yearString])
             ->groupBy('user_id');
 
-        return match ($tab) {
-            'sailor' => $this->buildSailorQuery($userFlashesSubquery, $year),
-            'fleet' => $this->buildGroupedQuery(
-                table: 'fleets',
-                selectColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
-                joinColumn: 'recent_members.fleet_id',
-                groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
-                userFlashesSubquery: $userFlashesSubquery,
-                year: $year
-            ),
-            'district' => $this->buildGroupedQuery(
-                table: 'districts',
-                selectColumns: ['districts.id', 'districts.name'],
-                joinColumn: 'recent_members.district_id',
-                groupByColumns: ['districts.id', 'districts.name'],
-                userFlashesSubquery: $userFlashesSubquery,
-                year: $year
-            ),
-            default => $this->buildSailorQuery($userFlashesSubquery, $year),
-        };
-    }
-
-    /**
-     * Build individual sailor leaderboard query.
-     * Uses pre-aggregated flash counts with JOIN (no correlated subqueries).
-     * Implements membership carry-forward: uses most recent membership <= target year.
-     */
-    private function buildSailorQuery($userFlashesSubquery, int $year): LengthAwarePaginator
-    {
-        // Subquery to find most recent membership for each user (single pass with join)
-        // Gets the membership record with the maximum year <= target year for each user
+        // Build the most recent membership subquery (shared across all tabs)
+        // Implements membership carry-forward: uses most recent membership <= target year
         $mostRecentMembershipSubquery = DB::table('members as m1')
             ->select('m1.*')
             ->joinSub(
@@ -118,6 +89,37 @@ class Leaderboard extends Component
                 }
             );
 
+        return match ($tab) {
+            'sailor' => $this->buildSailorQuery($userFlashesSubquery, $mostRecentMembershipSubquery, $year),
+            'fleet' => $this->buildGroupedQuery(
+                table: 'fleets',
+                selectColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+                joinColumn: 'recent_members.fleet_id',
+                groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
+                userFlashesSubquery: $userFlashesSubquery,
+                mostRecentMembershipSubquery: $mostRecentMembershipSubquery,
+                year: $year
+            ),
+            'district' => $this->buildGroupedQuery(
+                table: 'districts',
+                selectColumns: ['districts.id', 'districts.name'],
+                joinColumn: 'recent_members.district_id',
+                groupByColumns: ['districts.id', 'districts.name'],
+                userFlashesSubquery: $userFlashesSubquery,
+                mostRecentMembershipSubquery: $mostRecentMembershipSubquery,
+                year: $year
+            ),
+            default => $this->buildSailorQuery($userFlashesSubquery, $mostRecentMembershipSubquery, $year),
+        };
+    }
+
+    /**
+     * Build individual sailor leaderboard query.
+     * Uses pre-aggregated flash counts with JOIN (no correlated subqueries).
+     * Implements membership carry-forward: uses most recent membership <= target year.
+     */
+    private function buildSailorQuery($userFlashesSubquery, $mostRecentMembershipSubquery, int $year): LengthAwarePaginator
+    {
         return DB::table('users')
             ->select([
                 'users.*',
@@ -149,23 +151,9 @@ class Leaderboard extends Component
         string $joinColumn,
         array $groupByColumns,
         $userFlashesSubquery,
+        $mostRecentMembershipSubquery,
         int $year
     ): LengthAwarePaginator {
-        // Subquery to find most recent membership for each user (carry-forward logic)
-        $mostRecentMembershipSubquery = DB::table('members as m1')
-            ->select('m1.*')
-            ->joinSub(
-                DB::table('members')
-                    ->select('user_id', DB::raw('MAX(year) as max_year'))
-                    ->where('year', '<=', $year)
-                    ->groupBy('user_id'),
-                'm2',
-                function ($join) {
-                    $join->on('m1.user_id', '=', 'm2.user_id')
-                        ->on('m1.year', '=', 'm2.max_year');
-                }
-            );
-
         $aggregatedColumns = [
             DB::raw('COUNT(DISTINCT recent_members.user_id) as member_count'),
             // Total flashes: sailing (unlimited) + MIN(non-sailing, 5) per user

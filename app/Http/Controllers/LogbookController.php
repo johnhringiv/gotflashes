@@ -6,7 +6,7 @@ use App\Models\Flash;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-class FlashController extends Controller
+class LogbookController extends Controller
 {
     use AuthorizesRequests;
 
