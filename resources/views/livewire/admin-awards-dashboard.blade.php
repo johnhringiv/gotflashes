@@ -96,38 +96,24 @@
         </div>
     </div>
 
-    <!-- Quick Select Buttons -->
-    <div class="flex flex-wrap gap-2 mb-4">
-        <button wire:click="selectAllByStatus('pending')" class="btn btn-sm btn-outline btn-primary">
-            Select All Pending
-        </button>
-        <button wire:click="selectAllByStatus('earned')" class="btn btn-sm btn-outline btn-warning">
-            Select All Earned
-        </button>
-        <button wire:click="selectAllByStatus('processing')" class="btn btn-sm btn-outline btn-info">
-            Select All Processing
-        </button>
-        <button wire:click="selectAllByStatus('sent')" class="btn btn-sm btn-outline btn-success">
-            Select All Sent
-        </button>
-        <button wire:click="selectAllByStatus('all')" class="btn btn-sm btn-outline">
-            Select All on Page
-        </button>
-        <button wire:click="clearSelection" class="btn btn-sm btn-outline btn-error">
-            Clear Selection
-        </button>
-    </div>
-
     <!-- Awards Table -->
     @if($awards->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto mb-20">
             <table class="table">
                 <thead class="bg-base-300 border-b-2 border-base-content/20">
                     <tr>
-                        <th class="w-12">
-                            <input type="checkbox" class="checkbox checkbox-sm"
-                                   wire:click="selectAllByStatus('all')"
-                                   {{ count($selectedAwards) === $awards->count() ? 'checked' : '' }}>
+                        <th class="w-24">
+                            @if(count($selectedAwards) === $awards->count())
+                                <button wire:click="clearSelection"
+                                        class="btn btn-sm btn-error">
+                                    Clear
+                                </button>
+                            @else
+                                <button wire:click="selectAllByStatus('all')"
+                                        class="btn btn-sm btn-primary">
+                                    Select All
+                                </button>
+                            @endif
                         </th>
                         <th class="font-bold">Name</th>
                         <th class="font-bold">Address</th>
@@ -227,7 +213,7 @@
                         <span class="font-semibold">{{ count($selectedAwards) }} awards selected</span>
                     </div>
                     <div class="flex gap-2">
-                        <button wire:click="confirmMarkAsProcessing" class="btn btn-warning">
+                        <button wire:click="confirmMarkAsProcessing" class="btn btn-info">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
@@ -296,7 +282,7 @@
                 <div class="modal-action">
                     <button wire:click="cancelConfirmation" class="btn">Cancel</button>
                     <button wire:click="bulkMarkAsProcessing"
-                            class="btn btn-warning"
+                            class="btn btn-info"
                             @disabled($showDowngradeWarning && !$confirmDowngrade)>
                         Mark as Processing
                     </button>
