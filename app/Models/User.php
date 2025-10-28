@@ -80,6 +80,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's award fulfillment records.
+     */
+    public function awardFulfillments(): HasMany
+    {
+        return $this->hasMany(AwardFulfillment::class);
+    }
+
+    /**
      * Get the user's membership for a specific year.
      * If no membership exists for the specified year, carries forward from the most recent previous year.
      *
@@ -201,5 +209,44 @@ class User extends Authenticatable
                     AND strftime(\'%Y\', date) = ?
                 ', [(string) $year]);
             }, 'first_entry_date');
+    }
+
+    /**
+     * Get the date when user first reached a specific award threshold.
+     * Used in admin dashboard to show when user earned an award.
+     *
+     * @param  int  $year  The year to check
+     * @param  int  $tier  The award tier (10, 25, or 50)
+     * @return \Carbon\Carbon|null The date threshold was reached, or null if not reached
+     */
+    public function thresholdDateForYear(int $year, int $tier): ?\Carbon\Carbon
+    {
+        // Get all flashes for the year, ordered by date ASC
+        $flashes = $this->flashes()
+            ->whereYear('date', $year)
+            ->orderBy('date', 'asc')
+            ->get();
+
+        $sailingCount = 0;
+        $nonSailingCount = 0;
+
+        /** @var Flash $flash */
+        foreach ($flashes as $flash) {
+            if ($flash->activity_type === 'sailing') {
+                $sailingCount++;
+            } else {
+                $nonSailingCount++;
+            }
+
+            // Apply 5 non-sailing day cap
+            $cumulativeTotal = $sailingCount + min($nonSailingCount, 5);
+
+            // Check if we've crossed the threshold
+            if ($cumulativeTotal >= $tier) {
+                return \Carbon\Carbon::parse($flash->date);
+            }
+        }
+
+        return null; // Threshold not reached
     }
 }

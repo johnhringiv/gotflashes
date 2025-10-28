@@ -69,6 +69,11 @@ Route::get('/logout', function () {
     return redirect('/');
 });
 
+// Admin routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::view('/awards', 'admin.awards-dashboard')->name('admin.awards');
+});
+
 // Fallback route for 404 errors - must be last
 // This ensures 404 pages go through the web middleware stack (session, auth, etc.)
 // Uses controller instead of closure to support route caching

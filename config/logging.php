@@ -115,6 +115,15 @@ return [
             'formatter' => Monolog\Formatter\JsonFormatter::class,
         ],
 
+        // Admin action logging
+        'admin' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/admin.log'),
+            'level' => 'info',
+            'days' => 90,
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+        ],
+
         // Database query logging
         'query' => [
             'driver' => 'daily',
