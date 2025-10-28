@@ -44,7 +44,7 @@ class RegistrationWithMembershipsTest extends TestCase
             'yacht_club' => 'Test Yacht Club',
         ]);
 
-        $response->assertRedirect('/flashes');
+        $response->assertRedirect('/logbook');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'test@example.com')->first();
@@ -79,7 +79,7 @@ class RegistrationWithMembershipsTest extends TestCase
             'fleet_id' => 'none',
         ]);
 
-        $response->assertRedirect('/flashes');
+        $response->assertRedirect('/logbook');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'test@example.com')->first();
@@ -116,7 +116,7 @@ class RegistrationWithMembershipsTest extends TestCase
             'fleet_id' => 'none',
         ]);
 
-        $response->assertRedirect('/flashes');
+        $response->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();
@@ -146,7 +146,7 @@ class RegistrationWithMembershipsTest extends TestCase
             'fleet_id' => $fleet->id,
         ]);
 
-        $response->assertRedirect('/flashes');
+        $response->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();
@@ -317,7 +317,7 @@ class RegistrationWithMembershipsTest extends TestCase
             'fleet_id' => null,
         ]);
 
-        $response->assertRedirect('/flashes');
+        $response->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();

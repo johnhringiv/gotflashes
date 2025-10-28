@@ -69,6 +69,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Start Year
+    |--------------------------------------------------------------------------
+    |
+    | The year the application launched. Grace period logic (January allowing
+    | previous year entries) only applies AFTER this year.
+    |
+    | Example: If START_YEAR=2026:
+    |   - January 2026: Users can only enter 2026 dates (no grace period)
+    |   - January 2027: Users can enter 2026-2027 dates (grace period active)
+    |   - January 2028: Users can enter 2027-2028 dates (grace period active)
+    |
+    */
+
+    'start_year' => (int) env('START_YEAR', 2026),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

@@ -30,7 +30,7 @@ class LoginTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('flashes.index'));
+        $response->assertRedirect(route('logbook.index'));
     }
 
     public function test_users_cannot_authenticate_with_invalid_password(): void
@@ -102,7 +102,7 @@ class LoginTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('flashes.index'));
+        $response->assertRedirect(route('logbook.index'));
 
         // Verify remember token was set
         $this->assertNotNull($user->fresh()->remember_token);

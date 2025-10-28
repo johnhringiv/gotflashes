@@ -15,7 +15,7 @@ class FlashProgressTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Progress');
@@ -44,7 +44,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('7'); // Total: 5 sailing + 2 non-sailing
@@ -80,7 +80,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('8'); // Total: 3 sailing + 5 non-sailing (capped)
@@ -100,7 +100,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Next Award');
@@ -121,7 +121,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Next Award');
@@ -149,7 +149,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Achievement');
@@ -178,7 +178,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         // Check that we see the sailing count breakdown for current year only
@@ -198,7 +198,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertDontSee('bi-trophy-fill'); // No trophy icon
@@ -218,7 +218,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('got-10-badge.png'); // 10 Day badge image
@@ -238,7 +238,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
@@ -266,7 +266,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
@@ -295,7 +295,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertSee('burgee-50.jpg'); // Burgee image in "Next Award" stat
@@ -322,7 +322,7 @@ class FlashProgressTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('flashes.index'));
+        $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
         $response->assertDontSee('burgee-50.jpg'); // No burgee yet

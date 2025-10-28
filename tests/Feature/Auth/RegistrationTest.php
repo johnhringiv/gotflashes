@@ -38,7 +38,7 @@ class RegistrationTest extends TestCase
             'yacht_club' => 'Test Yacht Club',
         ]);
 
-        $response->assertRedirect(route('flashes.index'));
+        $response->assertRedirect(route('logbook.index'));
         $this->assertAuthenticated();
 
         // Verify user was created

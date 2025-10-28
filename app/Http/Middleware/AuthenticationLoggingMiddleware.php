@@ -33,7 +33,8 @@ class AuthenticationLoggingMiddleware
      */
     private function logLoginAttempt(Request $request, Response $response): void
     {
-        $successful = $response->getStatusCode() === 302 && $response->headers->get('Location') === url('/flashes');
+        // Check if user is authenticated after response (works with redirect()->intended())
+        $successful = $response->getStatusCode() === 302 && auth()->check();
 
         Log::channel('security')->info('Login attempt', [
             'event' => 'login_attempt',
@@ -61,7 +62,8 @@ class AuthenticationLoggingMiddleware
      */
     private function logRegistrationAttempt(Request $request, Response $response): void
     {
-        $successful = $response->getStatusCode() === 302 && $response->headers->get('Location') === url('/flashes');
+        // Check if user is authenticated after response (more reliable than URL matching)
+        $successful = $response->getStatusCode() === 302 && auth()->check();
 
         Log::channel('security')->info('Registration attempt', [
             'event' => 'registration_attempt',

@@ -54,7 +54,7 @@
             <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-3 shadow-lg bg-base-100 rounded-box w-56 text-base-content">
                 <li><a href="/" class="text-base py-3 {{ request()->path() === '/' ? 'active font-bold text-accent' : '' }}">Home</a></li>
                 @auth
-                    <li><a href="/flashes" class="text-base py-3 {{ str_starts_with(request()->path(), 'flashes') ? 'active font-bold text-accent' : '' }}">Activities</a></li>
+                    <li><a href="/logbook" class="text-base py-3 {{ str_starts_with(request()->path(), 'logbook') ? 'active font-bold text-accent' : '' }}">Logbook</a></li>
                 @endauth
                 <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
 
@@ -86,7 +86,7 @@
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
             @auth
-                <li><a href="/flashes" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'flashes') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Activities</a></li>
+                <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
             @endauth
             <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
         </ul>

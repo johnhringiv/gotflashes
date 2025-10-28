@@ -1087,4 +1087,188 @@ class LeaderboardTest extends TestCase
         // Central New York should appear before California (more sailing days)
         $response->assertSeeInOrder(['Central New York', 'California']);
     }
+
+    public function test_sailor_leaderboard_carries_forward_previous_year_memberships(): void
+    {
+        // Get district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        $user = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
+
+        // Create membership for 2025 only (no 2026 membership)
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        // Create flash in 2026 (no 2026 membership exists)
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2026-01-15',
+            'activity_type' => 'sailing',
+        ]);
+
+        // Mock now() to return 2026
+        $this->travelTo('2026-01-15');
+
+        $response = $this->get('/leaderboard');
+
+        $response->assertStatus(200);
+        // Should still show user with 2025 membership carried forward
+        $response->assertSee('John Doe');
+        $response->assertSee('California'); // 2025 district carried forward
+        $response->assertSee('194'); // 2025 fleet carried forward
+
+        $this->travelBack();
+    }
+
+    public function test_fleet_leaderboard_carries_forward_previous_year_memberships(): void
+    {
+        // Get district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+
+        // Create memberships for 2025 only
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        // Create flashes in 2026
+        Flash::factory()->create([
+            'user_id' => $user1->id,
+            'date' => '2026-01-10',
+            'activity_type' => 'sailing',
+        ]);
+
+        Flash::factory()->create([
+            'user_id' => $user2->id,
+            'date' => '2026-01-11',
+            'activity_type' => 'sailing',
+        ]);
+
+        // Mock now() to return 2026
+        $this->travelTo('2026-01-15');
+
+        $response = $this->get('/leaderboard?tab=fleet');
+
+        $response->assertStatus(200);
+        // Should show fleet with 2025 memberships carried forward
+        $response->assertSee('Fleet 194');
+        $response->assertSee('2'); // 2 members with flashes in 2026
+
+        $this->travelBack();
+    }
+
+    public function test_district_leaderboard_carries_forward_previous_year_memberships(): void
+    {
+        // Get district and fleet from seeded data
+        $california = District::where('name', 'California')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+
+        // Create memberships for 2025 only
+        Member::create([
+            'user_id' => $user1->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        Member::create([
+            'user_id' => $user2->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2025,
+        ]);
+
+        // Create flashes in 2026
+        Flash::factory()->create([
+            'user_id' => $user1->id,
+            'date' => '2026-01-10',
+            'activity_type' => 'sailing',
+        ]);
+
+        Flash::factory()->create([
+            'user_id' => $user2->id,
+            'date' => '2026-01-11',
+            'activity_type' => 'sailing',
+        ]);
+
+        // Mock now() to return 2026
+        $this->travelTo('2026-01-15');
+
+        $response = $this->get('/leaderboard?tab=district');
+
+        $response->assertStatus(200);
+        // Should show district with 2025 memberships carried forward
+        $response->assertSee('California');
+        $response->assertSee('2'); // 2 members with flashes in 2026
+
+        $this->travelBack();
+    }
+
+    public function test_leaderboard_uses_most_recent_membership_when_multiple_years_exist(): void
+    {
+        // Get districts and fleets
+        $california = District::where('name', 'California')->first();
+        $centralNewYork = District::where('name', 'Central New York')->first();
+        $fleet194 = Fleet::where('fleet_number', 194)->first();
+        $fleet1 = Fleet::where('fleet_number', 1)->first();
+
+        $user = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
+
+        // User was in California in 2024
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $california->id,
+            'fleet_id' => $fleet194->id,
+            'year' => 2024,
+        ]);
+
+        // User moved to Central New York in 2025
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $centralNewYork->id,
+            'fleet_id' => $fleet1->id,
+            'year' => 2025,
+        ]);
+
+        // Create flash in 2026 (should use 2025 membership, not 2024)
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2026-01-15',
+            'activity_type' => 'sailing',
+        ]);
+
+        // Mock now() to return 2026
+        $this->travelTo('2026-01-15');
+
+        $response = $this->get('/leaderboard');
+
+        $response->assertStatus(200);
+        // Should show most recent (2025) membership
+        $response->assertSee('John Doe');
+        $response->assertSee('Central New York'); // 2025 district, not 2024
+        $response->assertSee('1'); // Fleet 1 (2025), not Fleet 194 (2024)
+
+        $this->travelBack();
+    }
 }
