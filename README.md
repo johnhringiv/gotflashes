@@ -167,6 +167,12 @@ $user->save();
 
 Press `Ctrl+C` to exit Tinker.
 
+**Security Note:** Only grant admin access to trusted users. Admins can:
+- View all user addresses and contact information
+- Manage award fulfillment records across all users
+- Export user data via CSV (includes personal information)
+- Access the award fulfillment dashboard
+
 ### Docker Deployment
 
 For production deployment using Docker (no PHP/Node required on host):

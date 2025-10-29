@@ -542,9 +542,20 @@ class AdminAwardsDashboard extends Component
             // Process users in chunks (true streaming)
             User::query()
                 ->whereIn('id', $selectedData->keys())
-                ->with(['awardFulfillments' => function ($q) use ($selectedYear) {
-                    $q->where('year', $selectedYear);
-                }])
+                ->with([
+                    'awardFulfillments' => function ($q) use ($selectedYear) {
+                        $q->where('year', $selectedYear);
+                    },
+                    'members' => function ($q) use ($selectedYear) {
+                        $q->where('year', '<=', $selectedYear)
+                            ->orderBy('year', 'desc');
+                    },
+                    'members.fleet',
+                    'members.district',
+                    'flashes' => function ($q) use ($selectedYear) {
+                        $q->whereYear('date', $selectedYear);
+                    },
+                ])
                 ->chunk(50, function ($users) use ($handle, $selectedData, $selectedYear) {
                     foreach ($users as $user) {
                         $membership = $user->membershipForYear($selectedYear);
