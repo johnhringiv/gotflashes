@@ -19,6 +19,20 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **25 Days**: Second tier recognition
 - **50+ Days**: Third tier recognition (including Burgee eligibility)
 
+## Screenshots
+
+### Lightning Log
+![Lightning Log - Track your sailing activities](docs/screenshots/logbook.png)
+*Activity logging with progress tracking, award badges, and activity history*
+
+### Multi-Date Calendar Picker
+![Multi-Date Calendar Picker](docs/screenshots/datepicker.png)
+*Select multiple dates at once with existing entries marked*
+
+### Award Fulfillment Dashboard (Admin)
+![Award Fulfillment Dashboard](docs/screenshots/fulfillment.png)
+*Admin interface for managing physical award mailings with batch operations and CSV export*
+
 ## Key Features
 
 ### Current Implementation
@@ -42,6 +56,14 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Real-time validation ensures data quality
 - **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Award Fulfillment Dashboard** (Admin only): Manage physical award mailings
+  - Track award status: Earned → Processing → Sent
+  - Batch operations with checkbox selection
+  - Filter by year, status, tier, and search
+  - CSV export for mailing labels
+  - Discrepancy warnings when users drop below thresholds
+  - Flexible status transitions with confirmation modals
+  - Admin action logging to dedicated log channel
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
 - **Three Leaderboards**:
@@ -128,6 +150,23 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 4. **Access the application**
    Open http://localhost:8000 in your browser
 
+### Creating Admin Users
+
+After setup, you'll need to create at least one admin user to access the award fulfillment dashboard:
+
+```bash
+php artisan tinker
+```
+
+Then in the Tinker REPL:
+```php
+$user = User::where('email', 'user@example.com')->first();
+$user->is_admin = true;
+$user->save();
+```
+
+Press `Ctrl+C` to exit Tinker.
+
 ### Docker Deployment
 
 For production deployment using Docker (no PHP/Node required on host):
@@ -173,6 +212,7 @@ composer test
 - Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships, profile management
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
 - Livewire tests: FlashForm and ProfileForm components with dynamic date range refresh, grace period boundary crossing, membership updates
+- Admin dashboard tests: Authorization, award status management, bulk operations, filtering, CSV export
 - JavaScript tests: Registration form validation and dynamic fleet selection, multi-date picker logic
 - Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution
@@ -223,66 +263,58 @@ This project uses Husky to automatically run code quality checks before each com
 
 If any check fails, the commit will be blocked until you run `composer fix` and fix any remaining issues.
 
-### Database Management
-
-**Create a new migration:**
-```bash
-php artisan make:migration create_table_name
-```
-
-**Run migrations:**
-```bash
-php artisan migrate
-```
-
-**Rollback last migration:**
-```bash
-php artisan migrate:rollback
-```
-
-**Fresh database (WARNING: destroys all data):**
-```bash
-php artisan migrate:fresh
-```
-
-### Useful Artisan Commands
-
-```bash
-# Clear all caches
-php artisan optimize:clear
-
-# View routes
-php artisan route:list
-
-# Open Tinker REPL
-php artisan tinker
-
-# View real-time logs
-php artisan pail
-```
-
 ## Project Structure
 
 ```
 gotflashes/
 ├── app/
-│   ├── Http/Controllers/    # Request handling logic
+│   ├── Http/
+│   │   ├── Controllers/     # Request handling (Auth, Flash, Leaderboard, Profile, Admin)
+│   │   └── Middleware/      # Request middleware
+│   ├── Livewire/            # Livewire v3 components (FlashForm, Leaderboard, ProgressCard)
 │   ├── Models/              # Eloquent models (User, Flash, Member, District, Fleet)
-│   └── ...
+│   ├── Policies/            # Authorization policies (FlashPolicy)
+│   ├── Providers/           # Service providers (AppServiceProvider, ObservabilityServiceProvider)
+│   ├── Services/            # Business logic (DateRangeService)
+│   └── View/                # View composers
+├── bootstrap/               # Laravel bootstrap files
+├── config/                  # Configuration files
 ├── database/
+│   ├── factories/           # Model factories for testing
 │   ├── migrations/          # Database schema definitions
+│   ├── seeders/             # Database seeders
 │   └── database.sqlite      # SQLite database file
+├── docker/                  # Docker-specific files
 ├── docs/
 │   ├── prd.md              # Product Requirements Document
-│   └── CONTRIBUTING.md     # Contribution guidelines
+│   ├── membership-year-end-logic.md  # Year-specific membership system
+│   ├── CONTRIBUTING.md     # Contribution guidelines
+│   └── admin-awards-*.md   # Admin dashboard plans
+├── public/                  # Web server document root
+│   ├── images/             # Award badges, logo, burgee
+│   └── build/              # Compiled assets (via Vite)
 ├── resources/
 │   ├── views/              # Blade templates
-│   ├── css/                # Stylesheets
-│   └── js/                 # JavaScript files
+│   ├── css/                # Stylesheets (Tailwind CSS)
+│   └── js/                 # JavaScript files (multi-date-picker, registration, etc.)
 ├── routes/
-│   └── web.php            # Web routes
-├── tests/                 # PHPUnit tests
-└── public/               # Web server document root
+│   └── web.php             # Web routes
+├── storage/
+│   ├── app/                # Application storage
+│   ├── logs/               # Application logs
+│   └── framework/          # Framework cache, sessions, views
+├── tests/
+│   ├── Feature/            # Feature tests (HTTP workflows)
+│   └── Unit/               # Unit tests (isolated logic)
+├── .github/                # GitHub Actions workflows
+├── composer.json           # PHP dependencies
+├── package.json            # Node dependencies
+├── Dockerfile              # Docker image definition
+├── phpunit.xml             # PHPUnit configuration
+├── phpstan.neon            # PHPStan configuration
+├── eslint.config.js        # ESLint configuration
+├── vite.config.js          # Vite bundler configuration
+└── CLAUDE.md               # AI assistant instructions
 ```
 
 ## Documentation
@@ -291,28 +323,64 @@ gotflashes/
 - **[Membership Year-End Logic](docs/membership-year-end-logic.md)**: Year-specific membership system documentation
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
-## Production Deployment Details
+## Configuration
 
-For production most ENV variables are set in the container via `docker/.env.docker`.
-The following sensitive variables will need to be set manually
+### Environment Variables
 
-```env
-APP_KEY
+**Required (must be set manually):**
+- `APP_KEY` - Application encryption key (auto-generated by `php artisan key:generate`)
 
-# optional
-BASIC_AUTH_USERNAME
-BASIC_AUTH_PASSWORD
-```
+**Commonly Modified:**
+- `APP_ENV` - Environment: `local`, `staging`, or `production`
+- `APP_DEBUG` - Debug mode: `true` for development, `false` for production
+- `APP_URL` - Your application URL (e.g., `https://gotflashes.com`)
+- `BASIC_AUTH_USERNAME` / `BASIC_AUTH_PASSWORD` - Optional HTTP Basic Auth for staging protection
 
-Additionally, the following paths need to be mounted for persistent storage
-- /var/www/html/storage/logs
-- /var/www/html/database/database.sqlite
+**Observability (optional tuning):**
+- `LOG_SLOW_QUERIES` - Log database queries exceeding threshold (default: enabled)
+- `SLOW_QUERY_THRESHOLD_MS` - Slow query threshold in milliseconds (default: 100ms)
+- `SLOW_REQUEST_THRESHOLD_MS` - Slow HTTP request threshold in milliseconds (default: 300ms)
 
-The production deployment stack:
+**Default Configuration:**
+- **Local Development**: See `.env.example` for all available options and defaults
+- **Production**: See `docker/.env.docker` for production-optimized defaults
+
+### Observability Features
+
+The application includes comprehensive logging and monitoring:
+
+- **Request Logging**: All HTTP requests with structured context (request ID, user, duration, memory)
+- **Livewire Tracking**: Automatic component interaction logging (method calls, property updates)
+- **Performance Monitoring**: Slow query and slow request detection (configurable thresholds)
+- **Security Auditing**: Authentication events and admin actions logged to dedicated channels
+- **Error Tracking**: Exceptions logged with full context (user, request, stack trace)
+
+**Log Channels:**
+- `structured` - All requests/responses with JSON context
+- `security` - Authentication and authorization events
+- `performance` - Slow query/request warnings
+- `admin` - Admin action audit trail
+
+Logs are written to `storage/logs/`. During development, view real-time logs with `php artisan pail`.
+
+## Production Deployment
+
+### Docker Deployment
+
+**Required Setup:**
+1. Set `APP_KEY` in your environment (generate with `php artisan key:generate`)
+2. Mount persistent storage paths:
+   - `/var/www/html/storage/logs` - Application logs
+   - `/var/www/html/database/database.sqlite` - Database file
+
+**Production defaults** are pre-configured in `docker/.env.docker`. Only override when needed.
+
+### Deployment Stack
+
 - **Cloudflare**: DNS and CDN (firewall restricts traffic to Cloudflare IPs only)
 - **ACME/Let's Encrypt**: SSL certificate management
 - **HAProxy**: SSL termination and reverse proxy
-- **Docker Container**: Application (nginx + PHP-FPM)
+- **Docker Container**: Application (nginx + PHP-FPM + Supervisor)
 
 **Security Note:** Firewall-level restrictions ensure only Cloudflare IPs can reach the server, allowing nginx to safely trust `X-Forwarded-For` headers for real client IP logging.
 
