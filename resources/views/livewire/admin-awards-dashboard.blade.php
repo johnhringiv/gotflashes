@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Award Fulfillment Dashboard</h1>
-        @if(count($selectedAwards) > 0)
+        @if($this->selectedCount > 0)
             <button wire:click="confirmExportToCsv" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a 3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -103,7 +103,7 @@
                 <thead class="bg-base-300 border-b-2 border-base-content/20">
                     <tr>
                         <th class="w-24">
-                            @if(count($selectedAwards) === $awards->count())
+                            @if($this->selectedCount === $awards->count() && $awards->count() > 0)
                                 <button wire:click="clearSelection"
                                         class="btn btn-sm btn-error">
                                     Clear
@@ -131,9 +131,9 @@
                     @foreach($awards as $award)
                         @php
                             $user = $award['user'];
-                            $membership = $user->membershipForYear($selectedYear);
+                            $membership = $award['membership']; // Precomputed in component
                         @endphp
-                        <tr class="hover">
+                        <tr class="hover" wire:key="award-{{ $award['id'] }}">
                             <td>
                                 <input type="checkbox"
                                        class="checkbox checkbox-primary checkbox-sm"
@@ -205,12 +205,12 @@
     @endif
 
     <!-- Bulk Action Bar (Sticky) -->
-    @if(count($selectedAwards) > 0)
+    @if($this->selectedCount > 0)
         <div class="fixed bottom-0 left-0 right-0 bg-base-200 border-t-2 border-base-300 shadow-xl z-50">
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between flex-wrap gap-4">
                     <div class="flex items-center gap-2">
-                        <span class="font-semibold">{{ count($selectedAwards) }} awards selected</span>
+                        <span class="font-semibold">{{ $this->selectedCount }} awards selected</span>
                     </div>
                     <div class="flex gap-2">
                         <button wire:click="confirmMarkAsProcessing" class="btn btn-info">
@@ -276,7 +276,7 @@
                     </div>
                 @endif
 
-                <p class="py-4">Are you sure you want to mark <strong>{{ count($selectedAwards) }} award(s)</strong> as processing?</p>
+                <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as processing?</p>
                 <p class="text-sm text-base-content/70">This will create database records indicating these awards are being prepared for mailing.</p>
 
                 <div class="modal-action">
@@ -320,7 +320,7 @@
                     </div>
                 @endif
 
-                <p class="py-4">Are you sure you want to mark <strong>{{ count($selectedAwards) }} award(s)</strong> as sent?</p>
+                <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as sent?</p>
                 <p class="text-sm text-base-content/70">This will update the status indicating these awards have been mailed out.</p>
 
                 <div class="modal-action">
@@ -342,7 +342,7 @@
             <div class="modal-box">
                 <button wire:click="cancelConfirmation" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
                 <h3 class="font-bold text-lg mb-4">Export to CSV</h3>
-                <p class="py-4">Export <strong>{{ count($selectedAwards) }} award(s)</strong> to CSV?</p>
+                <p class="py-4">Export <strong>{{ $this->selectedCount }}</strong> award(s) to CSV?</p>
                 <p class="text-sm text-base-content/70">The CSV file will include names, addresses, award tiers, and status information for mailing labels.</p>
                 <p class="text-sm text-base-content/70 mt-2">Filename will include a timestamp: <code class="text-xs">awards-export-{{ $selectedYear }}-{{ now()->format('Y-m-d-H-i-s') }}.csv</code></p>
 

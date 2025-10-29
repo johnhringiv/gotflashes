@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\AwardFulfillment;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -79,6 +80,15 @@ class AdminAwardsDashboard extends Component
     }
 
     /**
+     * Get count of selected awards (computed property for performance).
+     */
+    #[Computed]
+    public function selectedCount(): int
+    {
+        return count($this->selectedAwards);
+    }
+
+    /**
      * Get all unfiltered awards (expensive DB query - cached per request).
      */
     private function getAllUnfilteredAwards(): Collection
@@ -108,14 +118,18 @@ class AdminAwardsDashboard extends Component
             /** @var Collection<int, AwardFulfillment> $fulfillments */
             $fulfillments = $user->awardFulfillments->keyBy('award_tier');
 
+            // Precompute membership to avoid N+1 query in view
+            $membership = $user->membershipForYear($this->selectedYear);
+
             // Create rows for earned tiers
-            $rows = $earnedTiers->map(function (int $tier) use ($user, $stats, $fulfillments) {
+            $rows = $earnedTiers->map(function (int $tier) use ($user, $stats, $fulfillments, $membership) {
                 /** @var AwardFulfillment|null $fulfillment */
                 $fulfillment = $fulfillments[$tier] ?? null;
 
                 return [
                     'id' => "{$user->id}-{$tier}",
                     'user' => $user,
+                    'membership' => $membership,
                     'tier' => $tier,
                     'total_days' => $stats->total,
                     'status' => $fulfillment ? $fulfillment->status : 'earned',
@@ -127,13 +141,14 @@ class AdminAwardsDashboard extends Component
 
             // Add rows for fulfillments where user no longer qualifies
             $lostTiers = $fulfillments->keys()->diff($earnedTiers);
-            $lostRows = $lostTiers->map(function (int $tier) use ($user, $stats, $fulfillments) {
+            $lostRows = $lostTiers->map(function (int $tier) use ($user, $stats, $fulfillments, $membership) {
                 /** @var AwardFulfillment $fulfillment */
                 $fulfillment = $fulfillments[$tier];
 
                 return [
                     'id' => "{$user->id}-{$tier}",
                     'user' => $user,
+                    'membership' => $membership,
                     'tier' => $tier,
                     'total_days' => $stats->total,
                     'status' => $fulfillment->status,
@@ -478,7 +493,7 @@ class AdminAwardsDashboard extends Component
     }
 
     /**
-     * Export selected awards to CSV.
+     * Export selected awards to CSV with true streaming for memory efficiency.
      */
     public function exportToCsv(): StreamedResponse
     {
@@ -486,16 +501,25 @@ class AdminAwardsDashboard extends Component
             'selectedAwards' => 'required|array|min:1',
         ]);
 
-        $allAwards = $this->getAllUnfilteredAwards();
-        $selectedAwards = $allAwards->filter(fn ($award) => in_array($award['id'], $this->selectedAwards));
+        // Parse selected award IDs to get user IDs and tiers
+        $selectedData = collect($this->selectedAwards)->map(function ($awardId) {
+            [$userId, $tier] = explode('-', $awardId);
+
+            return ['user_id' => (int) $userId, 'tier' => (int) $tier];
+        })->groupBy('user_id');
 
         // Include timestamp for multiple exports per day
         $filename = "awards-export-{$this->selectedYear}-".now()->format('Y-m-d-H-i-s').'.csv';
 
         $this->confirmingAction = null;
 
-        return response()->streamDownload(function () use ($selectedAwards) {
+        $selectedYear = $this->selectedYear; // Capture for closure
+
+        return response()->streamDownload(function () use ($selectedData, $selectedYear) {
             $handle = fopen('php://output', 'w');
+
+            // Write UTF-8 BOM for Excel compatibility
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Header row
             fputcsv($handle, [
@@ -515,31 +539,53 @@ class AdminAwardsDashboard extends Component
                 'Status',
             ]);
 
-            // Data rows
-            foreach ($selectedAwards as $award) {
-                $user = $award['user'];
-                $membership = $user->membershipForYear($this->selectedYear);
+            // Process users in chunks (true streaming)
+            User::query()
+                ->whereIn('id', $selectedData->keys())
+                ->with(['awardFulfillments' => function ($q) use ($selectedYear) {
+                    $q->where('year', $selectedYear);
+                }])
+                ->chunk(50, function ($users) use ($handle, $selectedData, $selectedYear) {
+                    foreach ($users as $user) {
+                        $membership = $user->membershipForYear($selectedYear);
+                        $stats = $user->flashStatsForYear($selectedYear);
+                        $tiers = $selectedData[$user->id]->pluck('tier');
 
-                fputcsv($handle, [
-                    $user->name,
-                    $membership?->fleet->fleet_number ?? '—',
-                    $membership?->district->name ?? '—',
-                    $user->email,
-                    $user->address_line1 ?? '',
-                    $user->address_line2 ?? '',
-                    $user->city ?? '',
-                    $user->state ?? '',
-                    $user->zip_code ?? '',
-                    $user->country ?? '',
-                    $award['tier'],
-                    $award['total_days'],
-                    $award['threshold_date']?->format('Y-m-d') ?? 'N/A',
-                    $award['status'],
-                ]);
-            }
+                        foreach ($tiers as $tier) {
+                            /** @var AwardFulfillment|null $fulfillment */
+                            $fulfillment = $user->awardFulfillments
+                                ->where('award_tier', $tier)
+                                ->first();
+
+                            fputcsv($handle, [
+                                $user->name,
+                                $membership?->fleet->fleet_number ?? '—',
+                                $membership?->district->name ?? '—',
+                                $user->email,
+                                $user->address_line1 ?? '',
+                                $user->address_line2 ?? '',
+                                $user->city ?? '',
+                                $user->state ?? '',
+                                $user->zip_code ?? '',
+                                $user->country ?? '',
+                                $tier,
+                                $stats->total,
+                                $user->thresholdDateForYear($selectedYear, $tier)?->format('Y-m-d') ?? 'N/A',
+                                $fulfillment ? $fulfillment->status : 'earned',
+                            ]);
+                        }
+                    }
+                });
 
             fclose($handle);
-        }, $filename);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Download-Options' => 'noopen',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**
