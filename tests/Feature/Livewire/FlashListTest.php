@@ -155,6 +155,9 @@ class FlashListTest extends TestCase
     {
         $user = User::factory()->create();
 
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
+
         // Create a flash from previous year
         $flash = Flash::factory()->forUser($user)->create(['date' => '2024-06-15']);
 
@@ -393,6 +396,9 @@ class FlashListTest extends TestCase
     public function test_edit_delete_buttons_appear_during_grace_period(): void
     {
         $user = User::factory()->create();
+
+        // Override START_YEAR so 2025 is after the start year (grace period applies)
+        config(['app.start_year' => 2024]);
 
         // Create a flash from previous year
         $flash = Flash::factory()->forUser($user)->create(['date' => '2024-06-15']);

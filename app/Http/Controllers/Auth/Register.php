@@ -79,7 +79,7 @@ class Register extends Controller
         // Log the user in
         Auth::login($user);
 
-        // Redirect to flashes index with success message
-        return redirect()->route('flashes.index')->with('success', 'Welcome to G.O.T. Flashes! Your account has been created.');
+        // Redirect to logbook index with success message
+        return redirect()->route('logbook.index')->with('success', 'Welcome to G.O.T. Flashes! Your account has been created.');
     }
 }

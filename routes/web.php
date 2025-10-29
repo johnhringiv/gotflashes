@@ -5,8 +5,8 @@ use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
 use App\Http\Controllers\ExportController;
-use App\Http\Controllers\FlashController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,9 +27,9 @@ Route::prefix('api')->middleware(['throttle:60,1', 'cache.headers:public;max_age
     Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
 });
 
-// Flash routes - Note: store/update/destroy are handled by Livewire components
+// Logbook routes - Note: store/update/destroy are handled by Livewire components
 // Only index and edit use traditional routes
-Route::resource('flashes', FlashController::class)
+Route::resource('logbook', LogbookController::class)
     ->only(['index', 'edit'])
     ->middleware('auth');
 
@@ -59,7 +59,22 @@ Route::view('/login', 'auth.login')
 Route::post('/login', Login::class)
     ->middleware('guest');
 
-// Logout route
+// Logout routes
 Route::post('/logout', Logout::class)
     ->middleware('auth')
     ->name('logout');
+
+// Handle GET requests to logout (redirect to home)
+Route::get('/logout', function () {
+    return redirect('/');
+});
+
+// Admin routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
+});
+
+// Fallback route for 404 errors - must be last
+// This ensures 404 pages go through the web middleware stack (session, auth, etc.)
+// Uses controller instead of closure to support route caching
+Route::fallback(\App\Http\Controllers\NotFoundController::class);

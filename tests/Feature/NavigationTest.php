@@ -17,7 +17,7 @@ class NavigationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Home');
         $response->assertSee('Leaderboard');
-        $response->assertDontSee('Activities');
+        $response->assertDontSee('Logbook');
     }
 
     public function test_guest_sees_sign_in_and_sign_up_buttons(): void
@@ -37,7 +37,7 @@ class NavigationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Home');
-        $response->assertSee('Activities');
+        $response->assertSee('Logbook');
         $response->assertSee('Leaderboard');
     }
 
@@ -92,7 +92,7 @@ class NavigationTest extends TestCase
         $response->assertStatus(200);
         // Mobile menu should have all nav links
         $response->assertSee('Home');
-        $response->assertSee('Activities');
+        $response->assertSee('Logbook');
         $response->assertSee('Leaderboard');
         // Mobile menu should have user name and logout
         $response->assertSee('Jane Smith');
@@ -145,10 +145,10 @@ class NavigationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/flashes');
+        $response = $this->actingAs($user)->get('/logbook');
 
         $response->assertStatus(200);
-        // Activities link should have active styling
+        // Logbook link should have active styling
         $response->assertSee('!text-white !font-bold underline', false);
     }
 

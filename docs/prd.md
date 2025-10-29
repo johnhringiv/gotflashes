@@ -39,7 +39,6 @@ District and fleet affiliations are tracked per calendar year. When users regist
 - Secure login system using email and password
 - Session persistence to keep users logged in across visits
 - Logout functionality
-- Password reset capability
 
 ### 1.3 Profile Management
 Users can view and edit their profile information through a dedicated profile page:
@@ -58,18 +57,18 @@ Users can view and edit their profile information through a dedicated profile pa
 - Email address remains fixed after registration (serves as permanent account identifier)
 - Secure access - users can only view and edit their own profile
 
-### 1.5 Data Export
+### 1.4 Data Export
 Users can export their complete profile and activity history:
 - CSV format download with user profile data and all flash entries
 - Includes year-appropriate district/fleet affiliations for each activity
 
-### 1.4 User Roles
+### 1.5 User Roles
 - **Regular Users**: Can track their own activities and view their progress
 - **Award Administrators**: Responsible for viewing award eligibility and mailing physical awards to participants
 
 ---
 
-## 2. Activity Tracking
+## 2. Awards & Recognition System
 
 ### 2.1 Program Rules - What Counts
 The following activities count toward G.O.T. Flashes awards:
@@ -77,91 +76,35 @@ The following activities count toward G.O.T. Flashes awards:
 **Sailing Days:**
 - Any time spent sailing on ANY Lightning (not just your own boat)
 - Counts whether you're the skipper or crew
-- Even one hour on a Lightning counts as a full "day"
 - Goal: Get the boat off the dock!
+- **Unlimited**: Sailing days always count toward awards
 
-**Boat Work Days (Non-sailing days):**
+**Non-Sailing Days:**
 The following activities may count toward your annual total:
 - Lightning boat maintenance
 - Lightning trailer maintenance
 - On-the-water Race Committee work on days where Lightnings are racing
-- **Limitation**: Maximum 5 "non-sailing day" days total per calendar year
+- **Limitation**: Maximum 5 non-sailing days per calendar year count toward awards
+- Users can log unlimited non-sailing days, but only the first 5 count toward award totals
+- Counter resets January 1st each year
 
-### 2.2 Activity Entry
-Users log activities using a simple form:
-
-**Date Selection:**
-- Multi-date selection: Users can select multiple dates at once using an interactive calendar
-- Single-date edit mode available for editing existing entries
-- All selected dates share the same activity details (type, location, notes)
-- Duplicate prevention: existing entries cannot be re-selected
-- Date restrictions: No future dates, respects grace period boundaries
-- All-or-nothing validation: if any selected date has an error, no entries are created
-
-**Activity Type (Required):**
-- **Sailing on a Lightning** (always available, unlimited)
-- **Boat/Trailer Maintenance** (non-sailing day - up to 5 per year count toward awards)
-- **Race Committee Work** (non-sailing day - up to 5 per year count toward awards)
-
-**Sailing Type (Required for sailing activities only):**
-- Regatta, Club Race, Practice, or Day Sailing
-- Purpose: Helps Lightning Class understand activity patterns for planning
-- Cannot be specified for non-sailing activities
-
-**Optional Fields:**
-- Location (city, lake, venue)
-- Sail Number (numeric)
-- Notes (free-form text)
-
-**Non-sailing Day Rules:**
-- Maximum 5 non-sailing days per year count toward awards (resets January 1st)
-- No minimum sailing days required to log non-sailing days
-- Users can log unlimited non-sailing days, but only first 5 count toward awards
-- System displays remaining non-sailing days counter (e.g., "3 of 5 remaining")
-- Warning shown when logging 6th+ non-sailing day that won't count toward awards
-- Encourages complete activity tracking while maintaining award integrity
-
-**Edit Restrictions:**
-- Current year activities: editable/deletable anytime
-- Previous year activities: editable/deletable during January only (grace period)
-- Starting February 1st: previous year becomes read-only
-- Grace period deadline: All activities must be logged by January 31st of following year
+**Award Calculation:**
+- **Qualifying Days** = Sailing Days + Logged Non-Sailing Days (up to 5 per year)
+- All logged activities count toward awards (system prevents logging ineligible activities)
+- Awards are based on calendar year (January 1 - December 31)
 
 **Date Restrictions:**
 - No future dates allowed (tolerance: +1 day for timezone handling)
-- No duplicate dates per user
-- During January: can select current year + previous year dates
-- Starting February 1st: can only select current year dates
+- One activity per date per user (duplicate prevention enforced)
+- Activities must be logged by January 31st of the following year (grace period deadline)
 
-### 2.4 Activity History
-- Users can view all their previously entered activities
-- Activities displayed in reverse chronological order (most recent first)
-- All logged activities count toward awards (since ineligible ones cannot be logged)
-- Current year activities can be edited or deleted
-- Previous year activities can be edited or deleted during January grace period
-- Previous years' activities become read-only starting February 1st (view only)
-- Activity history shows:
-    - Date
-    - Activity type (sailing, maintenance, or race committee)
-    - Optional details when provided (location, sail number, notes)
-- Ability to filter or search activities by optional fields (future enhancement)
+**Grace Period & Editability:**
+- **During January**: Can log/edit/delete both current year and previous year activities
+- **Starting February 1st**: Previous year becomes read-only (view only)
+- **Current year**: Always editable/deletable until grace period ends (following January 31st)
+- Grace period allows one month to finalize previous year's activities before they're locked
 
-**Activity Ordering:**
-- Activities are ordered by the activity date (the date the activity occurred), not by when the entry was created
-- Example: If a user logs last week's sailing trip today, it appears in chronological position based on last week's date, not at the top as today's entry
-
-**"Just Logged" Badge:**
-- Recently created entries display a "Just logged" badge for visibility
-- Badge appears when the entry's creation timestamp (created_at) is today
-- Badge is based on when the entry was logged, not when the activity occurred
-- Example: Logging last week's activity today shows "Just logged" badge even though the activity was last week
-- This helps users quickly identify which entries they just added during the current session
-
----
-
-## 3. Awards & Recognition System
-
-### 3.1 Award Tiers
+### 2.2 Award Tiers
 Participants earn recognition at the following annual milestones:
 - **10 days**: First tier award (badge image: `got-10-badge.png`)
 - **25 days**: Second tier award (badge image: `got-25-badge.png`)
@@ -175,12 +118,52 @@ Participants earn recognition at the following annual milestones:
 - At exactly 10, 25, or 50 days, the respective badge image appears immediately
 - The 50-day award includes special "(Burgee)" designation in the display text
 
-### 3.2 Award Counting Rules
-- Qualifying days = Sailing Days + Logged Non-sailing Days
-- All logged activities count toward awards
-- Maximum 5 non-sailing days per calendar year
-- Awards are based on calendar year (January 1 - December 31)
-- All activities must be logged by January 31st of the following year (one-month grace period)
+---
+
+## 3. Logbook
+
+### 3.1 Activity Entry
+Users log activities using a simple form:
+
+**Date Selection:**
+- Multi-date selection: Users can select multiple dates at once using an interactive calendar
+- Single-date edit mode available for editing existing entries
+- All selected dates share the same activity details (type, location, notes)
+- Duplicate prevention: existing entries cannot be re-selected
+- Date restrictions: No future dates, respects grace period boundaries
+- All-or-nothing validation: if any selected date has an error, no entries are created
+
+**Activity Type (Required):**
+- **Sailing on a Lightning** (always available, unlimited - see Section 2.1)
+- **Boat/Trailer Maintenance** (non-sailing day - see Section 2.1 for counting rules)
+- **Race Committee Work** (non-sailing day - see Section 2.1 for counting rules)
+
+**Sailing Type (Required for sailing activities only):**
+- Regatta, Club Race, Practice, or Day Sailing
+- Purpose: Helps Lightning Class understand activity patterns for planning
+- Cannot be specified for non-sailing activities
+
+**Optional Fields:**
+- Location (city, lake, venue)
+- Sail Number (numeric)
+- Notes (free-form text)
+
+**Form Features & Validation:**
+- System displays remaining non-sailing days counter (e.g., "3 of 5 remaining")
+- Warning shown when logging 6th+ non-sailing day that won't count toward awards
+- Date picker enforces restrictions from Section 2.1 (no future dates, no duplicates, respects grace period)
+- Edit/delete buttons only appear for activities within editable date range (see Section 2.1 for grace period rules)
+
+### 3.2 Activity History
+- Users can view all their previously entered activities, including previous years
+- Activities ordered by activity date (when it occurred), not by when it was logged
+- Recently logged entries (created today) display a "Just logged" badge for visibility
+- Edit/delete permissions follow grace period rules from Section 2.1
+- Activity history displays:
+    - Date
+    - Activity type (sailing, maintenance, or race committee)
+    - Optional details when provided (location, sail number, notes)
+- Ability to filter or search activities by optional fields (future enhancement)
 
 ### 3.3 Progress Tracking
 Users should see their current annual progress:
@@ -206,35 +189,15 @@ Users should see their current annual progress:
   - At 25-49 days: "50 days" with days remaining countdown
   - At 50+ days: "Achievement" with burgee image and "All tiers completed!" message
 
-**Historical View:**
-- Summary of each previous year's achievements
-- Total days and awards earned per year
-- Complete activity logs from prior years (read-only)
-- Only current year activities count toward current year awards
-
-### 3.4 Award Administrator Notifications
-Award Administrators need to know when users reach award thresholds to send recognition:
-- Alert when any user reaches 10, 25, or 50 days
-- Display participant information:
-    - Full name (first and last)
-    - Email address
-    - Mailing address
-    - Award tier reached
-    - Date threshold was achieved
-    - Current year total days
+### 3.4 Logbook Page Layout
+The logbook page is the main landing page after login, displaying:
+- Current year progress metrics (Section 3.3)
+- Activity entry form (Section 3.1)
+- Activity history with edit/delete capabilities (Section 3.2)
 
 ---
 
-## 4. Dashboard & Reporting
-
-### 4.1 User Dashboard
-The user dashboard is the main landing page after login, displaying:
-- Current year progress metrics (see Section 3.3 Progress Tracking for details)
-- Activity entry form (see Section 2.2 Activity Entry for form details)
-- Recent activity history with edit/delete capabilities (see Section 2.4 Activity History)
-- Grace period reminder: "You must log your days by January 31st of the following year"
-
-### 4.2 Leaderboards
+## 4. Leaderboards
 Public leaderboards to encourage friendly competition and community engagement.
 
 **Three Leaderboard Types:**
@@ -263,37 +226,55 @@ Public leaderboards to encourage friendly competition and community engagement.
 - Pagination: 15 results per page
 - Missing optional data displays as "—"
 
-### 4.3 Award Administrator Dashboard
-The award administrator view is specifically designed for award fulfillment purposes:
-- List of users who have reached award thresholds (10, 25, or 50 days)
-- For each award-eligible user, display:
-    - Email address
-    - Full name (first and last)
-    - Mailing address
-    - District (if provided)
-    - Yacht Club (if provided)
-    - Award tier reached
-    - Date threshold was reached
-- Ability to mark awards as "fulfilled" or "mailed" (optional feature)
-- Filter to show only pending/unfulfilled awards
-- Export list to CSV for mail merge or shipping labels
-- Optional: View detailed activity logs for verification purposes
+---
+
+## 5. Award Fulfillment
+
+The award fulfillment system provides administrators with tools to manage the physical award mailing process:
+
+**Award Status System:**
+- **Earned**: Awards computed in real-time based on user activity (not stored in database)
+- **Processing**: Awards marked for preparation and printing (stored in database)
+- **Sent**: Awards that have been mailed to participants (stored in database)
+
+**Key Features:**
+- View all awards grouped by status with year filtering
+- Batch operations: Select multiple awards and mark as Processing, Sent, or reset to Earned
+- Filter by status (Pending/Earned/Processing/Sent), award tier (10/25/50 days), and year
+- Search by participant name or email
+- Export selected awards to CSV for mailing label generation
+- Discrepancy warnings when participants drop below award thresholds after processing
+
+**Data Displayed:**
+- Participant name, email, and mailing address
+- Fleet and district affiliations (year-appropriate memberships)
+- Award tier earned
+- Total qualifying days for the year
+- Date threshold was first reached
+- Current award status
+- Warning indicators for data discrepancies
+
+**CSV Export:**
+Export selected awards with complete mailing information including name, address, fleet, district, award tier, total days, and status for mail merge or shipping label generation.
+
+**Audit Logging:**
+All admin status changes are logged to a dedicated admin log channel with user identification, action details, and affected records.
 
 ---
 
-## 5. System Requirements
+## 6. System Requirements
 
-### 5.1 Platform
+### 6.1 Platform
 - Web-based application accessible on desktop and mobile devices
 - Self-hosted deployment
 - Responsive design for various screen sizes
 
-### 5.2 Data Management
+### 6.2 Data Management
 - User accounts and activity data persist across sessions
 - Historical data retained indefinitely (read-only after grace period)
 - One activity per date per user (duplicate prevention enforced)
 
-### 5.3 Security
+### 6.3 Security
 - Secure user authentication and password protection
 - Role-based access control (regular users and award administrators)
 - Industry-standard security practices
@@ -302,16 +283,19 @@ The award administrator view is specifically designed for award fulfillment purp
 
 ---
 
-## 6. Future Considerations
+## 7. Future Considerations
 
 ### Potential Enhancements (Out of Scope for Initial Release)
+- Password reset/forgot password functionality
 - Email notifications to award administrators when users reach award thresholds
 - Email notifications to users when they earn awards
-- Award fulfillment tracking (marked as mailed/received)
+- **Historical year views**: Summary of each previous year's achievements, total days and awards earned per year, complete activity logs from prior years (read-only), with only current year activities counting toward current year awards
 - Export activity reports to PDF or CSV
+- Award certificates (downloadable PDFs)
+- Social sharing features
 ---
 
-## 7. Success Metrics
+## 8. Success Metrics
 
 ### Key Performance Indicators
 - Number of registered participants year-over-year
@@ -335,15 +319,12 @@ The award administrator view is specifically designed for award fulfillment purp
 
 ---
 
-## 8. Open Questions for Stakeholders
+## 9. Open Questions for Stakeholders
 
 1. **Name of Awards**: What are the specific names/types of awards for each tier (10, 25, 50 days)?
-2. **Award Fulfillment Workflow**: Should award administrators be able to mark awards as "mailed" or "fulfilled" in the system to track completion?
-3. **Branding**: What are the color scheme, logo, and branding requirements for the Lightning Class?
-4. **Fleet and District Data**: Can the Lightning Class provide a list of fleets with their corresponding district mappings? This would enable dropdown selection and automatic district assignment based on fleet.
+2. **Branding**: U32 Image + transparent images without the barcode
 ---
 
 ## Document Control
 
-**Version**: 1.0  
-**Last Updated**: October 10, 2025
+**Last Updated**: October 29, 2025
