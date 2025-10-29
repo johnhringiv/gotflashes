@@ -57,6 +57,11 @@
                     <li><a href="/logbook" class="text-base py-3 {{ str_starts_with(request()->path(), 'logbook') ? 'active font-bold text-accent' : '' }}">Logbook</a></li>
                 @endauth
                 <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
+                @auth
+                    @if(auth()->user()->is_admin)
+                        <li><a href="/admin/fulfillment" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'active font-bold text-accent' : '' }}">Award Fulfillment</a></li>
+                    @endif
+                @endauth
 
                 @auth
                     <li class="menu-title mt-2 text-xs opacity-70">Account</li>
@@ -89,6 +94,11 @@
                 <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
             @endauth
             <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
+            @auth
+                @if(auth()->user()->is_admin)
+                    <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
+                @endif
+            @endauth
         </ul>
     </div>
 

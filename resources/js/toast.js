@@ -54,7 +54,6 @@ window.showToast = function(type, message) {
     container.innerHTML = '';
     container.appendChild(toast);
 
-    // Auto-hide after 5 seconds
     toastTimeout = setTimeout(() => {
         toast.style.transition = 'opacity 0.3s ease-out';
         toast.style.opacity = '0';

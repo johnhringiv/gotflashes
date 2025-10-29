@@ -1,11 +1,11 @@
 <x-layout>
     <x-slot:title>
-        My Activities
+        {{ auth()->user()->name }}'s Lightning Log
     </x-slot:title>
 
     <div class="max-w-6xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold">My Activities</h1>
+            <h1 class="text-3xl font-bold">{{ auth()->user()->name }}'s Lightning Log</h1>
             <p class="text-base-content/70 mt-2">Your sailing days and progress toward awards</p>
         </div>
 
