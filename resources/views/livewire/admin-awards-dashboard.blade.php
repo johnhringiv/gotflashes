@@ -241,151 +241,107 @@
     @endif
 
     <!-- Mark as Processing Confirmation Modal -->
-    @if($confirmingAction === 'processing')
-        <div class="modal modal-open" role="dialog">
-            <div class="modal-box">
-                <button wire:click="cancelConfirmation" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                <h3 class="font-bold text-lg mb-4">Mark as Processing</h3>
-
-                @if($showDowngradeWarning)
-                    <div class="alert alert-warning mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                            <h3 class="font-bold">Warning: Downgrading Status</h3>
-                            <div class="text-sm">{{ $downgradeCount }} award(s) are currently "sent" and will be reverted back to processing.</div>
-                        </div>
-                    </div>
-
-                    <div class="form-control mb-4">
-                        <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" wire:model.live="confirmDowngrade" class="checkbox checkbox-warning" />
-                            <span class="label-text">
-                                I understand this will revert {{ $downgradeCount }} sent award(s) back to processing
-                            </span>
-                        </label>
-                    </div>
-                @endif
-
-                <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as processing?</p>
-                <p class="text-sm text-base-content/70">This will create database records indicating these awards are being prepared for mailing.</p>
-
-                <div class="modal-action">
-                    <button wire:click="cancelConfirmation" class="btn">Cancel</button>
-                    <button wire:click="bulkMarkAsProcessing"
-                            class="btn btn-info"
-                            @disabled($showDowngradeWarning && !$confirmDowngrade)>
-                        Mark as Processing
-                    </button>
+    <x-admin.confirmation-modal :show="$confirmingAction === 'processing'" title="Mark as Processing">
+        @if($showDowngradeWarning)
+            <div class="alert alert-warning mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                    <h3 class="font-bold">Warning: Downgrading Status</h3>
+                    <div class="text-sm">{{ $downgradeCount }} award(s) are currently "sent" and will be reverted back to processing.</div>
                 </div>
             </div>
-            <div class="modal-backdrop" wire:click="cancelConfirmation"></div>
-        </div>
-    @endif
+
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" wire:model.live="confirmDowngrade" class="checkbox checkbox-warning" />
+                    <span class="label-text">I understand this will revert {{ $downgradeCount }} sent award(s) back to processing</span>
+                </label>
+            </div>
+        @endif
+
+        <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as processing?</p>
+        <p class="text-sm text-base-content/70">This will create database records indicating these awards are being prepared for mailing.</p>
+
+        <x-slot:action>
+            <button wire:click="bulkMarkAsProcessing"
+                    class="btn btn-info"
+                    @disabled($showDowngradeWarning && !$confirmDowngrade)>
+                Mark as Processing
+            </button>
+        </x-slot:action>
+    </x-admin.confirmation-modal>
 
     <!-- Mark as Sent Confirmation Modal -->
-    @if($confirmingAction === 'sent')
-        <div class="modal modal-open" role="dialog">
-            <div class="modal-box">
-                <button wire:click="cancelConfirmation" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                <h3 class="font-bold text-lg mb-4">Mark as Sent</h3>
-
-                @if($showEarnedToSentWarning)
-                    <div class="alert alert-warning mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                            <h3 class="font-bold">Warning: Skipping Processing</h3>
-                            <div class="text-sm">{{ $earnedToSentCount }} award(s) are "earned" and will be marked as sent directly.</div>
-                        </div>
-                    </div>
-
-                    <div class="form-control mb-4">
-                        <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" wire:model.live="confirmEarnedToSent" class="checkbox checkbox-warning" />
-                            <span class="label-text">
-                                I understand {{ $earnedToSentCount }} award(s) are currently Earned
-                            </span>
-                        </label>
-                    </div>
-                @endif
-
-                <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as sent?</p>
-                <p class="text-sm text-base-content/70">This will update the status indicating these awards have been mailed out.</p>
-
-                <div class="modal-action">
-                    <button wire:click="cancelConfirmation" class="btn">Cancel</button>
-                    <button wire:click="bulkMarkAsSent"
-                            class="btn btn-success"
-                            @disabled($showEarnedToSentWarning && !$confirmEarnedToSent)>
-                        Mark as Sent
-                    </button>
+    <x-admin.confirmation-modal :show="$confirmingAction === 'sent'" title="Mark as Sent">
+        @if($showEarnedToSentWarning)
+            <div class="alert alert-warning mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                    <h3 class="font-bold">Warning: Skipping Processing</h3>
+                    <div class="text-sm">{{ $earnedToSentCount }} award(s) are "earned" and will be marked as sent directly.</div>
                 </div>
             </div>
-            <div class="modal-backdrop" wire:click="cancelConfirmation"></div>
-        </div>
-    @endif
+
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" wire:model.live="confirmEarnedToSent" class="checkbox checkbox-warning" />
+                    <span class="label-text">I understand {{ $earnedToSentCount }} award(s) are currently Earned</span>
+                </label>
+            </div>
+        @endif
+
+        <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as sent?</p>
+        <p class="text-sm text-base-content/70">This will update the status indicating these awards have been mailed out.</p>
+
+        <x-slot:action>
+            <button wire:click="bulkMarkAsSent"
+                    class="btn btn-success"
+                    @disabled($showEarnedToSentWarning && !$confirmEarnedToSent)>
+                Mark as Sent
+            </button>
+        </x-slot:action>
+    </x-admin.confirmation-modal>
 
     <!-- Export CSV Confirmation Modal -->
-    @if($confirmingAction === 'export')
-        <div class="modal modal-open" role="dialog">
-            <div class="modal-box">
-                <button wire:click="cancelConfirmation" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                <h3 class="font-bold text-lg mb-4">Export to CSV</h3>
-                <p class="py-4">Export <strong>{{ $this->selectedCount }}</strong> award(s) to CSV?</p>
-                <p class="text-sm text-base-content/70">The CSV file will include names, addresses, award tiers, and status information for mailing labels.</p>
-                <p class="text-sm text-base-content/70 mt-2">Filename will include a timestamp: <code class="text-xs">awards-export-{{ $selectedYear }}-{{ now()->format('Y-m-d-H-i-s') }}.csv</code></p>
+    <x-admin.confirmation-modal :show="$confirmingAction === 'export'" title="Export to CSV">
+        <p class="py-4">Export <strong>{{ $this->selectedCount }}</strong> award(s) to CSV?</p>
+        <p class="text-sm text-base-content/70">The CSV file will include names, addresses, award tiers, and status information for mailing labels.</p>
+        <p class="text-sm text-base-content/70 mt-2">Filename will include a timestamp: <code class="text-xs">awards-export-{{ $selectedYear }}-{{ now()->format('Y-m-d-H-i-s') }}.csv</code></p>
 
-                <div class="modal-action">
-                    <button wire:click="cancelConfirmation" class="btn">Cancel</button>
-                    <button wire:click="exportToCsv" class="btn btn-primary">Export CSV</button>
-                </div>
-            </div>
-            <div class="modal-backdrop" wire:click="cancelConfirmation"></div>
-        </div>
-    @endif
+        <x-slot:action>
+            <button wire:click="exportToCsv" class="btn btn-primary">Export CSV</button>
+        </x-slot:action>
+    </x-admin.confirmation-modal>
 
     <!-- Reset to Earned Confirmation Modal -->
-    @if($confirmingAction === 'remove')
-        <div class="modal modal-open" role="dialog">
-            <div class="modal-box">
-                <button wire:click="cancelConfirmation" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                <h3 class="font-bold text-lg mb-4">Reset to Earned Status</h3>
-
-                <div class="alert alert-warning mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                        <h3 class="font-bold">Reset Award Status</h3>
-                        <div class="text-sm">
-                            This will reset {{ $removeCount }} award(s) back to "Earned" status.
-                            Processing/Sent status will be cleared.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-control mb-4">
-                    <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" wire:model.live="confirmRemove" class="checkbox checkbox-warning" />
-                        <span class="label-text">
-                            I understand this will reset {{ $removeCount }} award(s) to Earned status
-                        </span>
-                    </label>
-                </div>
-
-                <div class="modal-action">
-                    <button wire:click="cancelConfirmation" class="btn">Cancel</button>
-                    <button wire:click="bulkRemoveFromDatabase"
-                            class="btn btn-warning"
-                            @disabled(!$confirmRemove)>
-                        Reset {{ $removeCount }} Award(s)
-                    </button>
-                </div>
+    <x-admin.confirmation-modal :show="$confirmingAction === 'remove'" title="Reset to Earned Status">
+        <div class="alert alert-warning mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+                <h3 class="font-bold">Reset Award Status</h3>
+                <div class="text-sm">This will reset {{ $removeCount }} award(s) back to "Earned" status. Processing/Sent status will be cleared.</div>
             </div>
-            <div class="modal-backdrop" wire:click="cancelConfirmation"></div>
         </div>
-    @endif
+
+        <div class="form-control mb-4">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" wire:model.live="confirmRemove" class="checkbox checkbox-warning" />
+                <span class="label-text">I understand this will reset {{ $removeCount }} award(s) to Earned status</span>
+            </label>
+        </div>
+
+        <x-slot:action>
+            <button wire:click="bulkRemoveFromDatabase"
+                    class="btn btn-warning"
+                    @disabled(!$confirmRemove)>
+                Reset {{ $removeCount }} Award(s)
+            </button>
+        </x-slot:action>
+    </x-admin.confirmation-modal>
 </div>
