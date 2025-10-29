@@ -2,14 +2,6 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Award Fulfillment Dashboard</h1>
-        @if($this->selectedCount > 0)
-            <button wire:click="confirmExportToCsv" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a 3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Export CSV
-            </button>
-        @endif
     </div>
 
     <!-- Filters -->
@@ -73,7 +65,7 @@
     <div class="mb-2 text-sm text-base-content/70 font-semibold">
         {{ $selectedYear }} Totals
     </div>
-    <div class="stats stats-vertical lg:stats-horizontal shadow mb-6 w-full">
+    <div class="stats stats-vertical lg:stats-horizontal shadow-lg mb-6 w-full">
         <div class="stat">
             <div class="stat-title">Pending</div>
             <div class="stat-value text-primary">{{ $stats['earned'] + $stats['processing'] }}</div>
@@ -213,6 +205,12 @@
                         <span class="font-semibold">{{ $this->selectedCount }} awards selected</span>
                     </div>
                     <div class="flex gap-2">
+                        <button wire:click="confirmRemoveFromDatabase" class="btn btn-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reset to Earned
+                        </button>
                         <button wire:click="confirmMarkAsProcessing" class="btn btn-info">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -230,12 +228,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Export CSV
-                        </button>
-                        <button wire:click="confirmRemoveFromDatabase" class="btn btn-warning">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Reset to Earned
                         </button>
                         <button wire:click="clearSelection" class="btn btn-ghost btn-outline">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
