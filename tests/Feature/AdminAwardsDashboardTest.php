@@ -464,4 +464,181 @@ class AdminAwardsDashboardTest extends TestCase
             ->test('admin-awards-dashboard')
             ->assertSet('statusFilter', 'pending');
     }
+
+    public function test_existing_award_with_discrepancy_can_be_marked_as_sent(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+
+        // User earned 50-day award, mark as processing
+        for ($i = 1; $i <= 50; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        AwardFulfillment::create([
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 50,
+            'status' => 'processing',
+        ]);
+
+        // User deletes flashes, drops to 48 days (discrepancy)
+        Flash::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->limit(2)
+            ->delete();
+
+        // Admin should still be able to mark as sent (award was legitimately processed)
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-50"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        $this->assertDatabaseHas('award_fulfillments', [
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 50,
+            'status' => 'sent',
+        ]);
+    }
+
+    public function test_existing_award_with_discrepancy_can_be_marked_as_processing(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+
+        // User earned 25-day award, mark as sent
+        for ($i = 1; $i <= 25; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        AwardFulfillment::create([
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 25,
+            'status' => 'sent',
+        ]);
+
+        // User deletes flashes, drops to 23 days (discrepancy)
+        Flash::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->limit(2)
+            ->delete();
+
+        // Admin should still be able to downgrade to processing (need to re-process)
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-25"])
+            ->call('confirmMarkAsProcessing')
+            ->set('confirmDowngrade', true)
+            ->call('bulkMarkAsProcessing');
+
+        $this->assertDatabaseHas('award_fulfillments', [
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 25,
+            'status' => 'processing',
+        ]);
+    }
+
+    public function test_new_award_with_insufficient_days_is_skipped_when_marking_as_processing(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+
+        // User has only 8 days (does not qualify for 10-day award)
+        for ($i = 1; $i <= 8; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Try to mark non-existent 10-day award as processing - should be skipped
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-10"])
+            ->call('confirmMarkAsProcessing')
+            ->call('bulkMarkAsProcessing');
+
+        // Should NOT create fulfillment record
+        $this->assertDatabaseMissing('award_fulfillments', [
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 10,
+        ]);
+    }
+
+    public function test_new_award_with_insufficient_days_is_skipped_when_marking_as_sent(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+
+        // User has only 23 days (does not qualify for 25-day award)
+        for ($i = 1; $i <= 23; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Try to mark non-existent 25-day award as sent - should be skipped
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-25"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        // Should NOT create fulfillment record
+        $this->assertDatabaseMissing('award_fulfillments', [
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 25,
+        ]);
+    }
+
+    public function test_discrepancy_warning_badge_is_shown_for_existing_awards(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+
+        // User earned 50-day award, create fulfillment
+        for ($i = 1; $i <= 50; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        AwardFulfillment::create([
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 50,
+            'status' => 'processing',
+        ]);
+
+        // User deletes flashes, drops to 48 days (discrepancy)
+        Flash::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->limit(2)
+            ->delete();
+
+        // Dashboard should show warning badge
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->assertSee('⚠') // Warning badge
+            ->assertSeeHtml('data-tip="User currently has 48 days but was processed for 50-day award"');
+    }
 }

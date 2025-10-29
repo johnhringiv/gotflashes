@@ -278,15 +278,9 @@ class AdminAwardsDashboard extends Component
         foreach ($this->selectedAwards as $awardId) {
             [$userId, $tier] = explode('-', $awardId);
 
-            // Verify user qualifies
             $user = User::find($userId);
             if (! $user) {
                 continue;
-            }
-
-            $stats = $user->flashStatsForYear($this->selectedYear);
-            if ($stats->total < $tier) {
-                continue; // User doesn't qualify
             }
 
             // Check if already in database
@@ -297,7 +291,7 @@ class AdminAwardsDashboard extends Component
             ])->first();
 
             if ($fulfillment) {
-                // Already exists
+                // Already exists - allow status change even with discrepancy
                 if ($fulfillment->status === 'processing') {
                     $unchanged++; // Already processing, no-op
                 } else {
@@ -313,6 +307,12 @@ class AdminAwardsDashboard extends Component
                     ];
                 }
             } else {
+                // Creating new fulfillment - verify user qualifies
+                $stats = $user->flashStatsForYear($this->selectedYear);
+                if ($stats->total < $tier) {
+                    continue; // User doesn't qualify for new award
+                }
+
                 // Create new (Earned → Processing)
                 AwardFulfillment::create([
                     'user_id' => $userId,
@@ -403,15 +403,9 @@ class AdminAwardsDashboard extends Component
         foreach ($this->selectedAwards as $awardId) {
             [$userId, $tier] = explode('-', $awardId);
 
-            // Verify user qualifies
             $user = User::find($userId);
             if (! $user) {
                 continue;
-            }
-
-            $stats = $user->flashStatsForYear($this->selectedYear);
-            if ($stats->total < $tier) {
-                continue; // User doesn't qualify
             }
 
             // Try to find existing fulfillment
@@ -422,7 +416,7 @@ class AdminAwardsDashboard extends Component
             ])->first();
 
             if ($fulfillment) {
-                // Already exists
+                // Already exists - allow status change even with discrepancy
                 if ($fulfillment->status === 'sent') {
                     $unchanged++; // Already sent, no-op
                 } else {
@@ -438,6 +432,12 @@ class AdminAwardsDashboard extends Component
                     ];
                 }
             } else {
+                // Creating new fulfillment - verify user qualifies
+                $stats = $user->flashStatsForYear($this->selectedYear);
+                if ($stats->total < $tier) {
+                    continue; // User doesn't qualify for new award
+                }
+
                 // Create new (Earned → Sent, skip processing)
                 AwardFulfillment::create([
                     'user_id' => $userId,
