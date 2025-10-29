@@ -71,7 +71,7 @@ Route::get('/logout', function () {
 
 // Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::view('/awards', 'admin.awards-dashboard')->name('admin.awards');
+    Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
 });
 
 // Fallback route for 404 errors - must be last

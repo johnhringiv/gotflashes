@@ -17,7 +17,7 @@ class AdminAwardsDashboardTest extends TestCase
     {
         $user = User::factory()->create(['is_admin' => false]);
 
-        $response = $this->actingAs($user)->get('/admin/awards');
+        $response = $this->actingAs($user)->get('/admin/fulfillment');
 
         $response->assertStatus(403);
     }
@@ -26,7 +26,7 @@ class AdminAwardsDashboardTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
-        $response = $this->actingAs($admin)->get('/admin/awards');
+        $response = $this->actingAs($admin)->get('/admin/fulfillment');
 
         $response->assertStatus(200);
     }
@@ -336,7 +336,7 @@ class AdminAwardsDashboardTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/');
 
-        $response->assertSee('Awards Admin');
+        $response->assertSee('Award Fulfillment');
     }
 
     public function test_admin_navigation_link_not_visible_to_non_admin(): void
@@ -345,7 +345,7 @@ class AdminAwardsDashboardTest extends TestCase
 
         $response = $this->actingAs($user)->get('/');
 
-        $response->assertDontSee('Awards Admin');
+        $response->assertDontSee('Award Fulfillment');
     }
 
     public function test_earned_to_sent_shows_warning(): void
