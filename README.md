@@ -340,6 +340,7 @@ gotflashes/
 - `APP_ENV` - Environment: `local`, `staging`, or `production`
 - `APP_DEBUG` - Debug mode: `true` for development, `false` for production
 - `APP_URL` - Your application URL (e.g., `https://gotflashes.com`)
+- `START_YEAR` - Application start year for grace period logic (default: `2026`). Grace period (allowing previous year entries in January) only applies **after** this year. Example: With `START_YEAR=2026`, January 2026 only allows 2026 entries; January 2027+ allows previous year entries during grace period.
 - `BASIC_AUTH_USERNAME` / `BASIC_AUTH_PASSWORD` - Optional HTTP Basic Auth for staging protection
 
 **Observability (optional tuning):**

@@ -537,7 +537,7 @@ class AdminAwardsDashboard extends Component
                 'Total Days',
                 'Date Threshold Reached',
                 'Status',
-            ]);
+            ], ',', '"', '');
 
             // Process users in chunks (true streaming)
             User::query()
@@ -583,7 +583,7 @@ class AdminAwardsDashboard extends Component
                                 $stats->total,
                                 $user->thresholdDateForYear($selectedYear, $tier)?->format('Y-m-d') ?? 'N/A',
                                 $fulfillment ? $fulfillment->status : 'earned',
-                            ]);
+                            ], ',', '"', '');
                         }
                     }
                 });

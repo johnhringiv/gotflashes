@@ -47,7 +47,7 @@ class ExportController extends Controller
                 'Notes',
                 'Created At',
                 'Updated At',
-            ]);
+            ], ',', '"', '');
 
             // Pre-build user data array (avoid repeated property access in loop)
             $userData = [
@@ -106,7 +106,7 @@ class ExportController extends Controller
                             $flash->notes ?? '',
                             $flash->created_at ?? '',
                             $flash->updated_at ?? '',
-                        ]));
+                        ]), ',', '"', '');
                     }
                 });
 

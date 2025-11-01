@@ -103,6 +103,7 @@ The following activities may count toward your annual total:
 - **Starting February 1st**: Previous year becomes read-only (view only)
 - **Current year**: Always editable/deletable until grace period ends (following January 31st)
 - Grace period allows one month to finalize previous year's activities before they're locked
+- **Launch Year Exception**: The grace period only applies after the application's start year (2026, configurable via `START_YEAR` environment variable). In January 2026, users can only enter 2026 dates. Starting in January 2027 and beyond, the grace period allows entering previous year dates during January. This prevents users from logging activities before the application existed.
 
 ### 2.2 Award Tiers
 Participants earn recognition at the following annual milestones:
