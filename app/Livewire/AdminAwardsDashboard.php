@@ -51,6 +51,11 @@ class AdminAwardsDashboard extends Component
 
     public bool $confirmRemove = false;
 
+    // CSV auto-download
+    public bool $downloadCsvAfterProcessing = false;
+
+    public bool $downloadCsvAfterSent = false;
+
     // Cache for unfiltered awards (only the expensive DB query)
     private ?Collection $cachedUnfilteredAwards = null;
 
@@ -104,7 +109,7 @@ class AdminAwardsDashboard extends Component
                 $q->whereYear('date', $this->selectedYear);
             }, 'awardFulfillments' => function ($q) {
                 $q->where('year', $this->selectedYear);
-            }, 'members' => function ($q) {
+            }, 'awardFulfillments.updatedBy', 'members' => function ($q) {
                 $q->where('year', '<=', $this->selectedYear)
                     ->orderBy('year', 'desc');
             }])
@@ -265,7 +270,7 @@ class AdminAwardsDashboard extends Component
     /**
      * Bulk mark selected awards as "processing".
      */
-    public function bulkMarkAsProcessing(): void
+    public function bulkMarkAsProcessing(): mixed
     {
         $this->validate([
             'selectedAwards' => 'required|array|min:1',
@@ -297,7 +302,10 @@ class AdminAwardsDashboard extends Component
                 } else {
                     // Sent → Processing (downgrade)
                     $oldStatus = $fulfillment->status;
-                    $fulfillment->update(['status' => 'processing']);
+                    $fulfillment->update([
+                        'status' => 'processing',
+                        'updated_by_user_id' => auth()->id(),
+                    ]);
                     $updated++;
                     $affectedAwards[] = [
                         'user_id' => $userId,
@@ -319,6 +327,7 @@ class AdminAwardsDashboard extends Component
                     'year' => $this->selectedYear,
                     'award_tier' => $tier,
                     'status' => 'processing',
+                    'updated_by_user_id' => auth()->id(),
                 ]);
                 $updated++;
                 $affectedAwards[] = [
@@ -346,13 +355,27 @@ class AdminAwardsDashboard extends Component
         $this->confirmingAction = null;
         $this->showDowngradeWarning = false;
         $this->confirmDowngrade = false;
-        $this->selectedAwards = [];
         $this->cachedUnfilteredAwards = null; // Clear cache - data changed
+
+        // Handle CSV download if requested
+        if ($this->downloadCsvAfterProcessing && $updated > 0) {
+            $this->downloadCsvAfterProcessing = false;
+            $this->dispatch('toast', [
+                'message' => $this->formatToastMessage($updated, $unchanged, 'processing'),
+                'type' => 'success',
+            ]);
+
+            return $this->exportToCsv();
+        }
+
+        $this->selectedAwards = [];
 
         $this->dispatch('toast', [
             'message' => $this->formatToastMessage($updated, $unchanged, 'processing'),
             'type' => $updated > 0 ? 'success' : 'info',
         ]);
+
+        return null;
     }
 
     /**
@@ -390,7 +413,7 @@ class AdminAwardsDashboard extends Component
      * Bulk mark selected awards as "sent".
      * Handles both processing and earned awards.
      */
-    public function bulkMarkAsSent(): void
+    public function bulkMarkAsSent(): mixed
     {
         $this->validate([
             'selectedAwards' => 'required|array|min:1',
@@ -422,7 +445,10 @@ class AdminAwardsDashboard extends Component
                 } else {
                     // Processing → Sent (upgrade)
                     $oldStatus = $fulfillment->status;
-                    $fulfillment->update(['status' => 'sent']);
+                    $fulfillment->update([
+                        'status' => 'sent',
+                        'updated_by_user_id' => auth()->id(),
+                    ]);
                     $updated++;
                     $affectedAwards[] = [
                         'user_id' => $userId,
@@ -444,6 +470,7 @@ class AdminAwardsDashboard extends Component
                     'year' => $this->selectedYear,
                     'award_tier' => $tier,
                     'status' => 'sent',
+                    'updated_by_user_id' => auth()->id(),
                 ]);
                 $updated++;
                 $affectedAwards[] = [
@@ -471,13 +498,27 @@ class AdminAwardsDashboard extends Component
         $this->confirmingAction = null;
         $this->showEarnedToSentWarning = false;
         $this->confirmEarnedToSent = false;
-        $this->selectedAwards = [];
         $this->cachedUnfilteredAwards = null; // Clear cache - data changed
+
+        // Handle CSV download if requested
+        if ($this->downloadCsvAfterSent && $updated > 0) {
+            $this->downloadCsvAfterSent = false;
+            $this->dispatch('toast', [
+                'message' => $this->formatToastMessage($updated, $unchanged, 'sent'),
+                'type' => 'success',
+            ]);
+
+            return $this->exportToCsv();
+        }
+
+        $this->selectedAwards = [];
 
         $this->dispatch('toast', [
             'message' => $this->formatToastMessage($updated, $unchanged, 'sent'),
             'type' => $updated > 0 ? 'success' : 'info',
         ]);
+
+        return null;
     }
 
     /**
@@ -701,6 +742,8 @@ class AdminAwardsDashboard extends Component
         $this->showDowngradeWarning = false;
         $this->confirmDowngrade = false;
         $this->confirmRemove = false;
+        $this->downloadCsvAfterProcessing = false;
+        $this->downloadCsvAfterSent = false;
     }
 
     /**

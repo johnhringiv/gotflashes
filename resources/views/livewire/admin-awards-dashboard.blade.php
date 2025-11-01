@@ -177,7 +177,8 @@
                             </td>
                             <td class="text-center text-sm">
                                 @if($award['fulfillment'])
-                                    {{ $award['fulfillment']->updated_at->format('M j, Y') }}
+                                    <div>{{ $award['fulfillment']->updatedBy?->name ?? '—' }}</div>
+                                    <div class="text-xs text-base-content/60">{{ $award['fulfillment']->updated_at->format('M j, Y') }}</div>
                                 @else
                                     —
                                 @endif
@@ -264,6 +265,13 @@
         <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as processing?</p>
         <p class="text-sm text-base-content/70">This will create database records indicating these awards are being prepared for mailing.</p>
 
+        <div class="form-control mt-4">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" wire:model.live="downloadCsvAfterProcessing" class="checkbox checkbox-primary" />
+                <span class="label-text">Download CSV after marking as processing</span>
+            </label>
+        </div>
+
         <x-slot:action>
             <button wire:click="bulkMarkAsProcessing"
                     class="btn btn-info"
@@ -296,6 +304,13 @@
 
         <p class="py-4">Are you sure you want to mark <strong>{{ $this->selectedCount }}</strong> award(s) as sent?</p>
         <p class="text-sm text-base-content/70">This will update the status indicating these awards have been mailed out.</p>
+
+        <div class="form-control mt-4">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" wire:model.live="downloadCsvAfterSent" class="checkbox checkbox-primary" />
+                <span class="label-text">Download CSV after marking as sent</span>
+            </label>
+        </div>
 
         <x-slot:action>
             <button wire:click="bulkMarkAsSent"
