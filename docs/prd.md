@@ -39,6 +39,11 @@ District and fleet affiliations are tracked per calendar year. When users regist
 - Secure login system using email and password
 - Session persistence to keep users logged in across visits
 - Logout functionality
+- Password reset functionality with email verification
+  - Users can request password reset link via email
+  - Reset links expire after 60 minutes for security
+  - Branded email notifications with G.O.T. Flashes styling
+  - Request throttling to prevent abuse (60 seconds between requests)
 
 ### 1.3 Profile Management
 Users can view and edit their profile information through a dedicated profile page:
@@ -287,7 +292,6 @@ All admin status changes are logged to a dedicated admin log channel with user i
 ## 7. Future Considerations
 
 ### Potential Enhancements (Out of Scope for Initial Release)
-- Password reset/forgot password functionality
 - Email notifications to award administrators when users reach award thresholds
 - Email notifications to users when they earn awards
 - **Historical year views**: Summary of each previous year's achievements, total days and awards earned per year, complete activity logs from prior years (read-only), with only current year activities counting toward current year awards

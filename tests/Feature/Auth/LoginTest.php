@@ -46,7 +46,7 @@ class LoginTest extends TestCase
         ]);
 
         $this->assertGuest();
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('password');
     }
 
     public function test_users_cannot_authenticate_with_nonexistent_email(): void

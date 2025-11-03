@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\FleetController;
+use App\Http\Controllers\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
 use App\Http\Controllers\Auth\Register;
+use App\Http\Controllers\Auth\ResetPassword;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LogbookController;
@@ -68,6 +70,23 @@ Route::post('/logout', Logout::class)
 Route::get('/logout', function () {
     return redirect('/');
 });
+
+// Password Reset routes
+Route::view('/password/reset', 'auth.forgot-password')
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('/password/email', ForgotPassword::class)
+    ->middleware('guest')
+    ->name('password.email');
+
+Route::view('/password/reset/{token}', 'auth.reset-password')
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('/password/reset', ResetPassword::class)
+    ->middleware('guest')
+    ->name('password.update');
 
 // Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {

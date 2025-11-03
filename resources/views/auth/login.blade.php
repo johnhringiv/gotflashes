@@ -44,14 +44,19 @@
                             </div>
                         @enderror
 
-                        <!-- Remember Me -->
+                        <!-- Remember Me & Forgot Password -->
                         <div class="form-control mt-4">
-                            <label class="label cursor-pointer justify-start">
-                                <input type="checkbox"
-                                       name="remember"
-                                       class="checkbox">
-                                <span class="label-text ml-2">Remember me</span>
-                            </label>
+                            <div class="flex justify-between items-center">
+                                <label class="label cursor-pointer justify-start p-0">
+                                    <input type="checkbox"
+                                           name="remember"
+                                           class="checkbox">
+                                    <span class="label-text ml-2">Remember me</span>
+                                </label>
+                                <a href="{{ route('password.request') }}" class="link link-primary text-sm">
+                                    Forgot your password?
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
