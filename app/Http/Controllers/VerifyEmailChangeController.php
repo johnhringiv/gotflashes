@@ -16,6 +16,32 @@ class VerifyEmailChangeController extends Controller
         $user = User::where('email_verification_token', $token)->first();
 
         if (! $user) {
+            // Token not found - provide context-aware error message using email from URL
+            $email = $request->query('email');
+            if ($email) {
+                $userByEmail = User::where('email', $email)->orWhere('pending_email', $email)->first();
+
+                if ($userByEmail) {
+                    // User exists with this email
+                    if ($userByEmail->email_verified_at && ! $userByEmail->pending_email) {
+                        // Already fully verified, no pending change
+                        return redirect()->route('logbook.index')
+                            ->with('success', 'This email address has already been verified.');
+                    }
+
+                    // User exists but token doesn't match (cancelled or replaced)
+                    return redirect()->route('profile')
+                        ->with('error', 'This verification link has been cancelled or already used. Please request a new one from your profile if needed.');
+                }
+
+                // Email doesn't match any user - check if logged-in user cancelled this
+                if (auth()->check() && auth()->user()->email !== $email) {
+                    // Logged in, but link email doesn't match current email = cancelled change
+                    return redirect()->route('profile')
+                        ->with('error', 'This email change was cancelled. The link is no longer valid.');
+                }
+            }
+
             return redirect()->route('logbook.index')
                 ->with('error', 'Invalid verification link.');
         }

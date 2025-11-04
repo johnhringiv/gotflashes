@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase
@@ -20,20 +21,22 @@ class EmailVerificationTest extends TestCase
     {
         Notification::fake();
 
-        $this->post('/register', [
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'john@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'City',
-            'state' => 'State',
-            'zip_code' => '12345',
-            'country' => 'USA',
-        ]);
+        Livewire::test(\App\Livewire\RegistrationForm::class)
+            ->set('first_name', 'John')
+            ->set('last_name', 'Doe')
+            ->set('email', 'john@example.com')
+            ->set('password', 'password123')
+            ->set('password_confirmation', 'password123')
+            ->set('date_of_birth', '1990-01-01')
+            ->set('gender', 'male')
+            ->set('address_line1', '123 Main St')
+            ->set('city', 'City')
+            ->set('state', 'State')
+            ->set('zip_code', '12345')
+            ->set('country', 'USA')
+            ->set('district_id', 1)
+            ->set('fleet_id', 1)
+            ->call('register');
 
         $user = User::where('email', 'john@example.com')->first();
 

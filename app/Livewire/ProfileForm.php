@@ -3,9 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Member;
-use App\Notifications\VerifyEmailChange;
+use App\Rules\UserProfileRules;
+use App\Services\EmailVerificationService;
+use App\Services\UserDataService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class ProfileForm extends Component
@@ -71,6 +72,24 @@ class ProfileForm extends Component
         $this->yacht_club = $user->yacht_club ?? '';
     }
 
+    public function rules()
+    {
+        $user = auth()->user();
+
+        return UserProfileRules::rules((string) $user->id, false);
+    }
+
+    public function messages()
+    {
+        return UserProfileRules::messages();
+    }
+
+    public function updated($propertyName)
+    {
+        // Validate the field that was just updated
+        $this->validateOnly($propertyName);
+    }
+
     public function save()
     {
         $user = auth()->user();
@@ -83,48 +102,26 @@ class ProfileForm extends Component
             $this->fleet_id = null;
         }
 
-        $validated = $this->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'date_of_birth' => ['required', 'date', 'before:today', 'after:1900-01-01'],
-            'gender' => ['required', 'in:male,female,non_binary,prefer_not_to_say'],
-            'address_line1' => ['required', 'string', 'max:255'],
-            'address_line2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'state' => ['required', 'string', 'max:255'],
-            'zip_code' => ['required', 'string', 'max:20'],
-            'country' => ['required', 'string', 'max:255'],
-            'district_id' => ['nullable', 'exists:districts,id'],
-            'fleet_id' => ['nullable', 'exists:fleets,id'],
-            'yacht_club' => ['nullable', 'string', 'max:255'],
-        ]);
+        // Validate using shared rules
+        $validated = $this->validate(UserProfileRules::rules((string) $user->id, false));
 
         // Check if email has changed
         $emailChanged = $validated['email'] !== $user->email;
 
         // Update user and membership in a transaction
         DB::transaction(function () use ($user, $validated, $emailChanged) {
-            $updateData = [
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'address_line1' => $validated['address_line1'],
-                'address_line2' => $validated['address_line2'] ?? null,
-                'city' => $validated['city'],
-                'state' => $validated['state'],
-                'zip_code' => $validated['zip_code'],
-                'country' => $validated['country'],
-                'yacht_club' => $validated['yacht_club'] ?? null,
-            ];
+            // Build update data (exclude email - we handle it separately)
+            $profileData = $validated;
+            unset($profileData['email']);
+            $updateData = UserDataService::buildUserData($profileData, false);
 
             // Handle email change with verification
             if ($emailChanged) {
-                $token = Str::random(64);
-                $updateData['pending_email'] = $validated['email'];
-                $updateData['email_verification_token'] = $token;
-                $updateData['email_verification_expires_at'] = now()->addHours(24);
+                $updateData = array_merge(
+                    $updateData,
+                    ['pending_email' => $validated['email']],
+                    UserDataService::generateEmailVerificationData()
+                );
             }
 
             // Update user
@@ -146,7 +143,7 @@ class ProfileForm extends Component
         // Send verification email if email changed
         if ($emailChanged) {
             // Send verification to new email
-            $user->notify(new VerifyEmailChange($user->email_verification_token, false));
+            EmailVerificationService::sendVerification($user, false);
 
             $this->dispatch('toast', [
                 'type' => 'success',
@@ -171,16 +168,9 @@ class ProfileForm extends Component
             return;
         }
 
-        // Generate new token and expiration
-        $token = Str::random(64);
-        $user->update([
-            'email_verification_token' => $token,
-            'email_verification_expires_at' => now()->addHours(24),
-        ]);
-
-        // Send verification email to pending email if exists, otherwise to current email
+        // Generate new token and send verification
         $isNewUser = ! $user->pending_email;
-        $user->notify(new VerifyEmailChange($token, $isNewUser));
+        EmailVerificationService::requestVerification($user, $isNewUser);
 
         $this->dispatch('toast', [
             'type' => 'success',

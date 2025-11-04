@@ -51,6 +51,13 @@ export function initializeDateOfBirthValidator(dobInput, onInputCallback = null)
 
         if (!value) return; // Skip if empty (will be caught by required attribute)
 
+        // If this is a Livewire form, let Livewire handle validation on blur
+        // Just do the formatting here
+        const isLivewireForm = dobInput.hasAttribute('wire:model.blur') || dobInput.hasAttribute('wire:model');
+        if (isLivewireForm) {
+            return; // Let Livewire handle the validation
+        }
+
         // Check format
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
         if (!datePattern.test(value)) {

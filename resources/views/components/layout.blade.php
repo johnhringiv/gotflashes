@@ -159,6 +159,15 @@
         </script>
     @endif
 
+    <!-- Error Toast (Session-based - for page reloads) -->
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast('error', {{ Js::from(session('error')) }});
+            });
+        </script>
+    @endif
+
     {{ $slot }}
 </main>
 

@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\FleetController;
 use App\Http\Controllers\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
-use App\Http\Controllers\Auth\Register;
 use App\Http\Controllers\Auth\ResetPassword;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\LeaderboardController;
@@ -46,13 +45,10 @@ Route::get('/export/user-data', [ExportController::class, 'exportUserData'])
     ->middleware('auth')
     ->name('export.user-data');
 
-// Registration routes
+// Registration routes (handled by Livewire component)
 Route::view('/register', 'auth.register')
     ->middleware('guest')
     ->name('register');
-
-Route::post('/register', Register::class)
-    ->middleware('guest');
 
 // Login routes
 Route::view('/login', 'auth.login')

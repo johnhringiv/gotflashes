@@ -44,7 +44,9 @@ class VerifyEmailChange extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $verifyUrl = url(route('verify-email-change', ['token' => $this->token], false));
+        // Include email in URL for better error messages (use pending_email if changing, otherwise current email)
+        $email = $notifiable->pending_email ?? $notifiable->email;
+        $verifyUrl = url(route('verify-email-change', ['token' => $this->token, 'email' => $email], false));
 
         return (new MailMessage)
             ->subject($this->isNewUser ? 'Verify Your G.O.T. Flashes Email' : 'Verify Your Email Change')
