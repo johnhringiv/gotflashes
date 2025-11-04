@@ -2,8 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Notifications\VerifyEmailChange;
-use Illuminate\Support\Str;
+use App\Services\EmailVerificationService;
 use Livewire\Component;
 
 class EmailVerificationBanner extends Component
@@ -16,15 +15,8 @@ class EmailVerificationBanner extends Component
             return;
         }
 
-        // Generate new token and expiration
-        $token = Str::random(64);
-        $user->update([
-            'email_verification_token' => $token,
-            'email_verification_expires_at' => now()->addHours(24),
-        ]);
-
-        // Send verification email
-        $user->notify(new VerifyEmailChange($token, true));
+        // Use service to generate token and send verification email
+        EmailVerificationService::requestVerification($user, true);
 
         $this->dispatch('toast', [
             'type' => 'success',

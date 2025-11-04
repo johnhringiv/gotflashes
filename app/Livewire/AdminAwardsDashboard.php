@@ -425,10 +425,14 @@ class AdminAwardsDashboard extends Component
         $affectedAwards = [];
         $emailsSent = 0;
 
+        // Pre-load all users to avoid N+1 query
+        $userIds = array_map(fn ($awardId) => (int) explode('-', $awardId)[0], $this->selectedAwards);
+        $users = User::whereIn('id', $userIds)->get()->keyBy('id');
+
         foreach ($this->selectedAwards as $awardId) {
             [$userId, $tier] = explode('-', $awardId);
 
-            $user = User::find($userId);
+            $user = $users->get((int) $userId);
             if (! $user) {
                 continue;
             }

@@ -1,16 +1,15 @@
 /**
- * Initialize date of birth input with formatting and validation
+ * Initialize date of birth input with auto-formatting for Livewire forms.
+ * Formats input as YYYY-MM-DD while user types. Validation is handled by Livewire server-side.
+ *
  * @param {HTMLInputElement} dobInput - The date of birth input element
  * @param {Function} onInputCallback - Optional callback for Livewire sync (receives formatted value)
  */
 export function initializeDateOfBirthValidator(dobInput, onInputCallback = null) {
     if (!dobInput) return;
 
-    // Auto-format as user types (add hyphens only) and clear custom validity
+    // Auto-format as user types (add hyphens to create YYYY-MM-DD format)
     dobInput.addEventListener('input', function(e) {
-        // Clear custom validity to allow revalidation
-        e.target.setCustomValidity('');
-
         const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
         let formatted = '';
 
@@ -31,80 +30,9 @@ export function initializeDateOfBirthValidator(dobInput, onInputCallback = null)
 
         e.target.value = formatted;
 
-        // Call Livewire sync callback if provided
+        // Sync with Livewire if callback provided
         if (onInputCallback) {
             onInputCallback(formatted);
-        }
-    });
-
-    // Validate on blur
-    dobInput.addEventListener('blur', function(e) {
-        const value = e.target.value;
-        let errorMessage = '';
-
-        // Remove any existing error message
-        const existingError = dobInput.parentElement.querySelector('.dob-error-message');
-        if (existingError) {
-            existingError.remove();
-        }
-        dobInput.classList.remove('input-error');
-
-        if (!value) return; // Skip if empty (will be caught by required attribute)
-
-        // If this is a Livewire form, let Livewire handle validation on blur
-        // Just do the formatting here
-        const isLivewireForm = dobInput.hasAttribute('wire:model.blur') || dobInput.hasAttribute('wire:model');
-        if (isLivewireForm) {
-            return; // Let Livewire handle the validation
-        }
-
-        // Check format
-        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-        if (!datePattern.test(value)) {
-            errorMessage = 'Please enter date in YYYY-MM-DD format';
-        } else {
-            // Parse the date
-            const [year, month, day] = value.split('-').map(Number);
-
-            // Validate year (reasonable range: 1900 to current year)
-            const currentYear = new Date().getFullYear();
-            if (year < 1900 || year > currentYear) {
-                errorMessage = `Year must be between 1900 and ${currentYear}`;
-            }
-            // Validate month
-            else if (month < 1 || month > 12) {
-                errorMessage = 'Month must be between 01 and 12';
-            }
-            else {
-                // Validate day
-                const daysInMonth = new Date(year, month, 0).getDate();
-                if (day < 1 || day > daysInMonth) {
-                    errorMessage = `Day must be between 01 and ${daysInMonth} for month ${month.toString().padStart(2, '0')}`;
-                } else {
-                    // Check if date is not in the future
-                    const inputDate = new Date(year, month - 1, day);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
-                    if (inputDate > today) {
-                        errorMessage = 'Date of birth cannot be in the future';
-                    }
-                }
-            }
-        }
-
-        // Show error if there is one
-        if (errorMessage) {
-            e.target.setCustomValidity(errorMessage);
-            dobInput.classList.add('input-error');
-
-            // Add visual error message below the input
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'label -mt-4 dob-error-message';
-            errorDiv.innerHTML = `<span class="label-text-alt text-error">${errorMessage}</span>`;
-            dobInput.parentElement.appendChild(errorDiv);
-        } else {
-            e.target.setCustomValidity('');
         }
     });
 }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('pending_email')->nullable()->after('email');
-            $table->string('email_verification_token')->nullable()->after('pending_email');
+            $table->string('email_verification_token', 64)->nullable()->unique()->after('pending_email');
             $table->timestamp('email_verification_expires_at')->nullable()->after('email_verification_token');
         });
     }
