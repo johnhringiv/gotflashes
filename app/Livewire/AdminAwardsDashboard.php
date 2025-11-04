@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\AwardFulfillment;
 use App\Models\User;
+use App\Notifications\AwardSentNotification;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -422,6 +423,7 @@ class AdminAwardsDashboard extends Component
         $updated = 0;
         $unchanged = 0;
         $affectedAwards = [];
+        $emailsSent = 0;
 
         foreach ($this->selectedAwards as $awardId) {
             [$userId, $tier] = explode('-', $awardId);
@@ -438,6 +440,8 @@ class AdminAwardsDashboard extends Component
                 'award_tier' => $tier,
             ])->first();
 
+            $statusChanged = false;
+
             if ($fulfillment) {
                 // Already exists - allow status change even with discrepancy
                 if ($fulfillment->status === 'sent') {
@@ -450,6 +454,7 @@ class AdminAwardsDashboard extends Component
                         'updated_by_user_id' => auth()->id(),
                     ]);
                     $updated++;
+                    $statusChanged = true;
                     $affectedAwards[] = [
                         'user_id' => $userId,
                         'year' => $this->selectedYear,
@@ -473,12 +478,29 @@ class AdminAwardsDashboard extends Component
                     'updated_by_user_id' => auth()->id(),
                 ]);
                 $updated++;
+                $statusChanged = true;
                 $affectedAwards[] = [
                     'user_id' => $userId,
                     'year' => $this->selectedYear,
                     'tier' => $tier,
                     'transition' => 'earned → sent',
                 ];
+            }
+
+            // Send email notification if status changed and user's email is verified
+            if ($statusChanged && $user->email_verified_at) {
+                try {
+                    $user->notify(new AwardSentNotification($this->selectedYear, (int) $tier));
+                    $emailsSent++;
+                } catch (\Exception $e) {
+                    // Log error but don't fail the entire operation
+                    \Log::error('Failed to send award notification', [
+                        'user_id' => $userId,
+                        'year' => $this->selectedYear,
+                        'tier' => $tier,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
@@ -492,6 +514,7 @@ class AdminAwardsDashboard extends Component
                 'affected_awards' => $affectedAwards,
                 'updated_count' => $updated,
                 'unchanged_count' => $unchanged,
+                'emails_sent' => $emailsSent,
             ]);
         }
 
@@ -568,6 +591,7 @@ class AdminAwardsDashboard extends Component
                 'Fleet',
                 'District',
                 'Email',
+                'Email Verified',
                 'Address Line 1',
                 'Address Line 2',
                 'City',
@@ -614,6 +638,7 @@ class AdminAwardsDashboard extends Component
                                 $membership?->fleet->fleet_number ?? '—',
                                 $membership?->district->name ?? '—',
                                 $user->email,
+                                $user->email_verified_at ? 'Yes' : 'No',
                                 $user->address_line1 ?? '',
                                 $user->address_line2 ?? '',
                                 $user->city ?? '',
