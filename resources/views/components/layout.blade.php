@@ -117,6 +117,13 @@
     </div>
 </nav>
 
+<!-- Email Verification Banner -->
+@auth
+    <div class="container mx-auto px-4 pt-4">
+        <livewire:email-verification-banner />
+    </div>
+@endauth
+
 <main class="flex-1 container mx-auto px-4 py-8">
     <!-- JavaScript Required Notice -->
     <noscript>

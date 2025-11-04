@@ -35,21 +35,65 @@
                 </div>
             </div>
 
-            <!-- Email (Read-only) -->
+            <!-- Email -->
             <div class="mb-6">
-                <label class="form-control w-full">
-                    <div class="label">
-                        <span class="label-text">Email</span>
-                    </div>
+                <div class="floating-label-visible">
                     <input type="email"
-                           value="{{ $email }}"
-                           class="input input-bordered w-full bg-base-200 cursor-not-allowed"
-                           disabled
-                           readonly>
-                    <div class="label">
-                        <span class="label-text-alt text-base-content/60">Need to change your email? Contact us at admin@gotflashes.com</span>
+                           wire:model.blur="email"
+                           placeholder="john@example.com"
+                           class="input input-bordered w-full @error('email') input-error @enderror"
+                           required>
+                    <label>Email</label>
+                    @error('email')
+                        <div class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </div>
+                    @enderror
+                </div>
+
+                @if($hasPendingEmail)
+                    <!-- Pending Email Change Notice -->
+                    <div class="alert alert-info mt-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <h4 class="font-bold">Pending Email Change</h4>
+                            <p class="text-sm">Waiting for verification: <strong>{{ $pendingEmail }}</strong></p>
+                            <p class="text-xs mt-1">Check your new email inbox and click the verification link.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button wire:click="resendEmailVerification" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="resendEmailVerification">
+                                <span wire:loading.remove wire:target="resendEmailVerification">Resend</span>
+                                <span wire:loading wire:target="resendEmailVerification">
+                                    <span class="loading loading-spinner loading-xs"></span>
+                                </span>
+                            </button>
+                            <button wire:click="cancelEmailChange" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="cancelEmailChange">
+                                <span wire:loading.remove wire:target="cancelEmailChange">Cancel</span>
+                                <span wire:loading wire:target="cancelEmailChange">
+                                    <span class="loading loading-spinner loading-xs"></span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
-                </label>
+                @elseif(!$isEmailVerified)
+                    <!-- Unverified Email Notice -->
+                    <div class="alert alert-warning mt-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm"><strong>Email not verified.</strong> You won't receive award notifications.</p>
+                        </div>
+                        <button wire:click="resendEmailVerification" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="resendEmailVerification">
+                            <span wire:loading.remove wire:target="resendEmailVerification">Resend Verification</span>
+                            <span wire:loading wire:target="resendEmailVerification">
+                                <span class="loading loading-spinner loading-xs"></span>
+                            </span>
+                        </button>
+                    </div>
+                @endif
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">

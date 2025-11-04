@@ -51,8 +51,9 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Profile Management**: Edit your profile information and Lightning Class affiliations
   - Update personal details (name, date of birth, gender)
   - Update mailing address
+  - Update email address with verification (pending email pattern - old email stays active until new email verified)
   - Change district and fleet affiliations (updates current year membership)
-  - Email address is read-only after registration
+  - Resend verification or cancel email changes
   - Real-time validation ensures data quality
 - **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
 - **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
@@ -70,7 +71,11 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - **Sailor**: Individual rankings by total flashes with year-specific memberships
   - **Fleet**: Fleet-level rankings with member counts
   - **District**: District-level rankings with member counts
-- **User Authentication**: Secure registration and login system
+- **User Authentication**: Secure registration, login, password reset, and email verification system
+  - Soft email verification - new users can immediately use the app without verifying
+  - Persistent verification reminder banner for unverified accounts
+  - 24-hour verification token expiration with resend option
+  - Email change verification with pending_email pattern
 - **Authorization**: Users can only view and modify their own entries
 - **Data Integrity**: Prevents duplicate date entries per user
 - **Non-Sailing Day Cap**: Automatically caps maintenance and race committee days at 5 per year
@@ -98,6 +103,9 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Backend**: Laravel 12 (PHP 8.2+)
 - **Database**: SQLite with WAL mode
 - **Email**: Resend (transactional email delivery)
+  - Email verification for new accounts and email changes
+  - Password reset emails
+  - 24-hour token expiration for security
 - **Frontend**:
   - Tailwind CSS v4 (self-hosted, no CDN)
   - DaisyUI (component library)
@@ -216,10 +224,11 @@ composer test
 
 **Test Coverage:**
 - Comprehensive test suite covering PHP and JavaScript
-- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships, profile management
+- Feature tests: Authentication, CRUD operations, authorization, validation, multi-date selection, leaderboards, progress tracking, navigation, registration with memberships, profile management, email verification
 - Unit tests: Models (User, Flash, Member, District, Fleet), policies, business logic
-- Livewire tests: FlashForm and ProfileForm components with dynamic date range refresh, grace period boundary crossing, membership updates
+- Livewire tests: FlashForm and ProfileForm components with dynamic date range refresh, grace period boundary crossing, membership updates, email change verification
 - Admin dashboard tests: Authorization, award status management, bulk operations, filtering, CSV export
+- Email verification tests: Registration verification, email change with pending_email, token expiration, resend/cancel flows
 - JavaScript tests: Registration form validation and dynamic fleet selection, multi-date picker logic
 - Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
 - Uses in-memory SQLite for fast test execution

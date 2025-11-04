@@ -10,6 +10,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\VerifyEmailChangeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -87,6 +88,10 @@ Route::view('/password/reset/{token}', 'auth.reset-password')
 Route::post('/password/reset', ResetPassword::class)
     ->middleware('guest')
     ->name('password.update');
+
+// Email verification route
+Route::get('/verify-email/{token}', VerifyEmailChangeController::class)
+    ->name('verify-email-change');
 
 // Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {

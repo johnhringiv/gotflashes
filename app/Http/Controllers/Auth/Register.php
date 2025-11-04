@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Models\User;
+use App\Notifications\VerifyEmailChange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class Register extends Controller
@@ -48,6 +50,9 @@ class Register extends Controller
 
         // Create user and membership in a transaction to ensure atomicity
         $user = DB::transaction(function () use ($validated) {
+            // Generate verification token
+            $token = Str::random(64);
+
             // Create the user
             $user = User::create([
                 'first_name' => $validated['first_name'],
@@ -63,6 +68,8 @@ class Register extends Controller
                 'zip_code' => $validated['zip_code'],
                 'country' => $validated['country'],
                 'yacht_club' => $validated['yacht_club'] ?? null,
+                'email_verification_token' => $token,
+                'email_verification_expires_at' => now()->addHours(24),
             ]);
 
             // Always create membership record for current year (even if unaffiliated)
@@ -76,10 +83,13 @@ class Register extends Controller
             return $user;
         });
 
+        // Send verification email (non-blocking - user can still use the app)
+        $user->notify(new VerifyEmailChange($user->email_verification_token, true));
+
         // Log the user in
         Auth::login($user);
 
         // Redirect to logbook index with success message
-        return redirect()->route('logbook.index')->with('success', 'Welcome to G.O.T. Flashes! Your account has been created.');
+        return redirect()->route('logbook.index')->with('success', 'Welcome to G.O.T. Flashes! Your account has been created. Please check your email to verify your address.');
     }
 }

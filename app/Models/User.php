@@ -34,6 +34,10 @@ class User extends Authenticatable
         'zip_code',
         'country',
         'yacht_club',
+        'pending_email',
+        'email_verification_token',
+        'email_verification_expires_at',
+        'email_verified_at',
     ];
 
     /**
@@ -57,6 +61,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'date_of_birth' => 'date',
+            'email_verification_expires_at' => 'datetime',
         ];
     }
 
