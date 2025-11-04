@@ -32,6 +32,7 @@ class ResetPassword extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'email_verified_at' => now(), // Verify email - clicking reset link proves ownership
                 ])->save();
 
                 event(new PasswordReset($user));

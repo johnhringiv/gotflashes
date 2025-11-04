@@ -31,7 +31,7 @@ RUN apk upgrade --no-cache && apk --no-cache add \
     sqlite-dev
 
 # Install PHP extensions (only what's needed)
-RUN docker-php-ext-install pdo_sqlite mbstring pcntl
+RUN docker-php-ext-install pdo_sqlite mbstring pcntl opcache
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -39,8 +39,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy composer files
 COPY composer.json composer.lock ./
 
+# Copy application files BEFORE composer install so autoloader knows about all classes
+COPY app ./app
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY routes ./routes
+COPY database/migrations ./database/migrations
+
 # Install PHP dependencies (production only, optimized, skip scripts)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --no-cache
+
+# Fix permissions for files that will be copied to final stage
+RUN chown -R 1000:1000 /app
 
 # Manually copy Livewire assets to public directory
 RUN mkdir -p public/vendor && \
@@ -66,9 +76,9 @@ RUN addgroup -g 1000 -S appuser && \
     addgroup appuser www-data
 
 # Configure nginx directories for appuser
-RUN mkdir -p /var/cache/nginx /var/log/nginx /run && \
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/lib/nginx/logs /run && \
     touch /run/nginx.pid && \
-    chown -R appuser:appuser /run/nginx.pid /var/cache/nginx /var/log/nginx
+    chown -R appuser:appuser /run/nginx.pid /var/cache/nginx /var/log/nginx /var/lib/nginx
 
 # Set working directory and change ownership to appuser
 WORKDIR /var/www/html
@@ -84,17 +94,17 @@ RUN mkdir -p storage/framework/sessions storage/framework/views storage/framewor
     && mkdir -p database
 
 # Copy application files (owned by appuser since USER is set)
-COPY app ./app
-COPY bootstrap ./bootstrap
-COPY config ./config
 COPY public ./public
 COPY resources ./resources
-COPY routes ./routes
 COPY artisan composer.json composer.lock ./
-COPY database/migrations ./database/migrations
 COPY docker/.env.docker ./.env
 
-# Copy dependencies (owned by appuser since USER is set)
+# Copy dependencies and built files from previous stages (owned by appuser since USER is set)
+COPY --from=php-builder /app/app ./app
+COPY --from=php-builder /app/bootstrap ./bootstrap
+COPY --from=php-builder /app/config ./config
+COPY --from=php-builder /app/routes ./routes
+COPY --from=php-builder /app/database/migrations ./database/migrations
 COPY --from=php-builder /app/vendor ./vendor
 COPY --from=php-builder /app/public/vendor/livewire ./public/vendor/livewire
 COPY --from=frontend /app/public/build ./public/build
@@ -107,6 +117,9 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 
 # Copy PHP-FPM configuration
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-custom.conf
+
+# Copy OPcache configuration
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Copy supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
