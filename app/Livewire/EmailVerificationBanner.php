@@ -15,8 +15,23 @@ class EmailVerificationBanner extends Component
             return;
         }
 
+        // Check rate limits
+        $rateLimitCheck = EmailVerificationService::checkRateLimit($user);
+
+        if (! $rateLimitCheck['allowed']) {
+            $this->dispatch('toast', [
+                'type' => $rateLimitCheck['type'],
+                'message' => $rateLimitCheck['message'],
+            ]);
+
+            return;
+        }
+
         // Use service to generate token and send verification email
         EmailVerificationService::requestVerification($user, true);
+
+        // Record rate limit attempt
+        EmailVerificationService::recordRateLimitAttempt($user);
 
         $this->dispatch('toast', [
             'type' => 'success',

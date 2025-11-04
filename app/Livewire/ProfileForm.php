@@ -168,9 +168,24 @@ class ProfileForm extends Component
             return;
         }
 
+        // Check rate limits
+        $rateLimitCheck = EmailVerificationService::checkRateLimit($user);
+
+        if (! $rateLimitCheck['allowed']) {
+            $this->dispatch('toast', [
+                'type' => $rateLimitCheck['type'],
+                'message' => $rateLimitCheck['message'],
+            ]);
+
+            return;
+        }
+
         // Generate new token and send verification
         $isNewUser = ! $user->pending_email;
         EmailVerificationService::requestVerification($user, $isNewUser);
+
+        // Record rate limit attempt
+        EmailVerificationService::recordRateLimitAttempt($user);
 
         $this->dispatch('toast', [
             'type' => 'success',

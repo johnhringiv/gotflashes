@@ -11,6 +11,7 @@ use App\Services\UserDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 
 class Register extends Controller
 {
@@ -49,7 +50,15 @@ class Register extends Controller
         });
 
         // Send verification email (non-blocking - user can still use the app)
-        EmailVerificationService::sendVerification($user, true);
+        // Rate limit: max 3 registration emails per IP per hour (prevents abuse)
+        $rateLimitKey = 'registration-email:'.$request->ip();
+
+        if (! RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            EmailVerificationService::sendVerification($user, true);
+            RateLimiter::hit($rateLimitKey, 3600); // 1 hour decay
+        }
+        // Note: If rate limited, user still gets registered and logged in,
+        // they just won't receive verification email. They can resend from profile.
 
         // Log the user in
         Auth::login($user);

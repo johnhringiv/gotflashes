@@ -8,6 +8,7 @@ use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -18,6 +19,9 @@ class RegistrationWithMembershipsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Fake notifications to prevent sending real emails in tests
+        Notification::fake();
 
         // Note: Districts and fleets are seeded automatically by the migration
         // via RefreshDatabase trait
