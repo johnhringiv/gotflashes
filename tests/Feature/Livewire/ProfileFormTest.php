@@ -102,6 +102,7 @@ class ProfileFormTest extends TestCase
             ->test(ProfileForm::class)
             ->set('first_name', 'Jane')
             ->set('last_name', 'Smith')
+            ->set('email', 'jane@example.com')
             ->set('date_of_birth', '1995-03-20')
             ->set('gender', 'female')
             ->set('address_line1', '456 Oak Ave')
@@ -115,11 +116,14 @@ class ProfileFormTest extends TestCase
             ->assertHasNoErrors()
             ->assertDispatched('toast');
 
-        // Verify user was updated (email should remain unchanged)
+        // Verify user was updated (email change goes to pending_email, requires verification)
         $user->refresh();
         $this->assertEquals('Jane', $user->first_name);
         $this->assertEquals('Smith', $user->last_name);
-        $this->assertEquals('john@example.com', $user->email); // Email unchanged
+        $this->assertEquals('john@example.com', $user->email); // Email unchanged until verified
+        $this->assertEquals('jane@example.com', $user->pending_email); // New email pending verification
+        $this->assertNotNull($user->email_verification_token);
+        $this->assertNotNull($user->email_verification_expires_at);
         $this->assertEquals('1995-03-20', $user->date_of_birth->format('Y-m-d'));
         $this->assertEquals('female', $user->gender);
         $this->assertEquals('456 Oak Ave', $user->address_line1);
@@ -411,5 +415,84 @@ class ProfileFormTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSeeLivewire(ProfileForm::class);
+    }
+
+    public function test_can_keep_same_email_when_updating_profile(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('first_name', 'Updated')
+            ->set('last_name', $user->last_name)
+            ->set('email', 'john@example.com') // Keep same email
+            ->set('date_of_birth', $user->date_of_birth->format('Y-m-d'))
+            ->set('gender', $user->gender)
+            ->set('address_line1', $user->address_line1)
+            ->set('city', $user->city)
+            ->set('state', $user->state)
+            ->set('zip_code', $user->zip_code)
+            ->set('country', $user->country)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $user->refresh();
+        $this->assertEquals('john@example.com', $user->email);
+        $this->assertEquals('Updated', $user->first_name);
+    }
+
+    public function test_validates_email_uniqueness(): void
+    {
+        // Create existing user with an email
+        User::factory()->create([
+            'email' => 'existing@example.com',
+        ]);
+
+        // Create another user
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        // Try to update to existing email
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('first_name', $user->first_name)
+            ->set('last_name', $user->last_name)
+            ->set('email', 'existing@example.com') // Try to use existing email
+            ->set('date_of_birth', $user->date_of_birth->format('Y-m-d'))
+            ->set('gender', $user->gender)
+            ->set('address_line1', $user->address_line1)
+            ->set('city', $user->city)
+            ->set('state', $user->state)
+            ->set('zip_code', $user->zip_code)
+            ->set('country', $user->country)
+            ->call('save')
+            ->assertHasErrors(['email']);
+
+        // Verify email was not changed
+        $user->refresh();
+        $this->assertEquals('john@example.com', $user->email);
+    }
+
+    public function test_validates_email_format(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('email', 'invalid-email')
+            ->set('first_name', $user->first_name)
+            ->set('last_name', $user->last_name)
+            ->set('date_of_birth', $user->date_of_birth->format('Y-m-d'))
+            ->set('gender', $user->gender)
+            ->set('address_line1', $user->address_line1)
+            ->set('city', $user->city)
+            ->set('state', $user->state)
+            ->set('zip_code', $user->zip_code)
+            ->set('country', $user->country)
+            ->call('save')
+            ->assertHasErrors(['email']);
     }
 }

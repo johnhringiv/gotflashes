@@ -69,7 +69,8 @@ export async function initializeDistrictFleetSelects(config) {
             { value: 'none', text: 'Unaffiliated/None', id: null },
             ...districts.map(d => ({ value: d.id, text: d.name, id: d.id, name: d.name }))
         ],
-        placeholder: 'Search districts...',
+        placeholder: 'Select district...',
+        allowEmptyOption: true,
         maxOptions: null,
         dropdownParent: 'body',
         sortField: {
@@ -89,11 +90,15 @@ export async function initializeDistrictFleetSelects(config) {
 
             if (value === 'none') {
                 updateFleetOptions(fleets, false);
-                fleetTomSelect.setValue('none', true);
+                // Don't auto-select 'none' - leave empty to show placeholder
             } else if (value) {
                 const filteredFleets = fleets.filter(f => f.district_id == value);
                 updateFleetOptions(filteredFleets, false);
             } else {
+                // District was cleared - sync null to Livewire and show all fleets
+                if (onDistrictChange) {
+                    onDistrictChange(null);
+                }
                 updateFleetOptions(fleets, false);
             }
         },
@@ -106,7 +111,7 @@ export async function initializeDistrictFleetSelects(config) {
 
     // Initialize Fleet Select
     const fleetTomSelect = new TomSelect(`#${fleetSelectId}`, {
-        placeholder: 'Search fleets by name or number...',
+        placeholder: 'Select fleet...',
         maxOptions: null,
         dropdownParent: 'body',
         sortField: {
@@ -116,10 +121,12 @@ export async function initializeDistrictFleetSelects(config) {
         render: {
             option: function(data, escape) {
                 if (data.value === 'none') return '<div>None</div>';
+                if (!data.fleet_number || !data.fleet_name) return '<div></div>';
                 return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
             },
             item: function(data, escape) {
                 if (data.value === 'none') return '<div>None</div>';
+                if (!data.fleet_number || !data.fleet_name) return '<div></div>';
                 return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
             }
         },
@@ -135,6 +142,11 @@ export async function initializeDistrictFleetSelects(config) {
                 const fleet = fleets.find(f => f.id == value);
                 if (fleet) {
                     districtTomSelect.setValue(fleet.district_id, true);
+                }
+            } else {
+                // Fleet was cleared - sync null to Livewire
+                if (onFleetChange) {
+                    onFleetChange(null);
                 }
             }
         },
@@ -181,14 +193,10 @@ export async function initializeDistrictFleetSelects(config) {
 
     if (initialDistrictId && initialDistrictId !== '' && initialDistrictId !== 'null') {
         districtTomSelect.setValue(initialDistrictId);
-    } else {
-        districtTomSelect.setValue('none');
     }
 
     if (initialFleetId && initialFleetId !== '' && initialFleetId !== 'null') {
         fleetTomSelect.setValue(initialFleetId);
-    } else {
-        fleetTomSelect.setValue('none');
     }
 
     return { districtTomSelect, fleetTomSelect };

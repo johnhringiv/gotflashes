@@ -641,4 +641,144 @@ class AdminAwardsDashboardTest extends TestCase
             ->assertSee('⚠') // Warning badge
             ->assertSeeHtml('data-tip="User currently has 48 days but was processed for 50-day award"');
     }
+
+    public function test_marking_award_as_sent_sends_email_to_verified_users(): void
+    {
+        \Notification::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create([
+            'email_verified_at' => now(), // Verified email
+        ]);
+
+        // User earned 10-day award
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Mark award as sent
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-10"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        // Assert email was sent
+        \Notification::assertSentTo(
+            $user,
+            \App\Notifications\AwardSentNotification::class,
+            function ($notification) {
+                return $notification->year === now()->year && $notification->tier === 10;
+            }
+        );
+    }
+
+    public function test_marking_award_as_sent_does_not_send_email_to_unverified_users(): void
+    {
+        \Notification::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create([
+            'email_verified_at' => null, // Unverified email
+        ]);
+
+        // User earned 10-day award
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Mark award as sent
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-10"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        // Assert NO email was sent
+        \Notification::assertNothingSent();
+    }
+
+    public function test_marking_award_as_sent_sends_email_only_on_status_change(): void
+    {
+        \Notification::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        // User earned 10-day award
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Already marked as sent
+        AwardFulfillment::create([
+            'user_id' => $user->id,
+            'year' => now()->year,
+            'award_tier' => 10,
+            'status' => 'sent',
+        ]);
+
+        // Try to mark as sent again (no status change)
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user->id}-10"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        // Assert NO email was sent (already sent status)
+        \Notification::assertNothingSent();
+    }
+
+    public function test_marking_multiple_awards_as_sent_sends_emails_for_each(): void
+    {
+        \Notification::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user1 = User::factory()->create(['email_verified_at' => now()]);
+        $user2 = User::factory()->create(['email_verified_at' => now()]);
+
+        // User 1 earned 10-day award
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user1->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // User 2 earned 25-day award
+        for ($i = 1; $i <= 25; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user2->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // Mark both awards as sent
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard', ['selectedYear' => now()->year])
+            ->set('selectedAwards', ["{$user1->id}-10", "{$user2->id}-25"])
+            ->call('confirmMarkAsSent')
+            ->call('bulkMarkAsSent');
+
+        // Assert both emails were sent
+        \Notification::assertSentTo($user1, \App\Notifications\AwardSentNotification::class);
+        \Notification::assertSentTo($user2, \App\Notifications\AwardSentNotification::class);
+        \Notification::assertCount(2);
+    }
 }
