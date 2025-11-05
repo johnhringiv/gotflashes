@@ -223,4 +223,112 @@ class EmailVerificationRateLimitTest extends TestCase
         // Should only send 1 email total (they share the same rate limit key)
         Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
     }
+
+    public function test_registration_is_rate_limited_per_ip(): void
+    {
+        RateLimiter::clear('registration:127.0.0.1');
+
+        $baseData = [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'date_of_birth' => '1990-01-01',
+            'gender' => 'male',
+            'address_line1' => '123 Test St',
+            'city' => 'Test City',
+            'state' => 'TS',
+            'zip_code' => '12345',
+            'country' => 'US',
+        ];
+
+        // First 5 registrations should succeed
+        for ($i = 0; $i < 5; $i++) {
+            $data = array_merge($baseData, ['email' => "test{$i}@example.com"]);
+            Livewire::test(\App\Livewire\RegistrationForm::class)
+                ->set('first_name', $data['first_name'])
+                ->set('last_name', $data['last_name'])
+                ->set('email', $data['email'])
+                ->set('password', $data['password'])
+                ->set('password_confirmation', $data['password_confirmation'])
+                ->set('date_of_birth', $data['date_of_birth'])
+                ->set('gender', $data['gender'])
+                ->set('address_line1', $data['address_line1'])
+                ->set('city', $data['city'])
+                ->set('state', $data['state'])
+                ->set('zip_code', $data['zip_code'])
+                ->set('country', $data['country'])
+                ->call('register');
+
+            $this->assertDatabaseHas('users', ['email' => $data['email']]);
+        }
+
+        // 6th registration should be rate limited
+        $data = array_merge($baseData, ['email' => 'test6@example.com']);
+        Livewire::test(\App\Livewire\RegistrationForm::class)
+            ->set('first_name', $data['first_name'])
+            ->set('last_name', $data['last_name'])
+            ->set('email', $data['email'])
+            ->set('password', $data['password'])
+            ->set('password_confirmation', $data['password_confirmation'])
+            ->set('date_of_birth', $data['date_of_birth'])
+            ->set('gender', $data['gender'])
+            ->set('address_line1', $data['address_line1'])
+            ->set('city', $data['city'])
+            ->set('state', $data['state'])
+            ->set('zip_code', $data['zip_code'])
+            ->set('country', $data['country'])
+            ->call('register')
+            ->assertDispatched('toast');
+
+        // User should NOT be created (rate limited)
+        $this->assertDatabaseMissing('users', ['email' => 'test6@example.com']);
+    }
+
+    public function test_registration_email_rate_limit_is_separate(): void
+    {
+        RateLimiter::clear('registration:127.0.0.1');
+        RateLimiter::clear('registration-email:127.0.0.1');
+
+        Notification::fake();
+
+        $baseData = [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'date_of_birth' => '1990-01-01',
+            'gender' => 'male',
+            'address_line1' => '123 Test St',
+            'city' => 'Test City',
+            'state' => 'TS',
+            'zip_code' => '12345',
+            'country' => 'US',
+        ];
+
+        // Register 4 users (within both rate limits)
+        for ($i = 0; $i < 4; $i++) {
+            $data = array_merge($baseData, ['email' => "test{$i}@example.com"]);
+            Livewire::test(\App\Livewire\RegistrationForm::class)
+                ->set('first_name', $data['first_name'])
+                ->set('last_name', $data['last_name'])
+                ->set('email', $data['email'])
+                ->set('password', $data['password'])
+                ->set('password_confirmation', $data['password_confirmation'])
+                ->set('date_of_birth', $data['date_of_birth'])
+                ->set('gender', $data['gender'])
+                ->set('address_line1', $data['address_line1'])
+                ->set('city', $data['city'])
+                ->set('state', $data['state'])
+                ->set('zip_code', $data['zip_code'])
+                ->set('country', $data['country'])
+                ->call('register');
+        }
+
+        // Should have sent 3 emails (email rate limit is 3 per hour)
+        // 4th registration succeeds but email is rate limited
+        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 3);
+    }
 }

@@ -9,6 +9,7 @@ use App\Services\EmailVerificationService;
 use App\Services\UserDataService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class RegistrationForm extends Component
@@ -72,6 +73,21 @@ class RegistrationForm extends Component
 
     public function register()
     {
+        // Rate limit registrations per IP: max 5 per hour
+        $ipAddress = request()->ip();
+        $rateLimitKey = 'registration:'.$ipAddress;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $minutes = ceil(RateLimiter::availableIn($rateLimitKey) / 60);
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => "Too many registration attempts. Please try again in {$minutes} minutes.",
+            ]);
+
+            return;
+        }
+
         // Convert "none" values to null before validation
         if ($this->district_id === 0) {
             $this->district_id = null;
@@ -105,8 +121,19 @@ class RegistrationForm extends Component
             return $user;
         });
 
+        // Record registration attempt for rate limiting (1 hour = 3600 seconds)
+        RateLimiter::hit($rateLimitKey, 3600);
+
         // Send verification email (non-blocking - user can still use the app)
-        EmailVerificationService::sendVerification($user, true);
+        // Rate limit verification emails per IP: max 3 per hour
+        $emailRateLimitKey = 'registration-email:'.$ipAddress;
+
+        if (! RateLimiter::tooManyAttempts($emailRateLimitKey, 3)) {
+            EmailVerificationService::sendVerification($user, true);
+            RateLimiter::hit($emailRateLimitKey, 3600);
+        }
+        // Note: If email rate limited, user still gets registered and logged in,
+        // they just won't receive verification email. They can resend from profile.
 
         // Log the user in
         Auth::login($user);

@@ -25,6 +25,7 @@ class ExportController extends Controller
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Write header row with all columns
+            // Use empty escape parameter to prevent CSV injection
             fputcsv($handle, [
                 'Name',
                 'Email',
