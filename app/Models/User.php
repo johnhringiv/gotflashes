@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use CanResetPassword, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -32,6 +34,10 @@ class User extends Authenticatable
         'zip_code',
         'country',
         'yacht_club',
+        'pending_email',
+        'email_verification_token',
+        'email_verification_expires_at',
+        'email_verified_at',
     ];
 
     /**
@@ -55,6 +61,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'date_of_birth' => 'date',
+            'email_verification_expires_at' => 'datetime',
         ];
     }
 
@@ -64,6 +71,16 @@ class User extends Authenticatable
     public function getNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function flashes(): HasMany
@@ -95,7 +112,25 @@ class User extends Authenticatable
      */
     public function membershipForYear(int $year): ?Member
     {
-        // First, try to find exact membership for this year
+        // If members relationship is already loaded, use it (avoids N+1 queries)
+        if ($this->relationLoaded('members')) {
+            // First, try exact match for this year
+            /** @var Member|null $membership */
+            $membership = $this->members->firstWhere('year', $year);
+
+            if ($membership) {
+                return $membership;
+            }
+
+            // If not found, get the most recent membership before this year (carry-forward)
+            /** @var Member|null */
+            return $this->members
+                ->where('year', '<', $year)
+                ->sortByDesc('year')
+                ->first();
+        }
+
+        // Fallback to query if relationship not loaded
         /** @var Member|null $membership */
         $membership = $this->members()->where('year', $year)->first();
 
@@ -146,6 +181,27 @@ class User extends Authenticatable
      */
     public function flashStatsForYear(int $year): object
     {
+        // If flashes relationship is already loaded, use it (avoids N+1 queries)
+        if ($this->relationLoaded('flashes')) {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Flash> $flashes */
+            $flashes = $this->flashes;
+
+            $sailingCount = $flashes
+                ->filter(fn (Flash $flash) => $flash->date->year === $year && $flash->activity_type === 'sailing')
+                ->count();
+
+            $nonSailingCount = $flashes
+                ->filter(fn (Flash $flash) => $flash->date->year === $year && in_array($flash->activity_type, ['maintenance', 'race_committee']))
+                ->count();
+
+            return (object) [
+                'sailing' => $sailingCount,
+                'nonSailing' => $nonSailingCount,
+                'total' => $sailingCount + min($nonSailingCount, 5),
+            ];
+        }
+
+        // Fallback to query if relationship not loaded
         $sailingCount = $this->flashes()
             ->whereYear('date', $year)
             ->where('activity_type', 'sailing')
@@ -221,11 +277,21 @@ class User extends Authenticatable
      */
     public function thresholdDateForYear(int $year, int $tier): ?\Carbon\Carbon
     {
-        // Get all flashes for the year, ordered by date ASC
-        $flashes = $this->flashes()
-            ->whereYear('date', $year)
-            ->orderBy('date', 'asc')
-            ->get();
+        // If flashes relationship is already loaded, use it (avoids N+1 queries)
+        if ($this->relationLoaded('flashes')) {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Flash> $flashesCollection */
+            $flashesCollection = $this->flashes;
+
+            $flashes = $flashesCollection
+                ->filter(fn (Flash $flash) => $flash->date->year === $year)
+                ->sortBy('date');
+        } else {
+            // Fallback to query if relationship not loaded
+            $flashes = $this->flashes()
+                ->whereYear('date', $year)
+                ->orderBy('date', 'asc')
+                ->get();
+        }
 
         $sailingCount = 0;
         $nonSailingCount = 0;

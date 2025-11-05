@@ -60,6 +60,13 @@ class RequestLoggingMiddleware
 
         // Log performance metrics if response is slow
         $slowRequestThreshold = config('logging.slow_request_threshold_ms', 300);
+
+        // Use higher threshold for auth routes (bcrypt password hashing is intentionally slow)
+        $isAuthRoute = in_array($request->path(), ['login', 'register']);
+        if ($isAuthRoute) {
+            $slowRequestThreshold = 500;
+        }
+
         if ($duration > $slowRequestThreshold) {
             Log::channel('performance')->warning('Slow request detected', [
                 'request_id' => $requestId,

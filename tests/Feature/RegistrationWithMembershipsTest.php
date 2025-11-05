@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\RegistrationForm;
 use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class RegistrationWithMembershipsTest extends TestCase
@@ -17,16 +20,16 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         parent::setUp();
 
+        // Fake notifications to prevent sending real emails in tests
+        Notification::fake();
+
         // Note: Districts and fleets are seeded automatically by the migration
         // via RefreshDatabase trait
     }
 
-    public function test_user_can_register_with_district_and_fleet(): void
+    private function getBaseRegistrationData(): array
     {
-        $district = District::first();
-        $fleet = Fleet::where('district_id', $district->id)->first();
-
-        $response = $this->post('/register', [
+        return [
             'first_name' => 'Test',
             'last_name' => 'User',
             'email' => 'test@example.com',
@@ -39,12 +42,25 @@ class RegistrationWithMembershipsTest extends TestCase
             'state' => 'CA',
             'zip_code' => '94102',
             'country' => 'United States',
+        ];
+    }
+
+    public function test_user_can_register_with_district_and_fleet(): void
+    {
+        $district = District::first();
+        $fleet = Fleet::where('district_id', $district->id)->first();
+
+        $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
             'yacht_club' => 'Test Yacht Club',
         ]);
 
-        $response->assertRedirect('/logbook');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertRedirect('/logbook');
+
         $this->assertAuthenticated();
 
         $user = User::where('email', 'test@example.com')->first();
@@ -62,24 +78,17 @@ class RegistrationWithMembershipsTest extends TestCase
 
     public function test_user_can_register_as_unaffiliated_with_none_values(): void
     {
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'female',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
-            'district_id' => 'none',
-            'fleet_id' => 'none',
+            'district_id' => 0, // Livewire converts 'none' to 0
+            'fleet_id' => 0,
         ]);
 
-        $response->assertRedirect('/logbook');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertRedirect('/logbook');
+
         $this->assertAuthenticated();
 
         $user = User::where('email', 'test@example.com')->first();
@@ -99,24 +108,16 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $district = District::first();
 
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'non_binary',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
             'district_id' => $district->id,
-            'fleet_id' => 'none',
+            'fleet_id' => 0,
         ]);
 
-        $response->assertRedirect('/logbook');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();
@@ -129,24 +130,16 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $fleet = Fleet::first();
 
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'prefer_not_to_say',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
-            'district_id' => 'none',
+            'district_id' => 0,
             'fleet_id' => $fleet->id,
         ]);
 
-        $response->assertRedirect('/logbook');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();
@@ -157,24 +150,16 @@ class RegistrationWithMembershipsTest extends TestCase
 
     public function test_registration_fails_with_invalid_district_id(): void
     {
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => 99999, // Invalid ID
-            'fleet_id' => 'none',
+            'fleet_id' => 0,
         ]);
 
-        $response->assertSessionHasErrors('district_id');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertHasErrors('district_id');
+
         $this->assertGuest();
     }
 
@@ -182,24 +167,17 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $district = District::first();
 
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'female',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
             'district_id' => $district->id,
             'fleet_id' => 99999, // Invalid ID
         ]);
 
-        $response->assertSessionHasErrors('fleet_id');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertHasErrors('fleet_id');
+
         $this->assertGuest();
     }
 
@@ -209,22 +187,14 @@ class RegistrationWithMembershipsTest extends TestCase
         $fleet = Fleet::where('district_id', $district->id)->first();
         $currentYear = now()->year;
 
-        $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
         ]);
+
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();
@@ -234,22 +204,14 @@ class RegistrationWithMembershipsTest extends TestCase
 
     public function test_user_without_district_or_fleet_still_creates_membership(): void
     {
-        $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
-            'district_id' => 'none',
-            'fleet_id' => 'none',
+        $data = array_merge($this->getBaseRegistrationData(), [
+            'district_id' => 0,
+            'fleet_id' => 0,
         ]);
+
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register');
 
         $user = User::where('email', 'test@example.com')->first();
 
@@ -264,22 +226,14 @@ class RegistrationWithMembershipsTest extends TestCase
         $district = District::first();
         $fleet = Fleet::where('district_id', $district->id)->first();
 
-        $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
         ]);
+
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register');
 
         $user = User::where('email', 'test@example.com')->first();
 
@@ -300,24 +254,15 @@ class RegistrationWithMembershipsTest extends TestCase
 
     public function test_registration_with_null_values_instead_of_none_string(): void
     {
-        $response = $this->post('/register', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01',
-            'gender' => 'male',
-            'address_line1' => '123 Main St',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'zip_code' => '94102',
-            'country' => 'United States',
+        $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => null,
             'fleet_id' => null,
         ]);
 
-        $response->assertRedirect('/logbook');
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertRedirect('/logbook');
 
         $user = User::where('email', 'test@example.com')->first();
         $membership = $user->currentMembership();

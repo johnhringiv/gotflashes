@@ -15,6 +15,7 @@ class AwardFulfillment extends Model
         'year',
         'award_tier',
         'status',
+        'updated_by_user_id',
         'notes',
     ];
 
@@ -32,5 +33,13 @@ class AwardFulfillment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the admin user who last updated this award fulfillment.
+     */
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id');
     }
 }

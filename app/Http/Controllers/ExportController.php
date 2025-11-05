@@ -25,6 +25,7 @@ class ExportController extends Controller
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Write header row with all columns
+            // Use empty escape parameter to prevent CSV injection
             fputcsv($handle, [
                 'Name',
                 'Email',
@@ -47,7 +48,7 @@ class ExportController extends Controller
                 'Notes',
                 'Created At',
                 'Updated At',
-            ]);
+            ], ',', '"', '');
 
             // Pre-build user data array (avoid repeated property access in loop)
             $userData = [
@@ -106,7 +107,7 @@ class ExportController extends Controller
                             $flash->notes ?? '',
                             $flash->created_at ?? '',
                             $flash->updated_at ?? '',
-                        ]));
+                        ]), ',', '"', '');
                     }
                 });
 

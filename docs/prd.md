@@ -35,16 +35,30 @@ District and fleet affiliations are tracked per calendar year. When users regist
 
 **Note**: Users don't need to own a Lightning - crews and anyone who sails on Lightnings can participate.
 
+**Email Verification:**
+- New users receive a verification email upon registration with a 24-hour token expiration
+- Users can immediately access and use all application features without verifying their email (soft verification)
+- A persistent banner encourages email verification until completed
+- Users can resend verification emails if needed
+- Unverified accounts remain fully functional to reduce registration friction
+
 ### 1.2 User Authentication
 - Secure login system using email and password
 - Session persistence to keep users logged in across visits
 - Logout functionality
+- Email verification system for new accounts (see Section 1.1) and email changes (see Section 1.3)
+- Password reset functionality:
+  - Users can request password reset link via email
+  - Reset links expire after 60 minutes for security
+  - Branded email notifications with G.O.T. Flashes styling
+  - Request throttling to prevent abuse (60 seconds between requests)
 
 ### 1.3 Profile Management
 Users can view and edit their profile information through a dedicated profile page:
 
 **Editable Information:**
 - Personal details: First name, last name, date of birth, gender
+- Email address (requires verification - see Email Change Process below)
 - Mailing address: Address line 1, address line 2 (optional), city, state, ZIP code, country
 - Lightning Class affiliations: District, fleet, yacht club (optional)
 
@@ -54,8 +68,17 @@ Users can view and edit their profile information through a dedicated profile pa
 - Updates both personal information and Lightning Class affiliations for the current year
 - Real-time validation ensures data quality (e.g., prevents invalid dates, validates district/fleet selections)
 - Success confirmation message after saving changes
-- Email address remains fixed after registration (serves as permanent account identifier)
 - Secure access - users can only view and edit their own profile
+
+**Email Change Process:**
+- Users can update their email address at any time
+- Email changes use a "pending email" pattern for security:
+  - New email is stored as `pending_email` (not immediately activated)
+  - Verification email sent to new address with 24-hour token expiration
+  - Old email remains active until new email is verified
+  - Users can resend verification or cancel the email change
+  - Upon verification, pending email becomes the active email
+- Email changes require re-verification even if original email was verified
 
 ### 1.4 Data Export
 Users can export their complete profile and activity history:
@@ -103,6 +126,7 @@ The following activities may count toward your annual total:
 - **Starting February 1st**: Previous year becomes read-only (view only)
 - **Current year**: Always editable/deletable until grace period ends (following January 31st)
 - Grace period allows one month to finalize previous year's activities before they're locked
+- **Launch Year Exception**: The grace period only applies after the application's start year (2026, configurable via `START_YEAR` environment variable). In January 2026, users can only enter 2026 dates. Starting in January 2027 and beyond, the grace period allows entering previous year dates during January. This prevents users from logging activities before the application existed.
 
 ### 2.2 Award Tiers
 Participants earn recognition at the following annual milestones:
@@ -276,6 +300,7 @@ All admin status changes are logged to a dedicated admin log channel with user i
 
 ### 6.3 Security
 - Secure user authentication and password protection
+- Email verification system with expiring tokens
 - Role-based access control (regular users and award administrators)
 - Industry-standard security practices
 
@@ -286,7 +311,6 @@ All admin status changes are logged to a dedicated admin log channel with user i
 ## 7. Future Considerations
 
 ### Potential Enhancements (Out of Scope for Initial Release)
-- Password reset/forgot password functionality
 - Email notifications to award administrators when users reach award thresholds
 - Email notifications to users when they earn awards
 - **Historical year views**: Summary of each previous year's achievements, total days and awards earned per year, complete activity logs from prior years (read-only), with only current year activities counting toward current year awards

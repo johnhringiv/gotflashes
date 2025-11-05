@@ -3,6 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Member;
+use App\Rules\UserProfileRules;
+use App\Services\EmailVerificationService;
+use App\Services\UserDataService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -69,6 +72,24 @@ class ProfileForm extends Component
         $this->yacht_club = $user->yacht_club ?? '';
     }
 
+    public function rules()
+    {
+        $user = auth()->user();
+
+        return UserProfileRules::rules((string) $user->id, false);
+    }
+
+    public function messages()
+    {
+        return UserProfileRules::messages();
+    }
+
+    public function updated($propertyName)
+    {
+        // Validate the field that was just updated
+        $this->validateOnly($propertyName);
+    }
+
     public function save()
     {
         $user = auth()->user();
@@ -81,38 +102,30 @@ class ProfileForm extends Component
             $this->fleet_id = null;
         }
 
-        $validated = $this->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'date_of_birth' => ['required', 'date', 'before:today', 'after:1900-01-01'],
-            'gender' => ['required', 'in:male,female,non_binary,prefer_not_to_say'],
-            'address_line1' => ['required', 'string', 'max:255'],
-            'address_line2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'state' => ['required', 'string', 'max:255'],
-            'zip_code' => ['required', 'string', 'max:20'],
-            'country' => ['required', 'string', 'max:255'],
-            'district_id' => ['nullable', 'exists:districts,id'],
-            'fleet_id' => ['nullable', 'exists:fleets,id'],
-            'yacht_club' => ['nullable', 'string', 'max:255'],
-        ]);
+        // Validate using shared rules
+        $validated = $this->validate(UserProfileRules::rules((string) $user->id, false));
+
+        // Check if email has changed
+        $emailChanged = $validated['email'] !== $user->email;
 
         // Update user and membership in a transaction
-        DB::transaction(function () use ($user, $validated) {
-            // Update user (email is not editable)
-            $user->update([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'address_line1' => $validated['address_line1'],
-                'address_line2' => $validated['address_line2'] ?? null,
-                'city' => $validated['city'],
-                'state' => $validated['state'],
-                'zip_code' => $validated['zip_code'],
-                'country' => $validated['country'],
-                'yacht_club' => $validated['yacht_club'] ?? null,
-            ]);
+        DB::transaction(function () use ($user, $validated, $emailChanged) {
+            // Build update data (exclude email - we handle it separately)
+            $profileData = $validated;
+            unset($profileData['email']);
+            $updateData = UserDataService::buildUserData($profileData, false);
+
+            // Handle email change with verification
+            if ($emailChanged) {
+                $updateData = array_merge(
+                    $updateData,
+                    ['pending_email' => $validated['email']],
+                    UserDataService::generateEmailVerificationData()
+                );
+            }
+
+            // Update user
+            $user->update($updateData);
 
             // Update or create current year membership
             Member::updateOrCreate(
@@ -127,14 +140,91 @@ class ProfileForm extends Component
             );
         });
 
+        // Send verification email if email changed
+        if ($emailChanged) {
+            // Send verification to new email
+            EmailVerificationService::sendVerification($user, false);
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Profile updated! Please check your new email to verify the change.',
+            ]);
+
+            // Update the component's email to show the current (not pending) email
+            $this->email = $user->email;
+        } else {
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Profile updated successfully!',
+            ]);
+        }
+    }
+
+    public function resendEmailVerification()
+    {
+        $user = auth()->user();
+
+        if (! $user->email_verification_token) {
+            return;
+        }
+
+        // Check rate limits
+        $rateLimitCheck = EmailVerificationService::checkRateLimit($user);
+
+        if (! $rateLimitCheck['allowed']) {
+            $this->dispatch('toast', [
+                'type' => $rateLimitCheck['type'],
+                'message' => $rateLimitCheck['message'],
+            ]);
+
+            return;
+        }
+
+        // Generate new token and send verification
+        $isNewUser = ! $user->pending_email;
+        EmailVerificationService::requestVerification($user, $isNewUser);
+
+        // Record rate limit attempt
+        EmailVerificationService::recordRateLimitAttempt($user);
+
         $this->dispatch('toast', [
             'type' => 'success',
-            'message' => 'Profile updated successfully!',
+            'message' => 'Verification email sent! Please check your inbox.',
+        ]);
+    }
+
+    public function cancelEmailChange()
+    {
+        $user = auth()->user();
+
+        if (! $user->pending_email) {
+            return;
+        }
+
+        // Clear pending email and verification data
+        $user->update([
+            'pending_email' => null,
+            'email_verification_token' => null,
+            'email_verification_expires_at' => null,
+        ]);
+
+        // Reset the component's email to current email
+        $this->email = $user->email;
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Email change cancelled.',
         ]);
     }
 
     public function render()
     {
-        return view('livewire.profile-form');
+        $user = auth()->user();
+
+        return view('livewire.profile-form', [
+            'hasPendingEmail' => (bool) $user->pending_email,
+            'pendingEmail' => $user->pending_email,
+            'isEmailVerified' => (bool) $user->email_verified_at,
+        ]);
     }
 }
