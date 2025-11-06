@@ -29,7 +29,7 @@ To Clear rebuild and run
 ```bash
 docker stop gotflashes && docker rm gotflashes
 docker build -t gotflashes:latest .
-docker run -d --name gotflashes -p 8080:8080 -v $(pwd)/database:/var/www/html/database -v $(pwd)/storage/logs:/var/www/html/storage/logs --env-file .env gotflashes:latest
+docker run -d --name gotflashes -p 8080:8080 -v $(pwd)/database/data:/var/www/html/database/data -v $(pwd)/storage/logs:/var/www/html/storage/logs --env-file .env gotflashes:latest
 ```
 
 To Save
@@ -67,5 +67,10 @@ docker exec -it gotflashes sh
 - **SQLite**: Persisted via volume mounts
 
 **Volume mounts (persistent data):**
-- `./database` → `/var/www/html/database` (SQLite database)
+- `./database/data` → `/var/www/html/database/data` (SQLite database + WAL files)
 - `./storage/logs` → `/var/www/html/storage/logs` (application logs)
+
+**Why mount `database/data` instead of `database`?**
+- Mounting `./database` would overwrite the container's migrations folder
+- Using a `data` subdirectory keeps database files persistent while preserving migrations in the container
+- SQLite WAL files (`.sqlite-wal`, `.sqlite-shm`) automatically persist alongside the main database file

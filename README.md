@@ -192,12 +192,11 @@ cp docker/.env.docker .env
 # Edit .env and set APP_KEY and RESEND_KEY
 
 # 2. Build and run
-mkdir -p database storage/app storage/logs
+mkdir -p database/data storage/app storage/logs
 docker build -t gotflashes:latest .
 docker run -d --name gotflashes --restart unless-stopped \
   -p 8080:80 \
-  -v $(pwd)/database:/var/www/html/database \
-  -v $(pwd)/storage/app:/var/www/html/storage/app \
+  -v $(pwd)/database/data:/var/www/html/database/data \
   -v $(pwd)/storage/logs:/var/www/html/storage/logs \
   --env-file .env \
   gotflashes:latest
@@ -389,8 +388,8 @@ Logs are written to `storage/logs/`. During development, view real-time logs wit
 1. Set `APP_KEY` in your environment (generate with `php artisan key:generate`)
 2. Set `RESEND_KEY` in your environment (obtain from [resend.com](https://resend.com))
 3. Mount persistent storage paths:
+   - `/var/www/html/database/data` - SQLite database files (includes WAL files)
    - `/var/www/html/storage/logs` - Application logs
-   - `/var/www/html/database/database.sqlite` - Database file
 
 **Production defaults** are pre-configured in `docker/.env.docker`. Only override when needed.
 
