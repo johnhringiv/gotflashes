@@ -11,17 +11,11 @@
                     <div class="flex gap-6">
                         @foreach($earnedAwards as $award)
                             @php
-                                $badgeImage = match($award) {
-                                    10 => 'got-10-badge.png',
-                                    25 => 'got-25-badge.png',
-                                    50 => 'got-50-badge.png',
-                                    default => 'got-50-badge.png'
-                                };
-                                $title = match($award) {
-                                    10 => '10 Day Award',
-                                    25 => '25 Day Award',
-                                    50 => '50 Day Award (Burgee)',
-                                    default => 'Award'
+                                [$badgeImage, $title] = match($award) {
+                                    10 => ['got_10_transparent.png', '10 Day Award'],
+                                    25 => ['got_25_transparent.png', '25 Day Award'],
+                                    50 => ['got_50_transparent.png', '50 Day Award (Burgee)'],
+                                    default => ['got_50_transparent.png', 'Award']
                                 };
                             @endphp
                             <div class="flex flex-col items-center gap-2">
@@ -57,7 +51,7 @@
                     <div class="stat p-0 flex-1">
                         <div class="stat-title text-xs">Achievement</div>
                         <div class="stat-value text-3xl">
-                            <img src="{{ asset('images/burgee-50.jpg') }}" alt="Burgee" class="h-9 w-auto object-contain inline-block">
+                            <img src="{{ asset('images/burgee_50_transparent.png') }}" alt="Burgee" class="h-9 w-auto object-contain inline-block">
                         </div>
                         <div class="stat-desc text-xs">All tiers completed!</div>
                     </div>
