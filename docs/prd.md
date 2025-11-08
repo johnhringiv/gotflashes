@@ -286,19 +286,40 @@ All admin status changes are logged to a dedicated admin log channel with user i
 
 ---
 
-## 6. System Requirements
+## 6. Sailor Activity Logs (Admin)
 
-### 6.1 Platform
+Shows all sailor log entries across the program with filtering and export capabilities.
+
+**Filtering:**
+- Year, district or fleet (mutually exclusive), search by name/email
+- Pagination with 25 entries per page
+- One-click clear all filters
+
+**Data Displayed:**
+- Date, sailor name, email, district, fleet
+- Activity type, event type, location, sail number, notes
+
+**CSV Export:**
+Export filtered results with all log data. Exports are logged to security channel for audit trail.
+
+**Access Control:**
+Admin users only.
+
+---
+
+## 7. System Requirements
+
+### 7.1 Platform
 - Web-based application accessible on desktop and mobile devices
 - Self-hosted deployment
 - Responsive design for various screen sizes
 
-### 6.2 Data Management
+### 7.2 Data Management
 - User accounts and activity data persist across sessions
 - Historical data retained indefinitely (read-only after grace period)
 - One activity per date per user (duplicate prevention enforced)
 
-### 6.3 Security
+### 7.3 Security
 - Secure user authentication and password protection
 - Email verification system with expiring tokens
 - Role-based access control (regular users and award administrators)
@@ -308,7 +329,7 @@ All admin status changes are logged to a dedicated admin log channel with user i
 
 ---
 
-## 7. Future Considerations
+## 8. Future Considerations
 
 ### Potential Enhancements (Out of Scope for Initial Release)
 - Email notifications to award administrators when users reach award thresholds
