@@ -5,6 +5,7 @@ let fleetTomSelect = null;
 
 /**
  * Initialize Tom Select dropdowns for Sailor Logs filters
+ * Simple logic: selecting district clears fleet, selecting fleet clears district
  */
 function initializeSailorLogsFilters() {
     const districtSelect = document.getElementById('sailor-logs-district-select');
@@ -30,6 +31,11 @@ function initializeSailorLogsFilters() {
         onChange: function(value) {
             if (value) this.blur();
 
+            // Clear fleet selection when district is selected
+            if (value && value !== '') {
+                fleetTomSelect.clear();
+            }
+
             // Sync with Livewire
             const livewireComponent = Livewire.find(districtSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));
             if (livewireComponent) {
@@ -46,6 +52,11 @@ function initializeSailorLogsFilters() {
         dropdownParent: 'body',
         onChange: function(value) {
             if (value) this.blur();
+
+            // Clear district selection when fleet is selected
+            if (value && value !== '') {
+                districtTomSelect.clear();
+            }
 
             // Sync with Livewire
             const livewireComponent = Livewire.find(fleetSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));

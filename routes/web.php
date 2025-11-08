@@ -26,9 +26,6 @@ Route::get('/leaderboard', [LeaderboardController::class, 'index'])
 // No rate limiting needed - these are lightweight read-only endpoints with browser caching
 Route::prefix('api')->middleware(['cache.headers:public;max_age=3600;etag'])->group(function () {
     Route::get('/districts-and-fleets', [FleetController::class, 'districtsAndFleets']);
-    Route::get('/districts', [FleetController::class, 'districts']);
-    Route::get('/fleets', [FleetController::class, 'fleets']);
-    Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
 });
 
 // Logbook routes - Note: store/update/destroy are handled by Livewire components

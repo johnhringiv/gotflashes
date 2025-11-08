@@ -5,21 +5,12 @@ namespace Tests\Feature\Auth;
 use App\Livewire\RegistrationForm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Fake notifications to prevent sending real emails in tests
-        Notification::fake();
-    }
 
     public function test_registration_page_can_be_rendered(): void
     {

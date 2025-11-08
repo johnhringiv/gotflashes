@@ -24,7 +24,7 @@
                 <!-- District Filter -->
                 <div class="form-control" wire:ignore>
                     <label class="label">
-                        <span class="label-text font-semibold">District</span>
+                        <span class="label-text font-semibold">District <span class="text-xs font-normal text-base-content/50">(clears fleet)</span></span>
                     </label>
                     <select id="sailor-logs-district-select"
                             class="select select-bordered"
@@ -41,7 +41,7 @@
                 <!-- Fleet Filter -->
                 <div class="form-control" wire:ignore>
                     <label class="label">
-                        <span class="label-text font-semibold">Fleet</span>
+                        <span class="label-text font-semibold">Fleet <span class="text-xs font-normal text-base-content/50">(clears district)</span></span>
                     </label>
                     <select id="sailor-logs-fleet-select"
                             class="select select-bordered"
