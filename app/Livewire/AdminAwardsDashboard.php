@@ -8,18 +8,11 @@ use App\Notifications\AwardSentNotification;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class AdminAwardsDashboard extends Component
+class AdminAwardsDashboard extends AdminComponent
 {
-    use WithPagination;
-
-    // Filters
-    #[Url]
-    public int $selectedYear;
-
+    // Filters (selectedYear inherited from AdminComponent)
     #[Url]
     public string $statusFilter = 'pending'; // all, pending, earned, processing, sent
 
@@ -59,19 +52,6 @@ class AdminAwardsDashboard extends Component
 
     // Cache for unfiltered awards (only the expensive DB query)
     private ?Collection $cachedUnfilteredAwards = null;
-
-    public function mount(): void
-    {
-        // Ensure user is admin
-        if (! auth()->check() || ! auth()->user()->is_admin) {
-            abort(403, 'Unauthorized. Admin access required.');
-        }
-
-        // Default to current year
-        if (! isset($this->selectedYear)) {
-            $this->selectedYear = now()->year;
-        }
-    }
 
     public function render()
     {
@@ -224,19 +204,6 @@ class AdminAwardsDashboard extends Component
             'processing' => $awards->where('status', 'processing')->count(),
             'sent' => $awards->where('status', 'sent')->count(),
         ];
-    }
-
-    /**
-     * Get all years that have flash activity.
-     */
-    private function getAvailableYears(): array
-    {
-        return \DB::table('flashes')
-            ->selectRaw('DISTINCT strftime("%Y", date) as year')
-            ->orderBy('year', 'desc')
-            ->pluck('year')
-            ->map(fn ($year) => (int) $year)
-            ->toArray();
     }
 
     /**

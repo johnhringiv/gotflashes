@@ -5,18 +5,11 @@ namespace App\Livewire;
 use App\Models\Flash;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class SailorLogs extends Component
+class SailorLogs extends AdminComponent
 {
-    use WithPagination;
-
-    // Filters
-    #[Url]
-    public int $selectedYear;
-
+    // Filters (selectedYear inherited from AdminComponent)
     #[Url]
     public ?int $selectedDistrict = null;
 
@@ -25,19 +18,6 @@ class SailorLogs extends Component
 
     #[Url]
     public string $searchQuery = '';
-
-    public function mount(): void
-    {
-        // Ensure user is admin
-        if (! auth()->check() || ! auth()->user()->is_admin) {
-            abort(403, 'Unauthorized. Admin access required.');
-        }
-
-        // Default to current year
-        if (! isset($this->selectedYear)) {
-            $this->selectedYear = now()->year;
-        }
-    }
 
     public function render()
     {
@@ -123,19 +103,6 @@ class SailorLogs extends Component
         }
 
         return $query->count();
-    }
-
-    /**
-     * Get all years that have flash activity.
-     */
-    private function getAvailableYears(): array
-    {
-        return \DB::table('flashes')
-            ->selectRaw('DISTINCT strftime("%Y", date) as year')
-            ->orderBy('year', 'desc')
-            ->pluck('year')
-            ->map(fn ($year) => (int) $year)
-            ->toArray();
     }
 
     /**
