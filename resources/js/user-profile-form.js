@@ -25,17 +25,12 @@ function initializeUserProfileForm() {
     // Get Livewire component for syncing (if available)
     const livewireComponent = window.Livewire?.find(districtSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));
 
-    // Initialize date of birth validator
+    // Initialize date of birth validator (formatting only - wire:model.blur handles sync)
     const dobInput = document.querySelector('input[wire\\:model\\.blur="date_of_birth"]') ||
                      document.querySelector('input[name="date_of_birth"]');
 
     if (dobInput && !dobInput._dobValidatorInitialized) {
-        // Pass Livewire sync callback if component available
-        const syncCallback = livewireComponent ? (formatted) => {
-            livewireComponent.set('date_of_birth', formatted);
-        } : null;
-
-        initializeDateOfBirthValidator(dobInput, syncCallback);
+        initializeDateOfBirthValidator(dobInput);
         dobInput._dobValidatorInitialized = true;
     }
 

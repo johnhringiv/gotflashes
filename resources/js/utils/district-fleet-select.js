@@ -26,19 +26,17 @@ export async function initializeDistrictFleetSelects(config) {
     let districts = [];
     let fleets = [];
 
-    // Fetch data from API
+    // Fetch data from API (combined endpoint for better performance and to avoid SQLite locking)
     try {
-        const [districtsResponse, fleetsResponse] = await Promise.all([
-            fetch('/api/districts'),
-            fetch('/api/fleets')
-        ]);
+        const response = await fetch('/api/districts-and-fleets');
 
-        if (!districtsResponse.ok || !fleetsResponse.ok) {
-            throw new Error(`Failed to fetch data: Districts ${districtsResponse.status}, Fleets ${fleetsResponse.status}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.status}`);
         }
 
-        districts = await districtsResponse.json();
-        fleets = await fleetsResponse.json();
+        const data = await response.json();
+        districts = data.districts;
+        fleets = data.fleets;
     } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching districts and fleets:', error);

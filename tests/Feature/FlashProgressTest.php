@@ -221,7 +221,7 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('got-10-badge.png'); // 10 Day badge image
+        $response->assertSee('got_10_transparent.png'); // 10 Day badge image
         $response->assertSee('10 Day Award');
     }
 
@@ -241,8 +241,8 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
-        $response->assertSee('got-25-badge.png'); // 25 Day badge image
+        $response->assertSee('got_10_transparent.png'); // 10 Day badge image (still earned)
+        $response->assertSee('got_25_transparent.png'); // 25 Day badge image
         $response->assertSee('25 Day Award');
     }
 
@@ -269,9 +269,9 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('got-10-badge.png'); // 10 Day badge image (still earned)
-        $response->assertSee('got-25-badge.png'); // 25 Day badge image (still earned)
-        $response->assertSee('got-50-badge.png'); // 50 Day badge image
+        $response->assertSee('got_10_transparent.png'); // 10 Day badge image (still earned)
+        $response->assertSee('got_25_transparent.png'); // 25 Day badge image (still earned)
+        $response->assertSee('got_50_transparent.png'); // 50 Day badge image
         $response->assertSee('50 Day Award (Burgee)');
     }
 
@@ -298,7 +298,7 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('burgee-50.jpg'); // Burgee image in "Next Award" stat
+        $response->assertSee('burgee_50_transparent.png'); // Burgee image in "Next Award" stat
         $response->assertSee('All tiers completed!'); // Stat description
     }
 
@@ -325,7 +325,7 @@ class FlashProgressTest extends TestCase
         $response = $this->actingAs($user)->get(route('logbook.index'));
 
         $response->assertStatus(200);
-        $response->assertDontSee('burgee-50.jpg'); // No burgee yet
+        $response->assertDontSee('burgee_50_transparent.png'); // No burgee yet
         $response->assertSee('1 days to go'); // Should show "1 days to go" for next milestone
     }
 }

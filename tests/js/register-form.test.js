@@ -136,21 +136,30 @@ describe('TomSelect Initialization', () => {
 });
 
 describe('API Fetch Integration', () => {
-    it('should handle successful API fetch', async () => {
+    it('should handle successful API fetch for combined endpoint', async () => {
         global.fetch = vi.fn(() =>
             Promise.resolve({
-                json: () => Promise.resolve([
-                    { id: 1, name: 'California' },
-                    { id: 2, name: 'Central Atlantic' },
-                ]),
+                ok: true,
+                json: () => Promise.resolve({
+                    districts: [
+                        { id: 1, name: 'California' },
+                        { id: 2, name: 'Central Atlantic' },
+                    ],
+                    fleets: [
+                        { id: 1, fleet_number: 194, fleet_name: 'Mission Bay', district_id: 1 },
+                        { id: 2, fleet_number: 413, fleet_name: 'Deep Creek', district_id: 2 },
+                    ]
+                }),
             })
         );
 
-        const response = await fetch('/api/districts');
+        const response = await fetch('/api/districts-and-fleets');
         const data = await response.json();
 
-        expect(data).toHaveLength(2);
-        expect(data[0].name).toBe('California');
+        expect(data.districts).toHaveLength(2);
+        expect(data.districts[0].name).toBe('California');
+        expect(data.fleets).toHaveLength(2);
+        expect(data.fleets[0].fleet_number).toBe(194);
 
         vi.restoreAllMocks();
     });
@@ -161,7 +170,7 @@ describe('API Fetch Integration', () => {
         global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
 
         try {
-            await fetch('/api/districts');
+            await fetch('/api/districts-and-fleets');
         } catch (error) {
             expect(error.message).toBe('Network error');
         }

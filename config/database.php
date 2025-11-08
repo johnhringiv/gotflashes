@@ -35,10 +35,19 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+
+            // Locking & Concurrency
+            'busy_timeout' => 5000,           // 5 second retry on locks
+            'journal_mode' => 'WAL',          // Write-Ahead Logging (better concurrency)
+            'synchronous' => 'NORMAL',        // Good balance of safety and performance
+            'transaction_mode' => 'DEFERRED', // Acquire locks only when needed
+
+            // Performance (applied via pragmas array)
+            'pragmas' => [
+                'cache_size' => -64000,       // 64 MB cache (negative = KB)
+                'temp_store' => 'MEMORY',     // Keep temp tables/sorts in RAM
+                'mmap_size' => 268435456,     // 256 MB memory-mapped I/O (in bytes)
+            ],
         ],
 
     ],

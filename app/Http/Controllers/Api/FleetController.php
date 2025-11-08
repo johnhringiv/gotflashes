@@ -10,8 +10,38 @@ use Illuminate\Support\Facades\DB;
 class FleetController extends Controller
 {
     /**
+     * Get both districts and fleets in a single request.
+     * Cached in browser for 1 hour with ETag for validation.
+     */
+    public function districtsAndFleets(): JsonResponse
+    {
+        $districts = DB::table('districts')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $fleets = DB::table('fleets')
+            ->join('districts', 'fleets.district_id', '=', 'districts.id')
+            ->select(
+                'fleets.id',
+                'fleets.fleet_number',
+                'fleets.fleet_name',
+                'fleets.district_id',
+                'districts.name as district_name'
+            )
+            ->orderBy('fleets.fleet_number')
+            ->get();
+
+        $response = [
+            'districts' => $districts,
+            'fleets' => $fleets,
+        ];
+
+        return response()->json($response);
+    }
+
+    /**
      * Get all districts.
-     * Cached in browser for 1 year with ETag for validation.
+     * Cached in browser for 1 hour with ETag for validation.
      */
     public function districts(): JsonResponse
     {
@@ -19,14 +49,12 @@ class FleetController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json($districts)
-            ->header('Cache-Control', 'public, max-age=31536000, immutable')
-            ->header('ETag', md5(json_encode($districts)));
+        return response()->json($districts);
     }
 
     /**
      * Get all fleets with their district information.
-     * Cached in browser for 1 year with ETag for validation.
+     * Cached in browser for 1 hour with ETag for validation.
      */
     public function fleets(): JsonResponse
     {
@@ -42,9 +70,7 @@ class FleetController extends Controller
             ->orderBy('fleets.fleet_number')
             ->get();
 
-        return response()->json($fleets)
-            ->header('Cache-Control', 'public, max-age=31536000, immutable')
-            ->header('ETag', md5(json_encode($fleets)));
+        return response()->json($fleets);
     }
 
     /**
