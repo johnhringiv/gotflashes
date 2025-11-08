@@ -65,6 +65,11 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Discrepancy warnings when users drop below thresholds
   - Flexible status transitions with confirmation modals
   - Admin action logging to dedicated log channel
+- **Sailor Activity Logs** (Admin only): View and export all participant activity
+  - Filter by year, district, or fleet (mutually exclusive)
+  - Search by sailor name or email
+  - CSV export with all activity data
+  - Audit logging for all exports
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
 - **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
 - **Three Leaderboards**:

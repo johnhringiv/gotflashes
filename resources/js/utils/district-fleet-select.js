@@ -137,9 +137,17 @@ export async function initializeDistrictFleetSelects(config) {
                     onFleetChange(value === 'none' ? null : value);
                 }
 
-                const fleet = fleets.find(f => f.id == value);
-                if (fleet) {
-                    districtTomSelect.setValue(fleet.district_id, true);
+                if (value === 'none') {
+                    // Special case: When fleet is set to 'none' and district is blank, set district to 'none'
+                    const currentDistrict = districtTomSelect.getValue();
+                    if (!currentDistrict || currentDistrict === '') {
+                        districtTomSelect.setValue('none', true);
+                    }
+                } else {
+                    const fleet = fleets.find(f => f.id == value);
+                    if (fleet) {
+                        districtTomSelect.setValue(fleet.district_id, true);
+                    }
                 }
             } else {
                 // Fleet was cleared - sync null to Livewire
@@ -188,14 +196,25 @@ export async function initializeDistrictFleetSelects(config) {
     // Set initial values from data attributes
     const initialDistrictId = districtSelect.dataset.value || districtSelect.dataset.oldValue;
     const initialFleetId = fleetSelect.dataset.value || fleetSelect.dataset.oldValue;
+    const isProfilePage = districtSelect.dataset.isProfile === 'true';
 
+    // Handle district initialization
     if (initialDistrictId && initialDistrictId !== '' && initialDistrictId !== 'null') {
         districtTomSelect.setValue(initialDistrictId);
+    } else if (isProfilePage) {
+        // On profile page, set to 'none' if district is null/empty (user has explicitly no district)
+        districtTomSelect.setValue('none', true);
     }
+    // On signup, leave empty to show placeholder
 
+    // Handle fleet initialization
     if (initialFleetId && initialFleetId !== '' && initialFleetId !== 'null') {
         fleetTomSelect.setValue(initialFleetId);
+    } else if (isProfilePage) {
+        // On profile page, set to 'none' if fleet is null/empty (user has explicitly no fleet)
+        fleetTomSelect.setValue('none', true);
     }
+    // On signup, leave empty to show placeholder
 
     return { districtTomSelect, fleetTomSelect };
 }

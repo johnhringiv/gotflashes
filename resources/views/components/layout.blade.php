@@ -60,6 +60,7 @@
                 @auth
                     @if(auth()->user()->is_admin)
                         <li><a href="/admin/fulfillment" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'active font-bold text-accent' : '' }}">Award Fulfillment</a></li>
+                        <li><a href="/admin/sailor-logs" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'active font-bold text-accent' : '' }}">Sailor Logs</a></li>
                     @endif
                 @endauth
 
@@ -97,6 +98,7 @@
             @auth
                 @if(auth()->user()->is_admin)
                     <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
+                    <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
                 @endif
             @endauth
         </ul>

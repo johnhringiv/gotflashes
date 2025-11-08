@@ -29,7 +29,7 @@ To Clear rebuild and run
 ```bash
 docker stop gotflashes && docker rm gotflashes
 docker build -t gotflashes:latest .
-docker run -d --name gotflashes -p 8080:8080 -v $(pwd)/database/data:/var/www/html/database/data -v $(pwd)/storage/logs:/var/www/html/storage/logs --env-file .env gotflashes:latest
+docker run -d --name gotflashes -p 8080:8080  -e DB_DATABASE=/var/www/html/database/data/database.sqlite -v $(pwd)/database/data:/var/www/html/database/data -v $(pwd)/storage/logs:/var/www/html/storage/logs --env-file .env gotflashes:latest
 ```
 
 To Save

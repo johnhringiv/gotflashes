@@ -193,6 +193,7 @@
                     id="{{ $districtSelectId }}"
                     class="select select-bordered @error('district_id') select-error @enderror"
                     data-value="{{ $this->district_id }}"
+                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}"
                     required>
                 <option value="">Select district...</option>
             </select>
@@ -221,6 +222,7 @@
                     id="{{ $fleetSelectId }}"
                     class="select select-bordered @error('fleet_id') select-error @enderror"
                     data-value="{{ $this->fleet_id }}"
+                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}"
                     required>
                 <option value="">Select fleet...</option>
             </select>
