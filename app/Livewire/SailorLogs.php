@@ -33,9 +33,9 @@ class SailorLogs extends AdminComponent
     }
 
     /**
-     * Get filtered flashes with pagination.
+     * Build base flash query with all filters applied.
      */
-    private function getFilteredFlashes()
+    private function buildFlashQuery()
     {
         $query = Flash::query()
             ->with(['user', 'user.members' => function ($q) {
@@ -69,7 +69,17 @@ class SailorLogs extends AdminComponent
             });
         }
 
-        return $query->orderBy('date', 'desc')->paginate(25);
+        return $query;
+    }
+
+    /**
+     * Get filtered flashes with pagination.
+     */
+    private function getFilteredFlashes()
+    {
+        return $this->buildFlashQuery()
+            ->orderBy('date', 'desc')
+            ->paginate(25);
     }
 
     /**
@@ -77,32 +87,7 @@ class SailorLogs extends AdminComponent
      */
     private function getTotalCount(): int
     {
-        $query = Flash::query()
-            ->whereYear('date', $this->selectedYear);
-
-        if ($this->searchQuery) {
-            $search = strtolower($this->searchQuery);
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->whereRaw('LOWER(first_name || " " || last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
-            });
-        }
-
-        if ($this->selectedDistrict) {
-            $query->whereHas('user.members', function ($q) {
-                $q->where('district_id', $this->selectedDistrict)
-                    ->where('year', '<=', $this->selectedYear);
-            });
-        }
-
-        if ($this->selectedFleet) {
-            $query->whereHas('user.members', function ($q) {
-                $q->where('fleet_id', $this->selectedFleet)
-                    ->where('year', '<=', $this->selectedYear);
-            });
-        }
-
-        return $query->count();
+        return $this->buildFlashQuery()->count();
     }
 
     /**
@@ -146,38 +131,8 @@ class SailorLogs extends AdminComponent
      */
     public function exportCsv(): StreamedResponse
     {
-        // Build query with same filters as display
-        $query = Flash::query()
-            ->with(['user', 'user.members' => function ($q) {
-                $q->where('year', '<=', $this->selectedYear)
-                    ->orderBy('year', 'desc');
-            }, 'user.members.fleet', 'user.members.district'])
-            ->whereYear('date', $this->selectedYear);
-
-        // Apply same filters
-        if ($this->searchQuery) {
-            $search = strtolower($this->searchQuery);
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->whereRaw('LOWER(first_name || " " || last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
-            });
-        }
-
-        if ($this->selectedDistrict) {
-            $query->whereHas('user.members', function ($q) {
-                $q->where('district_id', $this->selectedDistrict)
-                    ->where('year', '<=', $this->selectedYear);
-            });
-        }
-
-        if ($this->selectedFleet) {
-            $query->whereHas('user.members', function ($q) {
-                $q->where('fleet_id', $this->selectedFleet)
-                    ->where('year', '<=', $this->selectedYear);
-            });
-        }
-
-        $query->orderBy('date', 'desc');
+        // Use shared filter logic
+        $query = $this->buildFlashQuery()->orderBy('date', 'desc');
 
         $filename = "sailor-logs-{$this->selectedYear}-".now()->format('Y-m-d-H-i-s').'.csv';
 
