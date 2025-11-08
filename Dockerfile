@@ -49,9 +49,6 @@ COPY database/migrations ./database/migrations
 # Install PHP dependencies (production only, optimized, skip scripts)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --no-cache
 
-# Fix permissions for files that will be copied to final stage
-RUN chown -R 1000:1000 /app
-
 # Manually copy Livewire assets to public directory
 RUN mkdir -p public/vendor && \
     cp -r vendor/livewire/livewire/dist public/vendor/livewire

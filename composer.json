@@ -55,6 +55,7 @@
             "APP_ENV=testing php artisan test"
         ],
         "check": [
+            "@php -r \"if(shell_exec('lsof -ti:8000')) { echo 'ERROR: Dev server is running on port 8000'; exit(1); }\"",
             "APP_ENV=testing php artisan config:clear --ansi",
             "vendor/bin/pint --test",
             "vendor/bin/phpstan analyze --memory-limit=256M",

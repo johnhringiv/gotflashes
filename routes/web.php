@@ -26,9 +26,6 @@ Route::get('/leaderboard', [LeaderboardController::class, 'index'])
 // No rate limiting needed - these are lightweight read-only endpoints with browser caching
 Route::prefix('api')->middleware(['cache.headers:public;max_age=3600;etag'])->group(function () {
     Route::get('/districts-and-fleets', [FleetController::class, 'districtsAndFleets']);
-    Route::get('/districts', [FleetController::class, 'districts']);
-    Route::get('/fleets', [FleetController::class, 'fleets']);
-    Route::get('/districts/{districtId}/fleets', [FleetController::class, 'fleetsByDistrict']);
 });
 
 // Logbook routes - Note: store/update/destroy are handled by Livewire components
@@ -94,6 +91,7 @@ Route::get('/verify-email/{token}', VerifyEmailChangeController::class)
 // Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
+    Route::view('/sailor-logs', 'admin.sailor-logs')->name('admin.sailor-logs');
 });
 
 // Fallback route for 404 errors - must be last

@@ -133,7 +133,10 @@
                                        value="{{ $award['id'] }}">
                             </td>
                             <td class="font-medium">
-                                {{ $user->name }}
+                                <a href="{{ route('admin.sailor-logs', ['selectedYear' => $selectedYear, 'searchQuery' => $user->email]) }}"
+                                   class="link link-hover text-primary">
+                                    {{ $user->name }}
+                                </a>
                                 @if($award['discrepancy'])
                                     <div class="tooltip" data-tip="User currently has {{ $award['total_days'] }} days but was processed for {{ $award['tier'] }}-day award">
                                         <span class="badge badge-warning badge-sm ml-2">⚠</span>
