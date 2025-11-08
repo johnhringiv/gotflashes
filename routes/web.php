@@ -94,6 +94,7 @@ Route::get('/verify-email/{token}', VerifyEmailChangeController::class)
 // Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
+    Route::view('/sailor-logs', 'admin.sailor-logs')->name('admin.sailor-logs');
 });
 
 // Fallback route for 404 errors - must be last
