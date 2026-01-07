@@ -175,7 +175,7 @@
 
 <footer class="footer footer-center p-5 bg-base-300 text-base-content text-xs">
     <div>
-        <p>© {{ date('Y') }} <a href="https://www.lightningclass.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Lightning Class Association</a> - G.O.T. Flashes Challenge Tracker</p>
+        <p>© 2025-{{ date('Y') }} <a href="https://www.lightningclass.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Lightning Class Association</a> - G.O.T. Flashes Challenge Tracker</p>
         <p class="text-xs opacity-70">TRACK YOUR SAILING DAYS • EARN AWARDS • BUILD THE LIGHTNING COMMUNITY</p>
         <p class="text-xs opacity-60 mt-2">
             Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>

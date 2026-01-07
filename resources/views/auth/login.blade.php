@@ -18,7 +18,7 @@
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered @error('email') input-error @enderror"
+                                   class="input input-bordered w-full @error('email') input-error @enderror"
                                    required
                                    autofocus>
                             <span>Email</span>
@@ -30,14 +30,10 @@
                         @enderror
 
                         <!-- Password -->
-                        <label class="floating-label mb-6">
-                            <input type="password"
-                                   name="password"
-                                   placeholder="••••••••"
-                                   class="input input-bordered @error('password') input-error @enderror"
-                                   required>
+                        <div class="floating-label mb-6">
+                            <x-password-input name="password" :class="$errors->has('password') ? 'input-error' : ''" />
                             <span>Password</span>
-                        </label>
+                        </div>
                         @error('password')
                             <div class="label -mt-4 mb-2">
                                 <span class="label-text-alt text-error">{{ $message }}</span>

@@ -15,13 +15,27 @@ class RequestLoggingMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip logging for health check endpoint - keep it lightweight
+        if ($request->is('up')) {
+            return $next($request);
+        }
+
         $requestId = Str::uuid()->toString();
         $startTime = microtime(true);
 
         // Add request ID to the request for tracing
         $request->headers->set('X-Request-ID', $requestId);
 
-        // Parse Livewire component details if present
+        // Get user ID only if auth is already resolved (avoid triggering deserialization)
+        $userId = auth()->hasUser() ? auth()->id() : null;
+
+        // Get session ID only if session is already started (avoid triggering deserialization)
+        $sessionId = session()->isStarted() ? session()->getId() : null;
+
+        // Get body size from Content-Length header if available (avoid reading full body)
+        $bodySize = $request->header('Content-Length');
+
+        // Extract minimal Livewire context without full payload parsing
         $livewireContext = $this->extractLivewireContext($request);
 
         // Log the incoming request
@@ -32,12 +46,12 @@ class RequestLoggingMiddleware
             'path' => $request->path(),
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'user_id' => auth()->id(),
-            'session_id' => session()->getId(),
+            'user_id' => $userId,
+            'session_id' => $sessionId,
             'headers' => $this->filterSensitiveHeaders($request->headers->all()),
             'query_params' => $request->query(),
-            'body_size' => strlen($request->getContent()),
-            'livewire' => $livewireContext, // Only present for Livewire requests
+            'body_size' => $bodySize,
+            'livewire' => $livewireContext,
         ]));
 
         // Process the request
@@ -49,13 +63,16 @@ class RequestLoggingMiddleware
         // Add request ID to response headers
         $response->headers->set('X-Request-ID', $requestId);
 
+        // Get response size from Content-Length header if available (avoid reading full body)
+        $responseSize = $response->headers->get('Content-Length');
+
         // Log the response
         Log::channel('structured')->debug('Request completed', [
             'request_id' => $requestId,
             'status_code' => $response->getStatusCode(),
             'duration_ms' => round($duration, 2),
             'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
-            'response_size' => strlen($response->getContent()),
+            'response_size' => $responseSize,
         ]);
 
         // Log performance metrics if response is slow
@@ -68,13 +85,16 @@ class RequestLoggingMiddleware
         }
 
         if ($duration > $slowRequestThreshold) {
+            // Recheck auth - user may have been resolved during request processing
+            $currentUserId = auth()->hasUser() ? auth()->id() : $userId;
+
             Log::channel('performance')->warning('Slow request detected', [
                 'request_id' => $requestId,
                 'method' => $request->method(),
                 'path' => $request->path(),
                 'duration_ms' => round($duration, 2),
                 'threshold_ms' => $slowRequestThreshold,
-                'user_id' => auth()->id(),
+                'user_id' => $currentUserId,
             ]);
         }
 

@@ -20,6 +20,9 @@ class LeaderboardTest extends TestCase
 
         // Note: Districts and fleets are seeded automatically by the migration
         // via RefreshDatabase trait
+
+        // Pin tests to mid-2025 so hardcoded 2025 dates work regardless of actual year
+        $this->travelTo('2025-06-15');
     }
 
     public function test_leaderboard_is_publicly_accessible(): void
@@ -906,7 +909,8 @@ class LeaderboardTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             Flash::factory()->forUser($userA)->sailing()->create(['date' => "2025-01-{$i}"]);
         }
-        $this->travelBack();
+        // Travel back to 2025-06-15 (not real time) so leaderboard shows 2025 data
+        $this->travelTo('2025-06-15');
 
         $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
         for ($i = 1; $i <= 10; $i++) {

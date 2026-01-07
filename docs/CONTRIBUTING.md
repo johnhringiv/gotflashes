@@ -2,6 +2,31 @@
 
 Thank you for your interest in contributing to the G.O.T. Flashes Challenge Tracker!
 
+## Development Environment Setup
+
+### Prerequisites
+
+- PHP 8.2 or higher
+- Composer
+- Node.js & NPM
+- SQLite
+- Git LFS
+
+### Ubuntu/Debian (including WSL)
+
+Install PHP, Composer, and required extensions:
+```bash
+sudo apt install composer php8.3-xml php8.3-sqlite3 git-lfs
+```
+
+### Node.js via nvm (recommended)
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.bashrc
+nvm install 20
+```
+
 ## Quick Start
 
 ```bash
@@ -9,12 +34,12 @@ Thank you for your interest in contributing to the G.O.T. Flashes Challenge Trac
 git clone https://github.com/YOUR-USERNAME/gotflashes.git
 cd gotflashes
 
-# Install Git LFS (if not already installed)
-# See https://git-lfs.com for installation instructions
+# Initialize Git LFS and pull assets
 git lfs install
-
-# Pull LFS assets (images, badges, etc.)
 git lfs pull
+
+# Create the database
+mkdir -p database/data && touch database/data/database.sqlite
 
 # Setup everything
 composer setup
