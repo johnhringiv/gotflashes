@@ -33,7 +33,7 @@ class RequestLoggingMiddleware
         $sessionId = session()->isStarted() ? session()->getId() : null;
 
         // Get body size from Content-Length header if available (avoid reading full body)
-        $bodySize = $request->header('Content-Length') ?? strlen($request->getContent());
+        $bodySize = $request->header('Content-Length');
 
         // Extract minimal Livewire context without full payload parsing
         $livewireContext = $this->extractLivewireContext($request);
@@ -64,7 +64,7 @@ class RequestLoggingMiddleware
         $response->headers->set('X-Request-ID', $requestId);
 
         // Get response size from Content-Length header if available (avoid reading full body)
-        $responseSize = $response->headers->get('Content-Length') ?? strlen($response->getContent());
+        $responseSize = $response->headers->get('Content-Length');
 
         // Log the response
         Log::channel('structured')->debug('Request completed', [
