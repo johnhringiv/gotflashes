@@ -18,6 +18,14 @@ class ComponentCommunicationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Pin tests to mid-2025 so hardcoded 2025 dates work regardless of actual year
+        $this->travelTo('2025-06-15');
+    }
+
     public function test_flash_form_save_dispatches_flash_saved_event(): void
     {
         $user = User::factory()->create();

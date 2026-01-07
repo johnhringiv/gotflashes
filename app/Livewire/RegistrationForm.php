@@ -88,11 +88,12 @@ class RegistrationForm extends Component
             return;
         }
 
-        // Convert "none" values to null before validation
-        if ($this->district_id === 0) {
+        // Normalize affiliation IDs before validation (handles 'none', '', null, 0 -> null)
+        // This ensures 0 values pass nullable validation instead of failing exists check
+        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
         }
-        if ($this->fleet_id === 0) {
+        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
             $this->fleet_id = null;
         }
 

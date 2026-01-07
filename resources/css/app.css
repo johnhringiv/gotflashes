@@ -100,6 +100,35 @@
     border-color: oklch(55% 0.12 240deg) transparent transparent !important;
 }
 
+/* Password toggle visibility - ensure eye icon is always visible */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-input-wrapper .password-toggle-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+}
+
+.password-toggle-btn svg.hidden {
+    display: none !important;
+}
+
+/* Hide browser's native password reveal icon */
+.hide-password-reveal::-ms-reveal,
+.hide-password-reveal::-ms-clear {
+    display: none;
+}
+
+.hide-password-reveal::-webkit-credentials-auto-fill-button,
+.hide-password-reveal::-webkit-textfield-decoration-container {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Floating Label - Always Visible (on border) */
 .floating-label-visible {
     position: relative;

@@ -85,6 +85,10 @@ export async function initializeDistrictFleetSelects(config) {
 
             // Clear fleet selection when district changes
             fleetTomSelect.clear();
+            // Explicitly sync to Livewire since clear() doesn't trigger onChange
+            if (onFleetChange) {
+                onFleetChange(null);
+            }
 
             if (value === 'none') {
                 updateFleetOptions(fleets, false);
@@ -142,11 +146,19 @@ export async function initializeDistrictFleetSelects(config) {
                     const currentDistrict = districtTomSelect.getValue();
                     if (!currentDistrict || currentDistrict === '') {
                         districtTomSelect.setValue('none', true);
+                        // Explicitly sync to Livewire since silent=true skips onChange
+                        if (onDistrictChange) {
+                            onDistrictChange(null);
+                        }
                     }
                 } else {
                     const fleet = fleets.find(f => f.id == value);
                     if (fleet) {
                         districtTomSelect.setValue(fleet.district_id, true);
+                        // Explicitly sync to Livewire since silent=true skips onChange
+                        if (onDistrictChange) {
+                            onDistrictChange(fleet.district_id);
+                        }
                     }
                 }
             } else {
