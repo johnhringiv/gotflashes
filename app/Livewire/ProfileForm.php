@@ -225,6 +225,7 @@ class ProfileForm extends Component
             'hasPendingEmail' => (bool) $user->pending_email,
             'pendingEmail' => $user->pending_email,
             'isEmailVerified' => (bool) $user->email_verified_at,
+            'hasFlashes' => $user->flashes()->exists(),
         ]);
     }
 }

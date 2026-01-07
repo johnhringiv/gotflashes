@@ -13,6 +13,14 @@ class FlashFormTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Pin tests to mid-2025 so hardcoded 2025 dates work regardless of actual year
+        $this->travelTo('2025-06-15');
+    }
+
     public function test_component_renders_in_create_mode(): void
     {
         $user = User::factory()->create();

@@ -126,43 +126,26 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 ## Getting Started
 
 ### Prerequisites
-- PHP 8.2 or higher
+- PHP 8.2+
 - Composer
 - Node.js & NPM
 - SQLite
+- Git LFS
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed environment setup instructions (Ubuntu/WSL, nvm, etc.).
 
 ### Quick Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/johnhringiv/gotflashes.git
-   cd gotflashes
-   ```
+```bash
+git clone https://github.com/johnhringiv/gotflashes.git
+cd gotflashes
+git lfs install && git lfs pull
+mkdir -p database/data && touch database/data/database.sqlite
+composer setup
+composer dev
+```
 
-2. **Install dependencies and setup**
-   ```bash
-   composer setup
-   ```
-   This command will:
-   - Install PHP dependencies
-   - Copy `.env.example` to `.env`
-   - Generate application key
-   - Run database migrations
-   - Install Node dependencies
-   - Build frontend assets
-
-3. **Start development server**
-   ```bash
-   composer dev
-   ```
-   This runs multiple services concurrently:
-   - Laravel development server (http://localhost:8000)
-   - Queue worker
-   - Log viewer (Pail)
-   - Vite dev server for hot module reload
-
-4. **Access the application**
-   Open http://localhost:8000 in your browser
+Access at http://localhost:8000
 
 ### Creating Admin Users
 

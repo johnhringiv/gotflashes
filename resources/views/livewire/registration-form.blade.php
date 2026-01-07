@@ -8,11 +8,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                         <!-- Password -->
                         <div class="mb-6 floating-label-visible">
-                            <input type="password"
-                                   wire:model.blur="password"
-                                   placeholder="••••••••"
-                                   class="input input-bordered w-full @error('password') input-error @enderror"
-                                   required>
+                            <x-password-input wire-model="password" :class="$errors->has('password') ? 'input-error' : ''" />
                             <label>Password</label>
                             @error('password')
                                 <div class="label">
@@ -23,11 +19,7 @@
 
                         <!-- Password Confirmation -->
                         <div class="mb-6 floating-label-visible">
-                            <input type="password"
-                                   wire:model.blur="password_confirmation"
-                                   placeholder="••••••••"
-                                   class="input input-bordered w-full"
-                                   required>
+                            <x-password-input wire-model="password_confirmation" />
                             <label>Confirm Password</label>
                         </div>
                     </div>
