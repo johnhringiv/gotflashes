@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }
+
+        // Register CSP nonce Blade directive
+        Blade::directive('cspNonce', function () {
+            return "<?php echo 'nonce=\"' . app('csp-nonce') . '\"'; ?>";
+        });
 
         // Log slow database queries in production
         if (app()->environment('production')) {

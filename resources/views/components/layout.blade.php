@@ -39,7 +39,7 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
+    @livewireStyles(['nonce' => app('csp-nonce')])
 </head>
 <body class="min-h-screen flex flex-col bg-base-200 font-sans">
 <nav class="navbar shadow-md" style="background-color: var(--color-primary); color: var(--color-primary-content);">
@@ -145,7 +145,7 @@
 
     <!-- Success Toast (Session-based - for page reloads) -->
     @if (session('success'))
-        <script>
+        <script @cspNonce>
             document.addEventListener('DOMContentLoaded', function() {
                 showToast('success', {{ Js::from(session('success')) }});
             });
@@ -154,7 +154,7 @@
 
     <!-- Warning Toast (Session-based - for page reloads) -->
     @if (session('warning'))
-        <script>
+        <script @cspNonce>
             document.addEventListener('DOMContentLoaded', function() {
                 showToast('warning', {{ Js::from(session('warning')) }});
             });
@@ -163,7 +163,7 @@
 
     <!-- Error Toast (Session-based - for page reloads) -->
     @if (session('error'))
-        <script>
+        <script @cspNonce>
             document.addEventListener('DOMContentLoaded', function() {
                 showToast('error', {{ Js::from(session('error')) }});
             });
@@ -182,6 +182,6 @@
         </p>
     </div>
 </footer>
-@livewireScripts
+@livewireScripts(['nonce' => app('csp-nonce')])
 </body>
 </html>

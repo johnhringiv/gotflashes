@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,6 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust HAProxy (on pfSense) and recognize forwarded headers
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXY_IP'),
+            headers: Request::HEADER_X_FORWARDED_FOR |
+                     Request::HEADER_X_FORWARDED_HOST |
+                     Request::HEADER_X_FORWARDED_PROTO
+        );
+
+        $middleware->append(\App\Http\Middleware\ContentSecurityPolicy::class);
         $middleware->append(\App\Http\Middleware\BasicAuthMiddleware::class);
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
