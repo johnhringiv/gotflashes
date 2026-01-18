@@ -331,4 +331,68 @@ class EmailVerificationRateLimitTest extends TestCase
         // 4th registration succeeds but email is rate limited
         Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 3);
     }
+
+    public function test_registration_records_user_rate_limit_preventing_immediate_resend(): void
+    {
+        RateLimiter::clear('registration:127.0.0.1');
+        RateLimiter::clear('registration-email:127.0.0.1');
+
+        Notification::fake();
+
+        // Register a new user
+        Livewire::test(\App\Livewire\RegistrationForm::class)
+            ->set('first_name', 'Test')
+            ->set('last_name', 'User')
+            ->set('email', 'newuser@example.com')
+            ->set('password', 'password123')
+            ->set('password_confirmation', 'password123')
+            ->set('date_of_birth', '1990-01-01')
+            ->set('gender', 'male')
+            ->set('address_line1', '123 Test St')
+            ->set('city', 'Test City')
+            ->set('state', 'TS')
+            ->set('zip_code', '12345')
+            ->set('country', 'US')
+            ->call('register');
+
+        // Get the newly created user
+        $user = User::where('email', 'newuser@example.com')->first();
+        $this->assertNotNull($user);
+
+        // User-specific rate limit should now be active (from registration email)
+        $rateLimitKey = 'resend-verification:'.$user->id;
+        $this->assertTrue(
+            RateLimiter::tooManyAttempts($rateLimitKey, 1),
+            'Registration should record user-specific rate limit'
+        );
+
+        // Acting as the new user, try to resend from banner immediately
+        $this->actingAs($user);
+        Livewire::test('email-verification-banner')
+            ->call('resendVerification');
+
+        // Should only have sent 1 email total (the initial registration email)
+        // The banner resend should be blocked by rate limit
+        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
+    }
+
+    public function test_banner_shows_cooldown_seconds(): void
+    {
+        $user = User::factory()->create([
+            'email_verification_token' => 'test-token',
+            'email_verification_expires_at' => now()->addHours(24),
+            'email_verified_at' => null,
+        ]);
+
+        $this->actingAs($user);
+
+        // Hit the rate limiter to simulate just sent email
+        RateLimiter::hit('resend-verification:'.$user->id, 180);
+
+        // Banner should show cooldown > 0
+        $component = Livewire::test('email-verification-banner');
+        $viewData = $component->viewData('cooldownSeconds');
+        $this->assertGreaterThan(0, $viewData);
+        $this->assertLessThanOrEqual(180, $viewData);
+    }
 }

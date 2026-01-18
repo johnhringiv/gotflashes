@@ -33,10 +33,16 @@ class EmailVerificationBanner extends Component
         // Record rate limit attempt
         EmailVerificationService::recordRateLimitAttempt($user);
 
+        // Get the new cooldown time to pass to Alpine
+        $cooldownSeconds = EmailVerificationService::getCooldownSeconds($user);
+
         $this->dispatch('toast', [
             'type' => 'success',
             'message' => 'Verification email sent! Please check your inbox.',
         ]);
+
+        // Dispatch event for Alpine to restart the countdown
+        $this->dispatch('verification-sent', cooldown: $cooldownSeconds);
     }
 
     public function render()
@@ -51,8 +57,12 @@ class EmailVerificationBanner extends Component
         // Only show if user is authenticated and email is not verified
         $shouldShow = $user && ! $user->email_verified_at;
 
+        // Get cooldown seconds for countdown display
+        $cooldownSeconds = $shouldShow ? EmailVerificationService::getCooldownSeconds($user) : 0;
+
         return view('livewire.email-verification-banner', [
             'shouldShow' => $shouldShow,
+            'cooldownSeconds' => $cooldownSeconds,
         ]);
     }
 }

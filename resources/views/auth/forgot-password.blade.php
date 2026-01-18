@@ -53,7 +53,7 @@
     <!-- Toast notification container -->
     <div id="toast-container" class="toast toast-top toast-end"></div>
 
-    <script type="module">
+    <script @cspNonce type="module">
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('forgot-password-form');
             const submitBtn = document.getElementById('submit-btn');

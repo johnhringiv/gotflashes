@@ -27,9 +27,10 @@ class ContentSecurityPolicy
         $viteDevServer = $viteRunning ? ' http://127.0.0.1:5173 ws://127.0.0.1:5173' : '';
 
         // Build CSP directives
+        // Note: 'unsafe-eval' is required for Livewire 3 / Alpine.js reactive expressions
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}'".$viteDevServer,
+            "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval'".$viteDevServer,
             "style-src 'self' 'unsafe-inline'".$viteDevServer,
             "img-src 'self' data:".$viteDevServer,
             "font-src 'self' data:",
