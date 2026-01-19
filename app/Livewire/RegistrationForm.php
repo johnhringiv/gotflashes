@@ -132,6 +132,9 @@ class RegistrationForm extends Component
         if (! RateLimiter::tooManyAttempts($emailRateLimitKey, 3)) {
             EmailVerificationService::sendVerification($user, true);
             RateLimiter::hit($emailRateLimitKey, 3600);
+
+            // Record user-specific rate limit so they can't immediately click "resend"
+            EmailVerificationService::recordRateLimitAttempt($user);
         }
         // Note: If email rate limited, user still gets registered and logged in,
         // they just won't receive verification email. They can resend from profile.
