@@ -23,8 +23,10 @@ class ContentSecurityPolicy
         $response = $next($request);
 
         // In development, Vite runs on a separate port (hot file exists when Vite is running)
-        $viteRunning = file_exists(public_path('hot'));
-        $viteDevServer = $viteRunning ? ' http://127.0.0.1:5173 ws://127.0.0.1:5173' : '';
+        // Skip file_exists check in production for performance
+        $viteDevServer = app()->environment('production')
+            ? ''
+            : (file_exists(public_path('hot')) ? ' http://127.0.0.1:5173 ws://127.0.0.1:5173' : '');
 
         // Build CSP directives
         // Note: 'unsafe-eval' is required for Livewire 3 / Alpine.js reactive expressions

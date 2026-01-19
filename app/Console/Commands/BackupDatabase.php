@@ -29,7 +29,7 @@ class BackupDatabase extends Command
 
         // Create backup directory if needed
         if (! is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
+            mkdir($backupDir, 0750, true);
         }
 
         $backupPath = "{$backupDir}/{$filename}";
