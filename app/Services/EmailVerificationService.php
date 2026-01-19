@@ -101,4 +101,19 @@ class EmailVerificationService
         RateLimiter::hit($rateLimitKey, self::RATE_LIMIT_SECONDS);
         RateLimiter::hit($hourlyLimitKey, self::HOURLY_LIMIT_SECONDS);
     }
+
+    /**
+     * Get the number of seconds remaining before user can resend.
+     * Returns 0 if no cooldown is active.
+     */
+    public static function getCooldownSeconds(User $user): int
+    {
+        $rateLimitKey = 'resend-verification:'.$user->id;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
+            return RateLimiter::availableIn($rateLimitKey);
+        }
+
+        return 0;
+    }
 }
