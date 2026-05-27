@@ -1,5 +1,7 @@
 # G.O.T. Flashes Challenge Tracker
 
+[![codecov](https://codecov.io/gh/johnhringiv/gotflashes/graph/badge.svg)](https://codecov.io/gh/johnhringiv/gotflashes)
+
 A web application for tracking Lightning Class sailing activity and managing the G.O.T. Flashes Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
 **G.O.T. Flashes** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!

@@ -40,7 +40,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          touch database/database.sqlite
+          mkdir -p database/data && touch database/data/database.sqlite
 
       - name: Run all code quality checks
         run: composer check

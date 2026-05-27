@@ -2,7 +2,7 @@
     <div class="card-body">
         <h1 class="text-3xl font-bold text-center mb-6">Create Account</h1>
 
-        <form wire:submit="register">
+        <form wire:submit="register" novalidate>
             <x-user-profile-fields>
                 <x-slot:passwordFields>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
