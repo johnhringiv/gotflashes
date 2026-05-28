@@ -66,7 +66,7 @@ jobs:
 
       - name: Run Browser tests with coverage
         run: |
-          ./vendor/bin/pest tests/Browser --coverage-clover=coverage-browser.xml
+          ./vendor/bin/pest tests/Browser --parallel --coverage-clover=coverage-browser.xml
         env:
           APP_ENV: testing
           HTML_VALIDATOR_URL: http://localhost:8888
