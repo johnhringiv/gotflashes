@@ -38,7 +38,7 @@ class E2eSeedCommand extends Command
         $scenario = $this->option('scenario');
         $year = (int) ($this->option('year') ?: now()->year);
 
-        match ($scenario) {
+        $handled = match ($scenario) {
             'base' => $this->seedBase($year),
             'fresh-user' => $this->seedFreshUser(),
             'many-flashes' => $this->seedManyFlashes($year),
@@ -47,8 +47,14 @@ class E2eSeedCommand extends Command
             'leaderboard' => $this->seedLeaderboard($year),
             'tied-ranks' => $this->seedTiedRanks($year),
             'non-sailing-cap' => $this->seedNonSailingCap($year),
-            default => $this->error("Unknown scenario: {$scenario}"),
+            default => false,
         };
+
+        if ($handled === false) {
+            $this->error("Unknown scenario: {$scenario}");
+
+            return Command::FAILURE;
+        }
 
         $this->info("E2E seed complete: scenario={$scenario}");
 
