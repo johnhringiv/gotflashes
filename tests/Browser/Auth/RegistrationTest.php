@@ -214,6 +214,41 @@ it('clears district error when district is selected after error', function () {
     $page->assertDontSee('Please select a district');
 });
 
+it('keeps fleet error visible after picking district (fleet auto-clears, must still pick)', function () {
+    $page = visit('/register');
+
+    // Trigger both errors
+    $page->pressAndWaitFor('Register', 5);
+    $page->assertSee('Please select a district');
+    $page->assertSee('Please select a fleet');
+
+    // Pick a district — JS auto-clears fleet, but error must stay
+    $district = District::first();
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->wait(1);
+
+    $page->assertDontSee('Please select a district');
+    $page->assertSee('Please select a fleet');
+});
+
+it('clears fleet error when user picks a fleet after district', function () {
+    $page = visit('/register');
+    $district = District::first();
+    $fleet = Fleet::where('district_id', $district->id)->first();
+
+    // Trigger both errors
+    $page->pressAndWaitFor('Register', 5);
+    $page->assertSee('Please select a fleet');
+
+    // Pick district then fleet
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->wait(1);
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('{$fleet->id}')");
+    $page->wait(1);
+
+    $page->assertDontSee('Please select a fleet');
+});
+
 it('shows verification banner immediately after registration', function () {
     $unique = time();
     $page = visit('/register');
