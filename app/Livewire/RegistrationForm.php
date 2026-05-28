@@ -51,7 +51,31 @@ class RegistrationForm extends Component
 
     public function rules()
     {
-        return UserProfileRules::rules(null, true);
+        $rules = UserProfileRules::rules(null, true);
+        // Override district/fleet to require explicit selection ('none' or a valid id).
+        // null/''/0 = untouched. These run for both validateOnly() (per-field on blur/change)
+        // and validate() (on submit). 'nullable' is intentionally omitted — it short-circuits
+        // closures on null values.
+        $rules['district_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    $fail('Please select a district or choose Unaffiliated/None.');
+                } elseif ($value !== 'none' && ! \App\Models\District::where('id', $value)->exists()) {
+                    $fail('The selected district is invalid.');
+                }
+            },
+        ];
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    $fail('Please select a fleet or choose None.');
+                } elseif ($value !== 'none' && ! \App\Models\Fleet::where('id', $value)->exists()) {
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
+
+        return $rules;
     }
 
     public function messages()
@@ -61,12 +85,13 @@ class RegistrationForm extends Component
 
     public function updated($propertyName)
     {
-        // For password fields, validate both together
+        // 'confirmed' rule on 'password' already checks password_confirmation,
+        // so validate via the 'password' field name for both. Calling
+        // validateOnly('password_confirmation') would match no rule, and
+        // Livewire's resetErrorBag([]) wipes the entire bag in that case.
         if ($propertyName === 'password' || $propertyName === 'password_confirmation') {
             $this->validateOnly('password');
-            $this->validateOnly('password_confirmation');
         } else {
-            // Validate the field that was just updated
             $this->validateOnly($propertyName);
         }
     }
@@ -88,40 +113,18 @@ class RegistrationForm extends Component
             return;
         }
 
-        // Normalize 'none' to null (valid explicit selection) before validation
-        $districtRaw = $this->district_id;
-        $fleetRaw = $this->fleet_id;
+        // Validation uses rules() which includes district/fleet "explicit selection required" closures.
+        // 'none' is accepted as a valid explicit choice — normalized to null after validation passes.
+        $validated = $this->validate();
+
         if ($this->district_id === 'none') {
             $this->district_id = null;
+            $validated['district_id'] = null;
         }
         if ($this->fleet_id === 'none') {
             $this->fleet_id = null;
+            $validated['fleet_id'] = null;
         }
-
-        // Require explicit selection at registration. 'none' was normalized to null above,
-        // so districtRaw/fleetRaw still carry the original choice: 'none' = explicit, null/'' = untouched.
-        // 'nullable' is intentionally omitted — Laravel skips closure rules on null when it's present.
-        $rules = UserProfileRules::rules(null, true);
-        $rules['district_id'] = [
-            function ($attr, $value, $fail) use ($districtRaw) {
-                if (in_array($districtRaw, ['', null, 0, '0'], true)) {
-                    $fail('Please select a district or choose Unaffiliated/None.');
-                } elseif ($value !== null && ! \App\Models\District::where('id', $value)->exists()) {
-                    $fail('The selected district is invalid.');
-                }
-            },
-        ];
-        $rules['fleet_id'] = [
-            function ($attr, $value, $fail) use ($fleetRaw) {
-                if (in_array($fleetRaw, ['', null, 0, '0'], true)) {
-                    $fail('Please select a fleet or choose None.');
-                } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->exists()) {
-                    $fail('The selected fleet is invalid.');
-                }
-            },
-        ];
-
-        $validated = $this->validate($rules);
 
         // Create user and membership in a transaction
         $user = DB::transaction(function () use ($validated) {

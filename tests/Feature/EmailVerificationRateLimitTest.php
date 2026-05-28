@@ -259,6 +259,8 @@ class EmailVerificationRateLimitTest extends TestCase
                 ->set('state', $data['state'])
                 ->set('zip_code', $data['zip_code'])
                 ->set('country', $data['country'])
+                ->set('district_id', 'none')
+                ->set('fleet_id', 'none')
                 ->call('register');
 
             $this->assertDatabaseHas('users', ['email' => $data['email']]);
@@ -279,6 +281,8 @@ class EmailVerificationRateLimitTest extends TestCase
             ->set('state', $data['state'])
             ->set('zip_code', $data['zip_code'])
             ->set('country', $data['country'])
+            ->set('district_id', 'none')
+            ->set('fleet_id', 'none')
             ->call('register')
             ->assertDispatched('toast');
 
@@ -324,6 +328,8 @@ class EmailVerificationRateLimitTest extends TestCase
                 ->set('state', $data['state'])
                 ->set('zip_code', $data['zip_code'])
                 ->set('country', $data['country'])
+                ->set('district_id', 'none')
+                ->set('fleet_id', 'none')
                 ->call('register');
         }
 
@@ -353,6 +359,8 @@ class EmailVerificationRateLimitTest extends TestCase
             ->set('state', 'TS')
             ->set('zip_code', '12345')
             ->set('country', 'US')
+            ->set('district_id', 'none')
+            ->set('fleet_id', 'none')
             ->call('register');
 
         // Get the newly created user
