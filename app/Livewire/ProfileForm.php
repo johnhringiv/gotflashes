@@ -94,14 +94,8 @@ class ProfileForm extends Component
     {
         $user = auth()->user();
 
-        // Fleet '_cleared' means auto-cleared by district change — require re-selection
-        if ($this->fleet_id === '_cleared') {
-            $this->dispatch('affiliation-error', fields: ['fleet']);
-
-            return;
-        }
-
-        // Normalize 'none' and empty values to null
+        // Normalize 'none' and empty values to null before validation
+        $fleetRaw = $this->fleet_id;
         if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
         }
@@ -109,7 +103,20 @@ class ProfileForm extends Component
             $this->fleet_id = null;
         }
 
-        $validated = $this->validate(UserProfileRules::rules((string) $user->id, false));
+        // Override fleet rule: '_cleared' (JS auto-clear on district change) requires re-selection.
+        // 'nullable' omitted because it skips closure rules on null values.
+        $rules = UserProfileRules::rules((string) $user->id, false);
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) use ($fleetRaw) {
+                if ($fleetRaw === '_cleared') {
+                    $fail('Please select a fleet or choose None.');
+                } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->exists()) {
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
+
+        $validated = $this->validate($rules);
 
         // Check if email has changed
         $emailChanged = $validated['email'] !== $user->email;

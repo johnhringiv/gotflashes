@@ -177,7 +177,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- District -->
-    <div class="mb-6" wire:ignore>
+    <div class="mb-6">
         <label class="form-control w-full">
             <div class="label">
                 <span class="label-text flex items-center gap-1">
@@ -189,14 +189,15 @@
                     </div>
                 </span>
             </div>
-            <select name="district_id"
-                    id="{{ $districtSelectId }}"
-                    class="select select-bordered @error('district_id') select-error @enderror"
-                    data-value="{{ $this->district_id }}"
-                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}"
-                    required>
-                <option value="">Select district...</option>
-            </select>
+            <div wire:ignore>
+                <select name="district_id"
+                        id="{{ $districtSelectId }}"
+                        class="select select-bordered"
+                        data-value="{{ $this->district_id }}"
+                        data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+                    <option value="">Select district...</option>
+                </select>
+            </div>
             @error('district_id')
                 <div class="label">
                     <span class="label-text-alt text-error">{{ $message }}</span>
@@ -206,7 +207,7 @@
     </div>
 
     <!-- Fleet -->
-    <div class="mb-6" wire:ignore>
+    <div class="mb-6">
         <label class="form-control w-full">
             <div class="label">
                 <span class="label-text flex items-center gap-1">
@@ -218,14 +219,15 @@
                     </div>
                 </span>
             </div>
-            <select name="fleet_id"
-                    id="{{ $fleetSelectId }}"
-                    class="select select-bordered @error('fleet_id') select-error @enderror"
-                    data-value="{{ $this->fleet_id }}"
-                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}"
-                    required>
-                <option value="">Select fleet...</option>
-            </select>
+            <div wire:ignore>
+                <select name="fleet_id"
+                        id="{{ $fleetSelectId }}"
+                        class="select select-bordered"
+                        data-value="{{ $this->fleet_id }}"
+                        data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+                    <option value="">Select fleet...</option>
+                </select>
+            </div>
             @error('fleet_id')
                 <div class="label">
                     <span class="label-text-alt text-error">{{ $message }}</span>
@@ -251,49 +253,3 @@
     @enderror
 </div>
 
-<script @cspNonce>
-document.addEventListener('livewire:init', () => {
-    // Clear affiliation errors when user interacts with either TomSelect
-    function clearAffiliationError(selectId) {
-        const el = document.getElementById(selectId);
-        const w = el?.closest('.form-control');
-        w?.querySelector('.affiliation-error-msg')?.remove();
-        const ts = w?.querySelector('.ts-wrapper');
-        if (ts) ts.style.borderColor = '';
-    }
-
-    // Wait for TomSelect to init, then bind change listeners
-    const bindInterval = setInterval(() => {
-        const district = document.getElementById('district-select');
-        const fleet = document.getElementById('fleet-select');
-        if (district?.tomselect && fleet?.tomselect) {
-            district.tomselect.on('change', () => clearAffiliationError('district-select'));
-            fleet.tomselect.on('change', () => clearAffiliationError('fleet-select'));
-            clearInterval(bindInterval);
-        }
-    }, 200);
-
-    Livewire.on('affiliation-error', ({ fields }) => {
-        document.querySelectorAll('.affiliation-error-msg').forEach(el => el.remove());
-        document.querySelectorAll('.ts-wrapper.ts-error').forEach(el => {
-            el.classList.remove('ts-error');
-            el.style.borderColor = '';
-        });
-
-        fields.forEach(field => {
-            const selectId = field === 'district' ? 'district-select' : 'fleet-select';
-            const wrapper = document.querySelector(`#${selectId}`)?.closest('.form-control');
-            const tsWrapper = wrapper?.querySelector('.ts-wrapper');
-            if (tsWrapper) {
-                tsWrapper.style.borderColor = 'oklch(var(--er))';
-            }
-            if (wrapper && !wrapper.querySelector('.affiliation-error-msg')) {
-                const msg = document.createElement('div');
-                msg.className = 'label affiliation-error-msg';
-                msg.innerHTML = `<span class="label-text-alt text-error">Please select a ${field} or choose ${field === 'district' ? 'Unaffiliated/None' : 'None'}.</span>`;
-                wrapper.appendChild(msg);
-            }
-        });
-    });
-});
-</script>

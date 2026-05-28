@@ -88,17 +88,9 @@ class RegistrationForm extends Component
             return;
         }
 
-        // Check district/fleet selection before normalizing
-        // '_cleared' = auto-cleared by district change, also counts as missing
-        $affiliationMissing = [];
-        if (in_array($this->district_id, ['', null, 0, '0', '_cleared'], true)) {
-            $affiliationMissing[] = 'district';
-        }
-        if (in_array($this->fleet_id, ['', null, 0, '0', '_cleared'], true)) {
-            $affiliationMissing[] = 'fleet';
-        }
-
-        // Normalize 'none' to null (valid explicit selection)
+        // Normalize 'none' to null (valid explicit selection) before validation
+        $districtRaw = $this->district_id;
+        $fleetRaw = $this->fleet_id;
         if ($this->district_id === 'none') {
             $this->district_id = null;
         }
@@ -106,27 +98,31 @@ class RegistrationForm extends Component
             $this->fleet_id = null;
         }
 
-        // Run validation — may throw ValidationException which renders inline errors
-        $hasValidationErrors = false;
-        try {
-            $validated = $this->validate(UserProfileRules::rules(null, true));
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $hasValidationErrors = true;
-        }
+        // Override district/fleet rules: require explicit selection ('none' OK, untouched/cleared = error)
+        // Replace (not append) since base rules include 'nullable' which short-circuits the closure.
+        $rules = UserProfileRules::rules(null, true);
+        // Note: 'nullable' is intentionally omitted — Laravel's validator skips closure rules
+        // on null values when 'nullable' is present, even if the closure appears first.
+        $rules['district_id'] = [
+            function ($attr, $value, $fail) use ($districtRaw) {
+                if (in_array($districtRaw, ['', null, 0, '0', '_cleared'], true)) {
+                    $fail('Please select a district or choose Unaffiliated/None.');
+                } elseif ($value !== null && ! \App\Models\District::where('id', $value)->exists()) {
+                    $fail('The selected district is invalid.');
+                }
+            },
+        ];
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) use ($fleetRaw) {
+                if (in_array($fleetRaw, ['', null, 0, '0', '_cleared'], true)) {
+                    $fail('Please select a fleet or choose None.');
+                } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->exists()) {
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
 
-        // Show affiliation errors via JS (wire:ignore prevents Livewire rendering)
-        if (! empty($affiliationMissing)) {
-            $this->dispatch('affiliation-error', fields: $affiliationMissing);
-        }
-
-        // Stop if any errors
-        if ($hasValidationErrors || ! empty($affiliationMissing)) {
-            if ($hasValidationErrors) {
-                throw $e;
-            }
-
-            return;
-        }
+        $validated = $this->validate($rules);
 
         // Create user and membership in a transaction
         $user = DB::transaction(function () use ($validated) {
