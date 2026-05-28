@@ -36,9 +36,9 @@ class ProfileForm extends Component
     public string $country = '';
 
     // Lightning Class Info (from current membership)
-    public ?int $district_id = null;
+    public mixed $district_id = null;
 
-    public ?int $fleet_id = null;
+    public mixed $fleet_id = null;
 
     public string $yacht_club = '';
 
@@ -94,15 +94,21 @@ class ProfileForm extends Component
     {
         $user = auth()->user();
 
-        // Convert "none" values to null before validation
-        if ($this->district_id === null || $this->district_id === 0) {
+        // Fleet '_cleared' means auto-cleared by district change — require re-selection
+        if ($this->fleet_id === '_cleared') {
+            $this->dispatch('affiliation-error', fields: ['fleet']);
+
+            return;
+        }
+
+        // Normalize 'none' and empty values to null
+        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
         }
-        if ($this->fleet_id === null || $this->fleet_id === 0) {
+        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
             $this->fleet_id = null;
         }
 
-        // Validate using shared rules
         $validated = $this->validate(UserProfileRules::rules((string) $user->id, false));
 
         // Check if email has changed

@@ -250,3 +250,50 @@
         </div>
     @enderror
 </div>
+
+<script @cspNonce>
+document.addEventListener('livewire:init', () => {
+    // Clear affiliation errors when user interacts with either TomSelect
+    function clearAffiliationError(selectId) {
+        const el = document.getElementById(selectId);
+        const w = el?.closest('.form-control');
+        w?.querySelector('.affiliation-error-msg')?.remove();
+        const ts = w?.querySelector('.ts-wrapper');
+        if (ts) ts.style.borderColor = '';
+    }
+
+    // Wait for TomSelect to init, then bind change listeners
+    const bindInterval = setInterval(() => {
+        const district = document.getElementById('district-select');
+        const fleet = document.getElementById('fleet-select');
+        if (district?.tomselect && fleet?.tomselect) {
+            district.tomselect.on('change', () => clearAffiliationError('district-select'));
+            fleet.tomselect.on('change', () => clearAffiliationError('fleet-select'));
+            clearInterval(bindInterval);
+        }
+    }, 200);
+
+    Livewire.on('affiliation-error', ({ fields }) => {
+        document.querySelectorAll('.affiliation-error-msg').forEach(el => el.remove());
+        document.querySelectorAll('.ts-wrapper.ts-error').forEach(el => {
+            el.classList.remove('ts-error');
+            el.style.borderColor = '';
+        });
+
+        fields.forEach(field => {
+            const selectId = field === 'district' ? 'district-select' : 'fleet-select';
+            const wrapper = document.querySelector(`#${selectId}`)?.closest('.form-control');
+            const tsWrapper = wrapper?.querySelector('.ts-wrapper');
+            if (tsWrapper) {
+                tsWrapper.style.borderColor = 'oklch(var(--er))';
+            }
+            if (wrapper && !wrapper.querySelector('.affiliation-error-msg')) {
+                const msg = document.createElement('div');
+                msg.className = 'label affiliation-error-msg';
+                msg.innerHTML = `<span class="label-text-alt text-error">Please select a ${field} or choose ${field === 'district' ? 'Unaffiliated/None' : 'None'}.</span>`;
+                wrapper.appendChild(msg);
+            }
+        });
+    });
+});
+</script>

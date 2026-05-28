@@ -45,13 +45,12 @@ it('registers a new user with district + fleet and lands on /logbook', function 
         ->assertSee('Logout');
 });
 
-it('registers a new user with district but no fleet', function () {
+it('registers a new user with district and fleet set to None', function () {
     $district = District::first();
 
     $unique = time();
     $page = visit('/register');
 
-    // Wait for TomSelect to initialize
     $page->assertPresent('.ts-wrapper');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'NoFleet')
@@ -66,13 +65,12 @@ it('registers a new user with district but no fleet', function () {
         ->fill('[wire\\:model\\.blur="state"]', 'CA')
         ->fill('[wire\\:model\\.blur="zip_code"]', '90210');
 
-    // Set district via TomSelect programmatically
+    // Set district, then explicitly pick None for fleet
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     $page->wait(0.3);
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->wait(0.3);
 
-    // Skip fleet selection (leave as unaffiliated)
-
-    // Submit the form
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
 });
@@ -93,9 +91,11 @@ it('registers a fully unaffiliated user', function () {
         ->fill('[wire\\:model\\.blur="state"]', 'FL')
         ->fill('[wire\\:model\\.blur="zip_code"]', '33101');
 
-    // Skip both district and fleet selection (unaffiliated)
-
-    // Remove required from selects that block native validation
+    // Explicitly select None for both district and fleet (unaffiliated)
+    $page->script("document.getElementById('district-select').tomselect.setValue('none')");
+    $page->wait(0.3);
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->wait(0.3);
 
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
@@ -132,6 +132,88 @@ it('shows validation error when date_of_birth is in the future', function () {
         ->assertSee('date of birth');
 });
 
+it('requires district and fleet selection on registration', function () {
+    $unique = time();
+    $page = visit('/register');
+
+    // Fill all required fields except district/fleet
+    $page->fill('[wire\\:model\\.blur="first_name"]', 'NoPick')
+        ->fill('[wire\\:model\\.blur="last_name"]', 'User'.$unique)
+        ->fill('[wire\\:model\\.blur="email"]', "delivered+nopick{$unique}@resend.dev")
+        ->fill('[wire\\:model\\.blur="password"]', 'Password123!')
+        ->fill('[wire\\:model\\.blur="password_confirmation"]', 'Password123!')
+        ->fill('[wire\\:model\\.blur="date_of_birth"]', '1990-05-15')
+        ->select('[wire\\:model\\.blur="gender"]', 'male')
+        ->fill('[wire\\:model\\.blur="address_line1"]', '123 Test St')
+        ->fill('[wire\\:model\\.blur="city"]', 'Testville')
+        ->fill('[wire\\:model\\.blur="state"]', 'TX')
+        ->fill('[wire\\:model\\.blur="zip_code"]', '12345');
+
+    // Submit without selecting district/fleet
+    $page->pressAndWaitFor('Register', 5);
+
+    // Should stay on /register with error messages for district and fleet
+    $page->assertPathIs('/register');
+    $page->assertSee('Please select a district');
+    $page->assertSee('Please select a fleet');
+});
+
+it('requires fleet when district is set on registration', function () {
+    $district = District::first();
+    $unique = time();
+    $page = visit('/register');
+
+    $page->fill('[wire\\:model\\.blur="first_name"]', 'NoFleet')
+        ->fill('[wire\\:model\\.blur="last_name"]', 'User'.$unique)
+        ->fill('[wire\\:model\\.blur="email"]', "delivered+nfleet{$unique}@resend.dev")
+        ->fill('[wire\\:model\\.blur="password"]', 'Password123!')
+        ->fill('[wire\\:model\\.blur="password_confirmation"]', 'Password123!')
+        ->fill('[wire\\:model\\.blur="date_of_birth"]', '1990-05-15')
+        ->select('[wire\\:model\\.blur="gender"]', 'male')
+        ->fill('[wire\\:model\\.blur="address_line1"]', '123 Test St')
+        ->fill('[wire\\:model\\.blur="city"]', 'Testville')
+        ->fill('[wire\\:model\\.blur="state"]', 'TX')
+        ->fill('[wire\\:model\\.blur="zip_code"]', '12345');
+
+    // Set district but skip fleet (fleet auto-clears to '_cleared' state)
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->wait(0.5);
+
+    $page->pressAndWaitFor('Register', 5);
+    $page->assertPathIs('/register');
+    $page->assertSee('Please select a fleet');
+    $page->assertDontSee('Please select a district');
+});
+
+it('shows all field errors and district/fleet errors at once on submit', function () {
+    $page = visit('/register');
+
+    // Submit with everything empty
+    $page->pressAndWaitFor('Register', 5);
+
+    // Should see both Livewire field errors AND district/fleet errors simultaneously
+    $page->assertSee('Please select a district');
+    $page->assertSee('Please select a fleet');
+    // Standard Livewire validation errors should also appear (e.g., email required)
+    $page->assertSee('required');
+});
+
+it('clears district error when district is selected after error', function () {
+    $page = visit('/register');
+
+    // Trigger the error
+    $page->pressAndWaitFor('Register', 5);
+    $page->assertSee('Please select a district');
+
+    // Select a district
+    $district = District::first();
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->wait(1);
+
+    // District error should clear
+    $page->assertDontSee('Please select a district');
+});
+
 it('shows verification banner immediately after registration', function () {
     $unique = time();
     $page = visit('/register');
@@ -147,6 +229,12 @@ it('shows verification banner immediately after registration', function () {
         ->fill('[wire\\:model\\.blur="city"]', 'Testville')
         ->fill('[wire\\:model\\.blur="state"]', 'NY')
         ->fill('[wire\\:model\\.blur="zip_code"]', '10001');
+
+    // Explicitly select None for both
+    $page->script("document.getElementById('district-select').tomselect.setValue('none')");
+    $page->wait(0.3);
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->wait(0.3);
 
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook')

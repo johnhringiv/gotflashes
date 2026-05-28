@@ -43,9 +43,9 @@ class RegistrationForm extends Component
     public string $country = 'United States';
 
     // Lightning Class Info
-    public ?int $district_id = null;
+    public mixed $district_id = null;
 
-    public ?int $fleet_id = null;
+    public mixed $fleet_id = null;
 
     public string $yacht_club = '';
 
@@ -88,17 +88,45 @@ class RegistrationForm extends Component
             return;
         }
 
-        // Normalize affiliation IDs before validation (handles 'none', '', null, 0 -> null)
-        // This ensures 0 values pass nullable validation instead of failing exists check
-        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
+        // Check district/fleet selection before normalizing
+        // '_cleared' = auto-cleared by district change, also counts as missing
+        $affiliationMissing = [];
+        if (in_array($this->district_id, ['', null, 0, '0', '_cleared'], true)) {
+            $affiliationMissing[] = 'district';
+        }
+        if (in_array($this->fleet_id, ['', null, 0, '0', '_cleared'], true)) {
+            $affiliationMissing[] = 'fleet';
+        }
+
+        // Normalize 'none' to null (valid explicit selection)
+        if ($this->district_id === 'none') {
             $this->district_id = null;
         }
-        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
+        if ($this->fleet_id === 'none') {
             $this->fleet_id = null;
         }
 
-        // Validate using shared rules (including password for registration)
-        $validated = $this->validate(UserProfileRules::rules(null, true));
+        // Run validation — may throw ValidationException which renders inline errors
+        $hasValidationErrors = false;
+        try {
+            $validated = $this->validate(UserProfileRules::rules(null, true));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $hasValidationErrors = true;
+        }
+
+        // Show affiliation errors via JS (wire:ignore prevents Livewire rendering)
+        if (! empty($affiliationMissing)) {
+            $this->dispatch('affiliation-error', fields: $affiliationMissing);
+        }
+
+        // Stop if any errors
+        if ($hasValidationErrors || ! empty($affiliationMissing)) {
+            if ($hasValidationErrors) {
+                throw $e;
+            }
+
+            return;
+        }
 
         // Create user and membership in a transaction
         $user = DB::transaction(function () use ($validated) {

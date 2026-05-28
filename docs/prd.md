@@ -19,9 +19,11 @@ New users create accounts with the following information:
 - Gender (Male, Female, Non-binary, Prefer not to say)
 - Physical mailing address (for award fulfillment)
 
+**Affiliation Fields (selection required, "Unaffiliated/None" valid):**
+- District (Lightning Class geographic region, or "Unaffiliated/None")
+- Fleet (dynamically filtered by selected district, or "None")
+
 **Optional Fields:**
-- District (Lightning Class geographic region)
-- Fleet (dynamically filtered by selected district)
 - Yacht Club
 
 **Year-Specific Memberships:**

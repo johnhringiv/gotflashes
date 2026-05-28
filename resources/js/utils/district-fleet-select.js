@@ -78,21 +78,20 @@ export async function initializeDistrictFleetSelects(config) {
         onChange: function(value) {
             if (value) this.blur();
 
-            // Callback for Livewire sync
+            // Callback for Livewire sync — send 'none' literally for explicit unaffiliated
             if (onDistrictChange) {
-                onDistrictChange(value === 'none' ? null : value);
+                onDistrictChange(value);
             }
 
-            // Clear fleet selection when district changes
+            // Clear fleet selection when district changes — user must re-select
             fleetTomSelect.clear();
-            // Explicitly sync to Livewire since clear() doesn't trigger onChange
             if (onFleetChange) {
-                onFleetChange(null);
+                // Send sentinel to distinguish auto-clear from explicit "None"
+                onFleetChange('_cleared');
             }
 
             if (value === 'none') {
                 updateFleetOptions(fleets, false);
-                // Don't auto-select 'none' - leave empty to show placeholder
             } else if (value) {
                 const filteredFleets = fleets.filter(f => f.district_id == value);
                 updateFleetOptions(filteredFleets, false);
@@ -136,9 +135,9 @@ export async function initializeDistrictFleetSelects(config) {
             if (value) {
                 this.blur();
 
-                // Callback for Livewire sync
+                // Callback for Livewire sync — send 'none' literally so server can distinguish from untouched/auto-cleared
                 if (onFleetChange) {
-                    onFleetChange(value === 'none' ? null : value);
+                    onFleetChange(value);
                 }
 
                 if (value === 'none') {

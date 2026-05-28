@@ -81,14 +81,47 @@ The project uses automated pre-commit hooks via Husky. If checks fail, your comm
 All new features and bug fixes require tests:
 
 ```bash
-# Run all tests
+# Run PHPUnit tests (feature + unit)
 php artisan test
 
-# Run specific test
+# Run browser tests (Pest 4 + Playwright)
+./vendor/bin/pest tests/Browser
+./vendor/bin/pest tests/Browser --parallel    # ~40s with parallel
+
+# Run a specific test
 php artisan test --filter=FlashTest
+./vendor/bin/pest tests/Browser/Logbook/CreateTest.php
 ```
 
-Tests use in-memory SQLite for speed. Write feature tests for HTTP workflows and unit tests for isolated logic.
+PHPUnit tests use in-memory SQLite. Browser tests use Pest 4's in-process server with `LazilyRefreshDatabase`.
+
+### Test Data Seeding
+
+The `e2e:seed` command creates test users and data for local development and browser tests. It only runs in `local` and `testing` environments.
+
+```bash
+# Seed canonical test users (regular, admin, fresh, unverified)
+php artisan e2e:seed --scenario=base
+
+# Other scenarios
+php artisan e2e:seed --scenario=tiered          # Users at 9, 10, 24, 25, 49, 50 days
+php artisan e2e:seed --scenario=leaderboard     # 17 users across districts/fleets
+php artisan e2e:seed --scenario=non-sailing-cap # User at the 5-day non-sailing cap
+php artisan e2e:seed --scenario=tied-ranks      # Users with identical totals for tie-breaking
+php artisan e2e:seed --scenario=many-flashes    # Regular user with 18 flashes
+
+# Reset DB and seed fresh
+php artisan e2e:seed --scenario=base --reset
+```
+
+**Canonical test users** (all use password `Password123!`):
+
+| Email | Role |
+|---|---|
+| `delivered+regular@resend.dev` | Regular user with district/fleet |
+| `delivered+admin@resend.dev` | Admin user |
+| `delivered+fresh@resend.dev` | No flashes, no affiliations |
+| `delivered+unverified@resend.dev` | Unverified email |
 
 ## Branching Strategy
 

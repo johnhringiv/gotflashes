@@ -108,3 +108,63 @@ it('persists unaffiliated choice on save and reload', function () {
     $page2->assertScript("document.querySelector('#district-select').tomselect.getValue()", 'none');
     $page2->assertScript("document.querySelector('#fleet-select').tomselect.getValue()", 'none');
 });
+
+it('blocks save when district change clears fleet and user does not re-select', function () {
+    Member::create([
+        'user_id' => $this->user->id,
+        'district_id' => $this->district->id,
+        'fleet_id' => $this->fleet->id,
+        'year' => 2027,
+    ]);
+
+    $this->actingAs($this->user);
+    $page = visit('/profile');
+
+    // Change to a different district — JS will auto-clear fleet to '_cleared' sentinel
+    $otherDistrict = District::where('id', '!=', $this->district->id)->first();
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$otherDistrict->id}')");
+    $page->wait(1);
+
+    // Submit without picking a fleet
+    $page->script("
+        const formEl = document.querySelector('#fleet-select').closest('[wire\\\\:id]');
+        Livewire.find(formEl.getAttribute('wire:id')).call('save');
+    ");
+    $page->wait(2);
+
+    // Fleet error should appear, save should NOT have happened
+    $page->assertSee('Please select a fleet');
+    $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
+    expect($member->district_id)->toBe($this->district->id); // unchanged
+});
+
+it('clears fleet error when fleet is selected after district change', function () {
+    Member::create([
+        'user_id' => $this->user->id,
+        'district_id' => $this->district->id,
+        'fleet_id' => $this->fleet->id,
+        'year' => 2027,
+    ]);
+
+    $this->actingAs($this->user);
+    $page = visit('/profile');
+
+    // Change district to trigger fleet auto-clear
+    $otherDistrict = District::where('id', '!=', $this->district->id)->first();
+    $page->script("document.getElementById('district-select').tomselect.setValue('{$otherDistrict->id}')");
+    $page->wait(1);
+
+    // Trigger error
+    $page->script("
+        const formEl = document.querySelector('#fleet-select').closest('[wire\\\\:id]');
+        Livewire.find(formEl.getAttribute('wire:id')).call('save');
+    ");
+    $page->wait(2);
+    $page->assertSee('Please select a fleet');
+
+    // Now pick None
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->wait(1);
+
+    $page->assertDontSee('Please select a fleet');
+});
