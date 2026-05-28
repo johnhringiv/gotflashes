@@ -175,7 +175,7 @@ it('requires fleet when district is set on registration', function () {
         ->fill('[wire\\:model\\.blur="state"]', 'TX')
         ->fill('[wire\\:model\\.blur="zip_code"]', '12345');
 
-    // Set district but skip fleet (fleet auto-clears to '_cleared' state)
+    // Set district but skip fleet (fleet auto-clears to null)
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     $page->wait(0.5);
 

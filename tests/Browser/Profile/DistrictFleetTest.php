@@ -81,24 +81,16 @@ it('persists unaffiliated choice on save and reload', function () {
     $this->actingAs($this->user);
     $page = visit('/profile');
 
-    // Clear both via TomSelect and sync Livewire props
-    $page->script("
-        document.querySelector('#district-select').tomselect.clear();
-        document.querySelector('#fleet-select').tomselect.clear();
-        const formEl = document.querySelector('#district-select').closest('[wire\\\\:id]');
-        const wireId = formEl.getAttribute('wire:id');
-        Livewire.find(wireId).set('district_id', null);
-        Livewire.find(wireId).set('fleet_id', null);
-    ");
+    // User explicitly picks "Unaffiliated/None" for district (which auto-sets fleet to None too)
+    $page->script("document.querySelector('#district-select').tomselect.setValue('none')");
+    $page->wait(1);
+    $page->script("document.querySelector('#fleet-select').tomselect.setValue('none')");
     $page->wait(1);
 
-    // Call save directly via Livewire (TomSelect + wire:model sync unreliable)
     $page->script("
         const formEl = document.querySelector('#district-select').closest('[wire\\\\:id]');
-        const wireId = formEl.getAttribute('wire:id');
-        Livewire.find(wireId).call('save');
+        Livewire.find(formEl.getAttribute('wire:id')).call('save');
     ");
-    // wait for Livewire async round-trip
     $page->wait(3);
     $page->assertSee('updated');
 
@@ -120,7 +112,7 @@ it('blocks save when district change clears fleet and user does not re-select', 
     $this->actingAs($this->user);
     $page = visit('/profile');
 
-    // Change to a different district — JS will auto-clear fleet to '_cleared' sentinel
+    // Change to a different district — JS auto-clears fleet to null; server detects this via DB comparison
     $otherDistrict = District::where('id', '!=', $this->district->id)->first();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$otherDistrict->id}')");
     $page->wait(1);

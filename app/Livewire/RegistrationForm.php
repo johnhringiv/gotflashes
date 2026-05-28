@@ -98,14 +98,13 @@ class RegistrationForm extends Component
             $this->fleet_id = null;
         }
 
-        // Override district/fleet rules: require explicit selection ('none' OK, untouched/cleared = error)
-        // Replace (not append) since base rules include 'nullable' which short-circuits the closure.
+        // Require explicit selection at registration. 'none' was normalized to null above,
+        // so districtRaw/fleetRaw still carry the original choice: 'none' = explicit, null/'' = untouched.
+        // 'nullable' is intentionally omitted — Laravel skips closure rules on null when it's present.
         $rules = UserProfileRules::rules(null, true);
-        // Note: 'nullable' is intentionally omitted — Laravel's validator skips closure rules
-        // on null values when 'nullable' is present, even if the closure appears first.
         $rules['district_id'] = [
             function ($attr, $value, $fail) use ($districtRaw) {
-                if (in_array($districtRaw, ['', null, 0, '0', '_cleared'], true)) {
+                if (in_array($districtRaw, ['', null, 0, '0'], true)) {
                     $fail('Please select a district or choose Unaffiliated/None.');
                 } elseif ($value !== null && ! \App\Models\District::where('id', $value)->exists()) {
                     $fail('The selected district is invalid.');
@@ -114,7 +113,7 @@ class RegistrationForm extends Component
         ];
         $rules['fleet_id'] = [
             function ($attr, $value, $fail) use ($fleetRaw) {
-                if (in_array($fleetRaw, ['', null, 0, '0', '_cleared'], true)) {
+                if (in_array($fleetRaw, ['', null, 0, '0'], true)) {
                     $fail('Please select a fleet or choose None.');
                 } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->exists()) {
                     $fail('The selected fleet is invalid.');

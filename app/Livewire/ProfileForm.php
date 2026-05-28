@@ -94,7 +94,8 @@ class ProfileForm extends Component
     {
         $user = auth()->user();
 
-        // Normalize 'none' and empty values to null before validation
+        // Capture raw values to distinguish "explicit None" ('none') from auto-clear (null)
+        // before normalization. JS sends 'none' for an explicit pick; null for auto-clear.
         $fleetRaw = $this->fleet_id;
         if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
@@ -103,12 +104,15 @@ class ProfileForm extends Component
             $this->fleet_id = null;
         }
 
-        // Override fleet rule: '_cleared' (JS auto-clear on district change) requires re-selection.
-        // 'nullable' omitted because it skips closure rules on null values.
+        // Detect "district changed, fleet was auto-cleared, user didn't re-select".
+        // Auto-clear is identified by: district differs from DB AND fleet arrived as raw null
+        // (an explicit None pick would have arrived as 'none').
+        $originalDistrict = $user->currentMembership()?->district_id;
         $rules = UserProfileRules::rules((string) $user->id, false);
         $rules['fleet_id'] = [
-            function ($attr, $value, $fail) use ($fleetRaw) {
-                if ($fleetRaw === '_cleared') {
+            function ($attr, $value, $fail) use ($originalDistrict, $fleetRaw) {
+                $districtChanged = $this->district_id !== $originalDistrict;
+                if ($districtChanged && $fleetRaw === null) {
                     $fail('Please select a fleet or choose None.');
                 } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->exists()) {
                     $fail('The selected fleet is invalid.');

@@ -83,11 +83,11 @@ export async function initializeDistrictFleetSelects(config) {
                 onDistrictChange(value);
             }
 
-            // Clear fleet selection when district changes — user must re-select
+            // Clear fleet selection when district changes — user must re-select.
+            // Server detects this via comparison to DB state (profile) or null check (registration).
             fleetTomSelect.clear();
             if (onFleetChange) {
-                // Send sentinel to distinguish auto-clear from explicit "None"
-                onFleetChange('_cleared');
+                onFleetChange(null);
             }
 
             if (value === 'none') {
