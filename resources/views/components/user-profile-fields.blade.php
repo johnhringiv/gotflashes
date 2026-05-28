@@ -177,7 +177,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- District -->
-    <div class="mb-6">
+    <div class="mb-6 @error('district_id') ts-has-error @enderror">
         <label class="form-control w-full">
             <div class="label">
                 <span class="label-text flex items-center gap-1">
@@ -207,7 +207,7 @@
     </div>
 
     <!-- Fleet -->
-    <div class="mb-6">
+    <div class="mb-6 @error('fleet_id') ts-has-error @enderror">
         <label class="form-control w-full">
             <div class="label">
                 <span class="label-text flex items-center gap-1">

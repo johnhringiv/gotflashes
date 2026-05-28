@@ -225,6 +225,34 @@
     border-color: var(--color-primary);
 }
 
+/* Error state — red ring on the TomSelect box, mirroring DaisyUI select-error.
+   Toggled via the .ts-has-error class on the field's @error wrapper in
+   user-profile-fields.blade.php (the native <select> is hidden, so the class
+   must live on a parent the validation error can reach).
+   The single visible border lives on .ts-wrapper (TomSelect copies DaisyUI's
+   .select.select-bordered there, which is full-width and matches the text
+   inputs). Its inset box-shadows draw top/bottom lines that hide a plain red
+   border, so we replace them with a flat error ring on all four edges. On focus
+   DaisyUI draws a dark 2px outline, so we recolor that to the error color (same
+   as .input-error on the text fields). The inner .ts-control is taller and
+   horizontally inset, so we strip its border/ring to avoid a misaligned double
+   line. */
+.ts-has-error .ts-wrapper.select {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 1px var(--color-error);
+}
+
+.ts-has-error .ts-wrapper.select.focus {
+    outline-color: var(--color-error);
+}
+
+.ts-has-error .ts-wrapper.single .ts-control,
+.ts-has-error .ts-wrapper.focus .ts-control,
+.ts-has-error .ts-wrapper.single .ts-control:hover {
+    border-color: transparent;
+    box-shadow: none;
+}
+
 /* Flatpickr calendar customization with brand colors */
 
 /* Calendar container */
