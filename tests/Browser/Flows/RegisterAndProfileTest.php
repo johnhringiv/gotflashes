@@ -12,7 +12,7 @@ it('registering with district/fleet shows them on /profile', function () {
     $district = District::first();
     $fleet = Fleet::where('district_id', $district->id)->first();
 
-    $unique = time();
+    $unique = \Illuminate\Support\Str::random(8);
     $page = visit('/register');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'RegProf')
