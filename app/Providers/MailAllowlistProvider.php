@@ -15,9 +15,11 @@ class MailAllowlistProvider extends ServiceProvider
     public function boot(): void
     {
         // Fail-safe default: enforce unless explicitly disabled.
-        // When the config value is missing entirely, fall back to "enforce in non-production."
+        // Treat unset OR empty string (MAIL_ALLOWLIST_ENABLED= in .env, which CI
+        // copies) the same — "enforce in non-production" — so a blank value can't
+        // silently disable the guard.
         $explicit = config('mail.allowlist_enabled');
-        if ($explicit === null) {
+        if ($explicit === null || $explicit === '') {
             $enabled = ! $this->app->environment('production');
         } else {
             $enabled = filter_var($explicit, FILTER_VALIDATE_BOOLEAN);
