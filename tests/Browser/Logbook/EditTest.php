@@ -63,8 +63,6 @@ it('updates a flash and reflects the change in the list', function () {
         locationInput.dispatchEvent(new Event('change', { bubbles: true }));
         locationInput.dispatchEvent(new Event('blur', { bubbles: true }));
     JS);
-    $page->wait(1);
-
     // Click Update Activity
     $page->pressAndWaitFor('Update Activity', 2);
 
@@ -119,8 +117,6 @@ it('reinitializes form JS in edit modal when switching activity types', function
 
     // Switch to maintenance
     $page->select('#activity_type_edit', 'maintenance');
-    $page->wait(1);
-
     // The sailing_type_edit dropdown should now be disabled
     $page->assertScript(
         'document.getElementById("sailing_type_edit").disabled',
@@ -129,8 +125,6 @@ it('reinitializes form JS in edit modal when switching activity types', function
 
     // Switch back to sailing
     $page->select('#activity_type_edit', 'sailing');
-    $page->wait(1);
-
     // The sailing_type_edit dropdown should be enabled again
     $page->assertScript(
         '!document.getElementById("sailing_type_edit").disabled',

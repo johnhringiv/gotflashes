@@ -45,8 +45,6 @@ it('edit then cancel preserves original data', function () {
 
     // Cancel instead of saving
     $page->click('.modal.modal-open .btn-error');
-    $page->wait(1);
-
     // Original data should be preserved
     $page->assertSee('Original Lake');
     $page->assertDontSee('Changed Lake');
@@ -103,8 +101,6 @@ it('rejects concurrent duplicate date submission', function () {
         comp.set('event_type', 'regatta');
         comp.call('save');
     ");
-    $page->wait(2);
-
     // Should show error about duplicate date
     $page->assertSee('already');
 

@@ -14,8 +14,6 @@ it('renders the reset form with a token and submits a new password', function ()
         ->fill('password_confirmation', 'NewPassword123!');
 
     $page->click('#submit-btn');
-    $page->wait(3);
-
     $page->assertSee('reset');
 });
 
@@ -30,8 +28,6 @@ it('shows error when password and confirmation do not match', function () {
         ->fill('password_confirmation', 'DifferentPassword!');
 
     $page->click('#submit-btn');
-    $page->wait(2);
-
     $page->assertSee('match');
 });
 

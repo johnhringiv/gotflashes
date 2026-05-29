@@ -24,8 +24,6 @@ it('filters fleet list when district is selected', function () {
 
     $districtId = $this->district->id;
     $page->script("document.querySelector('#district-select').tomselect.setValue('{$districtId}')");
-    $page->wait(1);
-
     // Verify fleet dropdown has options after district selection
     $page->assertScript("Object.keys(document.querySelector('#fleet-select').tomselect.options).length > 0", true);
 });
@@ -36,8 +34,6 @@ it('auto-selects district when fleet is chosen', function () {
 
     $fleetId = $this->fleet->id;
     $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$fleetId}')");
-    $page->wait(1);
-
     $page->assertScript("document.querySelector('#district-select').tomselect.getValue() !== ''", true);
 });
 
@@ -63,7 +59,6 @@ it('lets user set fleet to None', function () {
         comp.set('fleet_id', null);
         comp.call('save');
     ");
-    $page->wait(3);
     $page->assertSee('updated');
 
     $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
@@ -91,7 +86,6 @@ it('persists unaffiliated choice on save and reload', function () {
         const formEl = document.querySelector('#district-select').closest('[wire\\\\:id]');
         Livewire.find(formEl.getAttribute('wire:id')).call('save');
     ");
-    $page->wait(3);
     $page->assertSee('updated');
 
     // Reload and verify
@@ -122,8 +116,6 @@ it('blocks save when district change clears fleet and user does not re-select', 
         const formEl = document.querySelector('#fleet-select').closest('[wire\\\\:id]');
         Livewire.find(formEl.getAttribute('wire:id')).call('save');
     ");
-    $page->wait(2);
-
     // Fleet error should appear, save should NOT have happened
     $page->assertSee('Please select a fleet');
     $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
@@ -151,12 +143,9 @@ it('clears fleet error when fleet is selected after district change', function (
         const formEl = document.querySelector('#fleet-select').closest('[wire\\\\:id]');
         Livewire.find(formEl.getAttribute('wire:id')).call('save');
     ");
-    $page->wait(2);
     $page->assertSee('Please select a fleet');
 
     // Now pick None
     $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
-    $page->wait(1);
-
     $page->assertDontSee('Please select a fleet');
 });

@@ -33,8 +33,6 @@ it('registers a new user with district + fleet and lands on /logbook', function 
 
     // Set fleet via TomSelect programmatically
     $page->script("document.getElementById('fleet-select').tomselect.setValue('{$fleet->id}')");
-    $page->wait(0.3);
-
     // Fill optional yacht club
     $page->fill('[wire\\:model\\.blur="yacht_club"]', 'Test YC');
 
@@ -69,8 +67,6 @@ it('registers a new user with district and fleet set to None', function () {
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     $page->wait(0.3);
     $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
-    $page->wait(0.3);
-
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
 });
@@ -95,8 +91,6 @@ it('registers a fully unaffiliated user', function () {
     $page->script("document.getElementById('district-select').tomselect.setValue('none')");
     $page->wait(0.3);
     $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
-    $page->wait(0.3);
-
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
 });
@@ -118,7 +112,6 @@ it('shows validation error when email is already taken', function () {
     $page = visit('/register');
     $page->fill('[wire\\:model\\.blur="email"]', $existing->email)
         ->click('[wire\\:model\\.blur="first_name"]')
-        ->wait(1)
         ->assertSee('has already been taken');
 });
 
@@ -177,8 +170,6 @@ it('requires fleet when district is set on registration', function () {
 
     // Set district but skip fleet (fleet auto-clears to null)
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
-    $page->wait(0.5);
-
     $page->pressAndWaitFor('Register', 5);
     $page->assertPathIs('/register');
     $page->assertSee('Please select a fleet');
@@ -208,8 +199,6 @@ it('clears district error when district is selected after error', function () {
     // Select a district
     $district = District::first();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
-    $page->wait(1);
-
     // District error should clear
     $page->assertDontSee('Please select a district');
 });
@@ -225,8 +214,6 @@ it('keeps fleet error visible after picking district (fleet auto-clears, must st
     // Pick a district — JS auto-clears fleet, but error must stay
     $district = District::first();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
-    $page->wait(1);
-
     $page->assertDontSee('Please select a district');
     $page->assertSee('Please select a fleet');
 });
@@ -244,8 +231,6 @@ it('clears fleet error when user picks a fleet after district', function () {
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     $page->wait(1);
     $page->script("document.getElementById('fleet-select').tomselect.setValue('{$fleet->id}')");
-    $page->wait(1);
-
     $page->assertDontSee('Please select a fleet');
 });
 
@@ -269,8 +254,6 @@ it('shows verification banner immediately after registration', function () {
     $page->script("document.getElementById('district-select').tomselect.setValue('none')");
     $page->wait(0.3);
     $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
-    $page->wait(0.3);
-
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook')
         ->assertSee('verify');

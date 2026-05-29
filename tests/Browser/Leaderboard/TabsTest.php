@@ -45,8 +45,6 @@ it('switches to fleet tab without full page reload', function () {
     $page->script('window.__navHappened = false; window.addEventListener("beforeunload", () => { window.__navHappened = true; })');
 
     $page->click('button[wire\\:click="switchTab(\'fleet\')"]');
-    $page->wait(1);
-
     $page->assertScript('window.__navHappened', false);
     $page->assertAttributeContains('button[wire\\:click="switchTab(\'fleet\')"]', 'class', 'tab-active');
 });
@@ -55,8 +53,6 @@ it('updates URL query param when switching tabs', function () {
     $page = visit('/leaderboard');
 
     $page->click('button[wire\\:click="switchTab(\'fleet\')"]');
-    $page->wait(1);
-
     $page->assertQueryStringHas('tab', 'fleet');
 });
 
@@ -75,8 +71,6 @@ it('resets pagination when switching tabs', function () {
     $page = visit('/leaderboard?page=2');
 
     $page->click('button[wire\\:click="switchTab(\'fleet\')"]');
-    $page->wait(1);
-
     // After tab switch, should be on page 1 (fleet tab only has 1 fleet, so no page=2)
     $page->assertAttributeContains('button[wire\\:click="switchTab(\'fleet\')"]', 'class', 'tab-active');
 });

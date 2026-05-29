@@ -52,8 +52,6 @@ it('logs multiple dates in one submission', function () {
         comp.set('event_type', 'practice');
         comp.call('save');
     ");
-    $page->wait(3);
-
     // Verify success toast with plural message
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'flashes logged successfully');
@@ -97,8 +95,6 @@ it('does not require event_type for maintenance', function () {
         comp.set('activity_type', 'maintenance');
         comp.call('save');
     ");
-    $page->wait(3);
-
     // Should see success toast
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash logged successfully');
@@ -119,8 +115,6 @@ it('does not require event_type for race_committee', function () {
         comp.set('activity_type', 'race_committee');
         comp.call('save');
     ");
-    $page->wait(3);
-
     // Should see success toast
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash logged successfully');
@@ -169,12 +163,8 @@ it('rejects future dates beyond today plus one day', function () {
     JS);
 
     // Wait a moment for Livewire to process
-    $page->wait(1);
-
     // Submit the form
     $page->pressAndWaitFor('Log Activity', 2);
-    $page->wait(1);
-
     // Should NOT see a success toast
     $page->assertNotPresent('#toast-container .alert-success');
 
@@ -202,12 +192,8 @@ it('rejects duplicate dates for the same user', function () {
     JS);
 
     // Wait for Livewire to process
-    $page->wait(1);
-
     // Submit the form
     $page->pressAndWaitFor('Log Activity', 2);
-    $page->wait(1);
-
     // Should NOT see a success toast
     $page->assertNotPresent('#toast-container .alert-success');
 

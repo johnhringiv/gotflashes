@@ -48,19 +48,13 @@ it('marks selected awards as Processing with confirmation', function () {
 
     // Select the first checkbox
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Mark as Processing" button in bulk action bar
     $page->click('Mark as Processing');
-    $page->wait(1);
-
     // Confirmation modal should appear
     $page->assertSee('Are you sure you want to mark');
 
     // Confirm the action
     $page->click('.modal-action button.btn-info, dialog button.btn-info');
-    $page->wait(2);
-
     // Should show success message
     $page->assertSee('processing');
 
@@ -88,19 +82,15 @@ it('marks selected awards as Sent with confirmation', function () {
 
     // Select the checkbox
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Mark as Sent"
     $page->click('Mark as Sent');
-    $page->wait(1);
-
     // Confirmation modal should appear
     $page->assertSee('Are you sure you want to mark');
 
     // Confirm
     $page->click('.modal-action button.btn-success, dialog button.btn-success');
-    $page->wait(2);
-
+    // Wait for the Livewire round-trip to persist (success toast) before the DB read
+    $page->assertSeeIn('#toast-container', 'marked as sent');
     // Verify in database
     $fulfillment = AwardFulfillment::where('user_id', $this->sailor->id)
         ->where('award_tier', 10)
@@ -115,12 +105,8 @@ it('shows Earned to Sent warning when skipping Processing', function () {
 
     // Select earned award
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Mark as Sent" (skipping Processing)
     $page->click('Mark as Sent');
-    $page->wait(1);
-
     // Should show warning about skipping Processing
     $page->assertSee('Skipping Processing');
     $page->assertSee('currently Earned');
@@ -141,16 +127,10 @@ it('shows Downgrade warning when moving Sent back to Processing', function () {
     // Visit with "all" status filter to see sent awards
     $page = visit('/admin/fulfillment');
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'all');
-    $page->wait(1);
-
     // Select the sent award
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Mark as Processing" (downgrade)
     $page->click('Mark as Processing');
-    $page->wait(1);
-
     // Should show downgrade warning
     $page->assertSee('Downgrading Status');
     $page->assertSee('reverted back to processing');
@@ -171,23 +151,17 @@ it('removes fulfillment records (resets to Earned)', function () {
 
     // Select the award
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Reset to Earned"
     $page->click('Reset to Earned');
-    $page->wait(1);
-
     // Confirmation modal should appear
     $page->assertSee('Reset Award Status');
 
     // Check the confirmation checkbox
     $page->click('.checkbox-warning');
-    $page->wait(1);
-
     // Click the reset button
     $page->click('.modal-action button.btn-warning, dialog button.btn-warning');
-    $page->wait(2);
-
+    // Wait for the Livewire round-trip to persist (success toast) before the DB read
+    $page->assertSeeIn('#toast-container', 'reset to Earned');
     // Verify fulfillment was deleted
     expect(AwardFulfillment::where('user_id', $this->sailor->id)
         ->where('award_tier', 10)

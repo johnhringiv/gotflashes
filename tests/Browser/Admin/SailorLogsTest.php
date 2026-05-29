@@ -86,8 +86,6 @@ it('clears fleet filter when district changes', function () {
             distSelect.tomselect.setValue('{$this->districtB->id}');
         }
     ");
-    $page->wait(1);
-
     // Fleet should be cleared - verify by checking the TomSelect value
     $page->assertScript(
         "(() => { const s = document.getElementById('sailor-logs-fleet-select'); return s?.tomselect ? s.tomselect.getValue() : ''; })()",
@@ -102,14 +100,10 @@ it('clears all filters via Clear button', function () {
 
     // Apply a search filter
     $page->fill('input[wire\\:model\\.live\\.debounce\\.300ms="searchQuery"]', 'Alpha');
-    $page->wait(1);
-
     $page->assertDontSee('Bravo Captain');
 
     // Click "Clear Filters"
     $page->click('Clear Filters');
-    $page->wait(1);
-
     // Both sailors should now be visible
     $page->assertSee('Alpha Sailor');
     $page->assertSee('Bravo Captain');
@@ -121,8 +115,6 @@ it('searches by sailor name', function () {
     $page = visit('/admin/sailor-logs');
 
     $page->fill('input[wire\\:model\\.live\\.debounce\\.300ms="searchQuery"]', 'Bravo');
-    $page->wait(1);
-
     $page->assertSee('Bravo Captain');
     $page->assertDontSee('Alpha Sailor');
 });

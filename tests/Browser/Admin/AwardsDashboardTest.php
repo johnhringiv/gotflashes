@@ -64,8 +64,6 @@ it('filters by status=earned', function () {
     $page = visit('/admin/fulfillment');
 
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'earned');
-    $page->wait(1);
-
     // All visible rows should have "Earned" status badge
     $page->assertSee('Earned');
     $page->assertScript("document.querySelector('table tbody')?.textContent.includes('Processing') ?? false", false);
@@ -87,8 +85,6 @@ it('filters by status=processing', function () {
     $page = visit('/admin/fulfillment');
 
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'processing');
-    $page->wait(1);
-
     $page->assertSee('Processing');
 });
 
@@ -106,8 +102,6 @@ it('filters by status=sent', function () {
     $page = visit('/admin/fulfillment');
 
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'sent');
-    $page->wait(1);
-
     $page->assertSee('Sent');
 });
 
@@ -117,8 +111,6 @@ it('filters by tier=10', function () {
     $page = visit('/admin/fulfillment');
 
     $page->select('select[wire\\:model\\.live="tierFilter"]', '10');
-    $page->wait(1);
-
     // Both users qualify for tier 10 (Ten has 10 days, TwentyFive has 15)
     $page->assertSee('Ten');
 });
@@ -129,8 +121,6 @@ it('searches by participant name', function () {
     $page = visit('/admin/fulfillment');
 
     $page->fill('input[wire\\:model\\.live\\.debounce\\.300ms="searchQuery"]', 'TwentyFive');
-    $page->wait(1);
-
     $page->assertSee('TwentyFive');
     $page->assertDontSee('Ten Day');
 });
@@ -141,8 +131,6 @@ it('searches by email', function () {
     $page = visit('/admin/fulfillment');
 
     $page->fill('input[wire\\:model\\.live\\.debounce\\.300ms="searchQuery"]', $this->userTier10->email);
-    $page->wait(1);
-
     $page->assertSee('Ten');
 });
 
@@ -153,8 +141,6 @@ it('selects all visible awards via master Select All', function () {
 
     // Click "Select All" button in table header
     $page->click('Select All');
-    $page->wait(1);
-
     // Should show selection count in the bulk action bar
     $page->assertSee('awards selected');
 });
@@ -165,12 +151,8 @@ it('selects all earned awards via scoped button', function () {
     // Visit with earned filter
     $page = visit('/admin/fulfillment');
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'earned');
-    $page->wait(1);
-
     // Click "Select All" button
     $page->click('Select All');
-    $page->wait(1);
-
     $page->assertSee('awards selected');
 });
 
@@ -188,10 +170,6 @@ it('selects all processing awards via scoped button', function () {
 
     $page = visit('/admin/fulfillment');
     $page->select('select[wire\\:model\\.live="statusFilter"]', 'processing');
-    $page->wait(1);
-
     $page->click('Select All');
-    $page->wait(1);
-
     $page->assertSee('awards selected');
 });

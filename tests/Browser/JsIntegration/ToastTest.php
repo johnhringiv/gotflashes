@@ -23,7 +23,6 @@ it('shows success toast after flash save', function () {
         comp.set('event_type', 'practice');
         comp.call('save');
     ");
-    $page->wait(2);
 
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'logged');
@@ -56,7 +55,6 @@ it('shows warning toast when logging 6th non-sailing day', function () {
         comp.set('activity_type', 'maintenance');
         comp.call('save');
     ");
-    $page->wait(3);
 
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertSeeIn('#toast-container', 'non-sailing');
@@ -78,7 +76,6 @@ it('toast carries correct alert class (dynamic class safelist)', function () {
         comp.set('activity_type', 'maintenance');
         comp.call('save');
     ");
-    $page->wait(3);
 
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertAttributeContains('#toast-container .alert', 'class', 'alert-warning');

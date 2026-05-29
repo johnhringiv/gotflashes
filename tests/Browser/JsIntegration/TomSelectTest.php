@@ -49,7 +49,6 @@ describe('TomSelect on profile', function () {
         $page = visit('/profile');
         $fleetId = $this->fleet->id;
         $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$fleetId}')");
-        $page->wait(1);
         $page->assertScript(
             "document.querySelector('#district-select').tomselect.getValue() !== ''",
             true

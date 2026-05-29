@@ -45,20 +45,14 @@ it('downloads CSV via Export', function () {
 
     // Select an award
     $page->click('table tbody tr:first-child input[type="checkbox"]');
-    $page->wait(1);
-
     // Click "Export CSV" in bulk action bar
     $page->click('Export CSV');
-    $page->wait(1);
-
     // Confirmation modal should appear
     $page->assertSee('Export to CSV');
     $page->assertSee('CSV file will include names');
 
     // Click export in modal
     $page->click('.modal-action button.btn-primary, dialog button.btn-primary');
-    $page->wait(2);
-
     // The CSV export triggers a streamDownload response.
     // In browser tests, we verify the modal appeared and the button was clickable.
     // The actual download is handled by the Livewire component's exportToCsv method,

@@ -72,8 +72,6 @@ describe('flatpickr calendar', function () {
             const fp = document.querySelector('#date-picker')._flatpickr;
             fp.jumpToDate('2027-01-10');
         ");
-        $page->wait(1);
-
         $page->assertScript('document.querySelectorAll(".flatpickr-calendar.open .flatpickr-day.has-entry").length > 0', true);
     });
 

@@ -31,8 +31,6 @@ it('registering with district/fleet shows them on /profile', function () {
     $page->script("document.querySelector('#district-select').tomselect.setValue('{$district->id}')");
     $page->wait(1);
     $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$fleet->id}')");
-    $page->wait(1);
-
     // Remove required from selects and submit
 
     $page->pressAndWaitFor('Register', 8)

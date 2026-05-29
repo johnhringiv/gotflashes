@@ -20,7 +20,6 @@ function e2eSubmitNonSailingFlash($page, string $activityType, string $date): vo
         comp.set('activity_type', '{$activityType}');
         comp.call('save');
     ");
-    $page->wait(3);
 }
 
 it('shows warning toast when logging 6th non-sailing day', function () {
