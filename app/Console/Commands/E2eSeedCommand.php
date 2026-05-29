@@ -21,7 +21,7 @@ class E2eSeedCommand extends Command
 
     protected $description = 'Seed test data for Playwright E2E tests';
 
-    private string $password = 'Password123!';
+    private const PASSWORD = 'Password123!';
 
     public function handle(): int
     {
@@ -79,7 +79,7 @@ class E2eSeedCommand extends Command
             [
                 'first_name' => 'Fresh',
                 'last_name' => 'Start',
-                'password' => Hash::make($this->password),
+                'password' => Hash::make(self::PASSWORD),
                 'email_verified_at' => now(),
                 'date_of_birth' => '1990-01-15',
                 'gender' => 'prefer_not_to_say',
@@ -130,7 +130,7 @@ class E2eSeedCommand extends Command
     private function seedTiered(int $year): void
     {
         $thresholds = [9, 10, 24, 25, 49, 50];
-        $district = District::first();
+        $district = District::firstOrFail();
         $fleet = Fleet::where('district_id', $district->id)->first();
 
         foreach ($thresholds as $count) {
@@ -140,7 +140,7 @@ class E2eSeedCommand extends Command
                 [
                     'first_name' => "Tier{$count}",
                     'last_name' => 'User',
-                    'password' => Hash::make($this->password),
+                    'password' => Hash::make(self::PASSWORD),
                     'email_verified_at' => now(),
                     'date_of_birth' => '1985-06-15',
                     'gender' => 'prefer_not_to_say',
@@ -194,7 +194,7 @@ class E2eSeedCommand extends Command
                 [
                     'first_name' => "Sailor{$i}",
                     'last_name' => 'Leaderboard',
-                    'password' => Hash::make($this->password),
+                    'password' => Hash::make(self::PASSWORD),
                     'email_verified_at' => now(),
                     'date_of_birth' => '1990-01-01',
                     'gender' => 'prefer_not_to_say',
@@ -231,7 +231,7 @@ class E2eSeedCommand extends Command
     private function seedTiedRanks(int $year): void
     {
         $this->seedBase($year);
-        $district = District::first();
+        $district = District::firstOrFail();
         $fleet = Fleet::where('district_id', $district->id)->first();
 
         // Pair 1: same qualifying total (25), different sailing counts
@@ -259,7 +259,7 @@ class E2eSeedCommand extends Command
     {
         $user = User::where('email', 'delivered+regular@resend.dev')->first();
         if (! $user) {
-            $district = District::first();
+            $district = District::firstOrFail();
             $fleet = Fleet::where('district_id', $district->id)->first();
             $user = $this->createCanonicalUser('delivered+regular@resend.dev', 'Reggie', 'Sailor', $district->id, $fleet->id, $year);
         }
@@ -316,7 +316,7 @@ class E2eSeedCommand extends Command
             [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'password' => Hash::make($this->password),
+                'password' => Hash::make(self::PASSWORD),
                 'email_verified_at' => $verified ? now() : null,
                 'date_of_birth' => '1990-01-15',
                 'gender' => 'prefer_not_to_say',

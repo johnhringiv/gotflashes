@@ -55,8 +55,9 @@ it('marks selected awards as Processing with confirmation', function () {
 
     // Confirm the action
     $page->click('.modal-action button.btn-info, dialog button.btn-info');
-    // Should show success message
-    $page->assertSee('processing');
+    // Wait for the Livewire round-trip to persist (success toast) before the DB read.
+    // Scope to the toast container so it can't match the modal body's "processing".
+    $page->assertSeeIn('#toast-container', 'marked as processing');
 
     // Verify in database
     $fulfillment = AwardFulfillment::where('user_id', $this->sailor->id)

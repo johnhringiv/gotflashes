@@ -87,6 +87,7 @@ it('counts the first 5 non-sailing days toward awards but not the 6th', function
     $this->actingAs($user);
     $page = visit('/logbook');
 
-    $page->assertSee('7');
+    // The qualifying-day breakdown is the specific assertion; a bare '7' would
+    // match dates/ids elsewhere on the page.
     $page->assertSee('2 sailing + 5 non-sailing');
 });
