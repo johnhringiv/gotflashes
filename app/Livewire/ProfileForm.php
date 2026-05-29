@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Fleet;
 use App\Models\Member;
 use App\Rules\UserProfileRules;
 use App\Services\EmailVerificationService;
@@ -36,6 +37,8 @@ class ProfileForm extends Component
     public string $country = '';
 
     // Lightning Class Info (from current membership)
+    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
+    // until save() normalizes it to null after validation.
     public mixed $district_id = null;
 
     public mixed $fleet_id = null;
@@ -122,7 +125,7 @@ class ProfileForm extends Component
                 $districtChanged = $this->district_id !== $originalDistrict;
                 if ($districtChanged && $fleetRaw === null) {
                     $fail('Please select a fleet or choose None.');
-                } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                } elseif ($value !== null && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
                     // Every fleet belongs to a district, so the fleet must exist
                     // AND belong to the selected district — rejecting a cross-district
                     // fleet or a fleet with no district selected.

@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\District;
+use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
 use App\Rules\UserProfileRules;
@@ -43,6 +45,8 @@ class RegistrationForm extends Component
     public string $country = 'United States';
 
     // Lightning Class Info
+    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
+    // until register() normalizes it to null after validation.
     public mixed $district_id = null;
 
     public mixed $fleet_id = null;
@@ -60,7 +64,7 @@ class RegistrationForm extends Component
             function ($attr, $value, $fail) {
                 if (in_array($value, ['', null, 0, '0'], true)) {
                     $fail('Please select a district or choose Unaffiliated/None.');
-                } elseif ($value !== 'none' && ! \App\Models\District::where('id', $value)->exists()) {
+                } elseif ($value !== 'none' && ! District::where('id', $value)->exists()) {
                     $fail('The selected district is invalid.');
                 }
             },
@@ -69,7 +73,7 @@ class RegistrationForm extends Component
             function ($attr, $value, $fail) {
                 if (in_array($value, ['', null, 0, '0'], true)) {
                     $fail('Please select a fleet or choose None.');
-                } elseif ($value !== 'none' && ! \App\Models\Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                } elseif ($value !== 'none' && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
                     // Every fleet belongs to a district, so the fleet must exist
                     // AND belong to the selected district. This rejects both a
                     // cross-district fleet and a fleet with no district selected

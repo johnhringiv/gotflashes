@@ -33,6 +33,14 @@ class MailAllowlistProvider extends ServiceProvider
         );
         $allowed = array_filter(array_map('strtolower', $allowed));
 
+        if ($allowed === []) {
+            // Enabled but no domains configured would block ALL mail; warn and
+            // skip enforcement rather than silently swallowing every send.
+            Log::warning('MailAllowlistProvider enabled but MAIL_ALLOWED_DOMAINS is empty; skipping enforcement.');
+
+            return;
+        }
+
         Event::listen(MessageSending::class, function (MessageSending $event) use ($allowed) {
             $message = $event->message;
             $recipients = array_merge(

@@ -131,7 +131,7 @@ class E2eSeedCommand extends Command
     {
         $thresholds = [9, 10, 24, 25, 49, 50];
         $district = District::firstOrFail();
-        $fleet = Fleet::where('district_id', $district->id)->first();
+        $fleet = Fleet::where('district_id', $district->id)->firstOrFail();
 
         foreach ($thresholds as $count) {
             $email = "delivered+tier{$count}@resend.dev";
@@ -232,7 +232,7 @@ class E2eSeedCommand extends Command
     {
         $this->seedBase($year);
         $district = District::firstOrFail();
-        $fleet = Fleet::where('district_id', $district->id)->first();
+        $fleet = Fleet::where('district_id', $district->id)->firstOrFail();
 
         // Pair 1: same qualifying total (25), different sailing counts
         // User A: 25 sailing + 0 non-sailing = 25 qualifying (25 sailing)
@@ -260,7 +260,7 @@ class E2eSeedCommand extends Command
         $user = User::where('email', 'delivered+regular@resend.dev')->first();
         if (! $user) {
             $district = District::firstOrFail();
-            $fleet = Fleet::where('district_id', $district->id)->first();
+            $fleet = Fleet::where('district_id', $district->id)->firstOrFail();
             $user = $this->createCanonicalUser('delivered+regular@resend.dev', 'Reggie', 'Sailor', $district->id, $fleet->id, $year);
         }
 

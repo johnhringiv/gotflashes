@@ -9,34 +9,38 @@ $publicPaths = ['/', '/leaderboard', '/login', '/register', '/password/reset'];
 $authPaths = ['/logbook', '/profile'];
 $adminPaths = ['/admin/fulfillment', '/admin/sailor-logs'];
 
-function e2eCheckStructure($page): void
-{
-    $page->assertPresent('meta[charset]');
-    $page->assertPresent('meta[name="viewport"]');
-    $page->assertScript('document.querySelectorAll("nav").length >= 1', true);
-    $page->assertScript('document.querySelectorAll("main").length', 1);
-    $page->assertScript('document.querySelectorAll("h1").length', 1);
-    $page->assertScript('document.querySelectorAll("img:not([alt])").length', 0);
-}
+// Guarded against redeclaration: Pest loads test files into a shared scope, so
+// a same-named helper in another file would otherwise fatal.
+if (! function_exists('e2eCheckStructure')) {
+    function e2eCheckStructure($page): void
+    {
+        $page->assertPresent('meta[charset]');
+        $page->assertPresent('meta[name="viewport"]');
+        $page->assertScript('document.querySelectorAll("nav").length >= 1', true);
+        $page->assertScript('document.querySelectorAll("main").length', 1);
+        $page->assertScript('document.querySelectorAll("h1").length', 1);
+        $page->assertScript('document.querySelectorAll("img:not([alt])").length', 0);
+    }
 
-function e2eCheckW3C($page, string $validatorUrl): void
-{
-    try {
-        $html = $page->content();
-        $response = Http::withBody($html, 'text/html; charset=utf-8')
-            ->post("{$validatorUrl}/?out=json");
+    function e2eCheckW3C($page, string $validatorUrl): void
+    {
+        try {
+            $html = $page->content();
+            $response = Http::withBody($html, 'text/html; charset=utf-8')
+                ->post("{$validatorUrl}/?out=json");
 
-        if ($response->ok()) {
-            $errors = collect($response->json('messages', []))
-                ->filter(fn ($m) => ($m['type'] ?? '') === 'error')
-                // Livewire adds non-standard attributes that validator.nu flags
-                ->reject(fn ($m) => str_contains($m['message'] ?? '', 'wire:'))
-                ->values();
+            if ($response->ok()) {
+                $errors = collect($response->json('messages', []))
+                    ->filter(fn ($m) => ($m['type'] ?? '') === 'error')
+                    // Livewire adds non-standard attributes that validator.nu flags
+                    ->reject(fn ($m) => str_contains($m['message'] ?? '', 'wire:'))
+                    ->values();
 
-            expect($errors)->toBeEmpty('W3C errors: '.$errors->pluck('message')->join('; '));
+                expect($errors)->toBeEmpty('W3C errors: '.$errors->pluck('message')->join('; '));
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException) {
+            test()->markTestSkipped("HTML validator not available at {$validatorUrl}");
         }
-    } catch (\Illuminate\Http\Client\ConnectionException) {
-        test()->markTestSkipped("HTML validator not available at {$validatorUrl}");
     }
 }
 

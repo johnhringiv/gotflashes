@@ -21,7 +21,7 @@ New users create accounts with the following information:
 
 **Affiliation Fields (selection required, "Unaffiliated/None" valid):**
 - District (Lightning Class geographic region, or "Unaffiliated/None")
-- Fleet (dynamically filtered by selected district, or "None")
+- Fleet (dynamically filtered by selected district, or "None"). Every fleet belongs to a district, so a fleet can only be chosen when a district is selected — a fleet without its district is rejected.
 
 **Optional Fields:**
 - Yacht Club
