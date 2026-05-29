@@ -177,63 +177,55 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- District -->
-    <div class="mb-6 @error('district_id') ts-has-error @enderror">
-        <label class="form-control w-full">
-            <div class="label">
-                <span class="label-text flex items-center gap-1">
-                    District
-                    <div class="tooltip tooltip-right" data-tip="Select 'Unaffiliated/None' if you're not in a district">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </span>
+    <div class="mb-6 floating-label-visible @error('district_id') ts-has-error @enderror">
+        <div wire:ignore>
+            <select name="district_id"
+                    id="{{ $districtSelectId }}"
+                    class="select select-bordered w-full"
+                    data-value="{{ $this->district_id }}"
+                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+                <option value="">Select district...</option>
+            </select>
+        </div>
+        <label class="flex items-center gap-1">
+            District
+            <div class="tooltip tooltip-right" data-tip="Select 'Unaffiliated/None' if you're not in a district">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
-            <div wire:ignore>
-                <select name="district_id"
-                        id="{{ $districtSelectId }}"
-                        class="select select-bordered"
-                        data-value="{{ $this->district_id }}"
-                        data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
-                    <option value="">Select district...</option>
-                </select>
-            </div>
-            @error('district_id')
-                <div class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </div>
-            @enderror
         </label>
+        @error('district_id')
+            <div class="label">
+                <span class="label-text-alt text-error">{{ $message }}</span>
+            </div>
+        @enderror
     </div>
 
     <!-- Fleet -->
-    <div class="mb-6 @error('fleet_id') ts-has-error @enderror">
-        <label class="form-control w-full">
-            <div class="label">
-                <span class="label-text flex items-center gap-1">
-                    Fleet
-                    <div class="tooltip tooltip-right" data-tip="Search by name or number, or select 'None' if unaffiliated">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </span>
+    <div class="mb-6 floating-label-visible @error('fleet_id') ts-has-error @enderror">
+        <div wire:ignore>
+            <select name="fleet_id"
+                    id="{{ $fleetSelectId }}"
+                    class="select select-bordered w-full"
+                    data-value="{{ $this->fleet_id }}"
+                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+                <option value="">Select fleet...</option>
+            </select>
+        </div>
+        <label class="flex items-center gap-1">
+            Fleet
+            <div class="tooltip tooltip-right" data-tip="Search by name or number, or select 'None' if unaffiliated">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
-            <div wire:ignore>
-                <select name="fleet_id"
-                        id="{{ $fleetSelectId }}"
-                        class="select select-bordered"
-                        data-value="{{ $this->fleet_id }}"
-                        data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
-                    <option value="">Select fleet...</option>
-                </select>
-            </div>
-            @error('fleet_id')
-                <div class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </div>
-            @enderror
         </label>
+        @error('fleet_id')
+            <div class="label">
+                <span class="label-text-alt text-error">{{ $message }}</span>
+            </div>
+        @enderror
     </div>
 </div>
 
