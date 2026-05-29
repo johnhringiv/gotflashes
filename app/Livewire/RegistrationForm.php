@@ -69,18 +69,12 @@ class RegistrationForm extends Component
             function ($attr, $value, $fail) {
                 if (in_array($value, ['', null, 0, '0'], true)) {
                     $fail('Please select a fleet or choose None.');
-                } elseif ($value !== 'none') {
-                    // Fleet must exist; and when a real district is selected, the
-                    // fleet must belong to it (mirrors the frontend's district→fleet
-                    // filtering). With no district ('none'), any valid fleet is
-                    // allowed — fleet-only membership is supported.
-                    $query = \App\Models\Fleet::where('id', $value);
-                    if (! in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
-                        $query->where('district_id', $this->district_id);
-                    }
-                    if (! $query->exists()) {
-                        $fail('The selected fleet is invalid.');
-                    }
+                } elseif ($value !== 'none' && ! \App\Models\Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // Every fleet belongs to a district, so the fleet must exist
+                    // AND belong to the selected district. This rejects both a
+                    // cross-district fleet and a fleet with no district selected
+                    // (the frontend filters by district and auto-sets it).
+                    $fail('The selected fleet is invalid.');
                 }
             },
         ];

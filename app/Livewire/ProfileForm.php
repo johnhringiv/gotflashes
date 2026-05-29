@@ -122,17 +122,11 @@ class ProfileForm extends Component
                 $districtChanged = $this->district_id !== $originalDistrict;
                 if ($districtChanged && $fleetRaw === null) {
                     $fail('Please select a fleet or choose None.');
-                } elseif ($value !== null) {
-                    // Fleet must exist; and when a real district is selected, the
-                    // fleet must belong to it (mirrors the frontend filtering).
-                    // With no district, any valid fleet is allowed (fleet-only).
-                    $query = \App\Models\Fleet::where('id', $value);
-                    if ($this->district_id !== null) {
-                        $query->where('district_id', $this->district_id);
-                    }
-                    if (! $query->exists()) {
-                        $fail('The selected fleet is invalid.');
-                    }
+                } elseif ($value !== null && ! \App\Models\Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // Every fleet belongs to a district, so the fleet must exist
+                    // AND belong to the selected district — rejecting a cross-district
+                    // fleet or a fleet with no district selected.
+                    $fail('The selected fleet is invalid.');
                 }
             },
         ];
