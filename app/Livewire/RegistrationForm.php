@@ -91,9 +91,19 @@ class RegistrationForm extends Component
         // Livewire's resetErrorBag([]) wipes the entire bag in that case.
         if ($propertyName === 'password' || $propertyName === 'password_confirmation') {
             $this->validateOnly('password');
-        } else {
-            $this->validateOnly($propertyName);
+
+            return;
         }
+
+        // District/fleet are cleared programmatically (picking a district clears
+        // the fleet), so don't flag them while empty — that would error an
+        // untouched field. They still validate on submit.
+        if (in_array($propertyName, ['district_id', 'fleet_id'], true)
+            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            return;
+        }
+
+        $this->validateOnly($propertyName);
     }
 
     public function register()

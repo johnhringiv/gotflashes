@@ -86,6 +86,14 @@ class ProfileForm extends Component
 
     public function updated($propertyName)
     {
+        // District/fleet are cleared programmatically (picking a district clears
+        // the fleet), so don't flag them while empty — that would error an
+        // untouched field. They still validate on save.
+        if (in_array($propertyName, ['district_id', 'fleet_id'], true)
+            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            return;
+        }
+
         // Validate the field that was just updated
         $this->validateOnly($propertyName);
     }
