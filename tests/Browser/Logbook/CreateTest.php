@@ -200,3 +200,44 @@ it('rejects duplicate dates for the same user', function () {
     // Should see a duplicate date error
     $page->assertSee('already have activities logged');
 });
+
+it('clears validation errors as fields are corrected', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $page = visit('/logbook');
+
+    // Submit with nothing filled — validation errors on date(s) and activity type.
+    $page->press('Log Activity');
+    $page->assertAttributeContains('#date-picker', 'class', 'input-error');
+    $page->assertAttributeContains('#activity_type', 'class', 'select-error');
+
+    // Selecting an activity type (wire:model.live) clears its error; the
+    // untouched date field keeps its error.
+    $page->select('#activity_type', 'sailing');
+    $page->assertAttributeDoesntContain('#activity_type', 'class', 'select-error');
+    $page->assertAttributeContains('#date-picker', 'class', 'input-error');
+
+    // Picking a date clears the date error too.
+    $page->click('#date-picker');
+    $page->script("document.querySelector('.flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay)').click()");
+    $page->script("document.querySelector('#date-picker')._flatpickr.close()");
+    $page->assertAttributeDoesntContain('#date-picker', 'class', 'input-error');
+});
+
+it('clears the sailing-type error when activity type changes away from sailing', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $page = visit('/logbook');
+
+    // Sailing selected, date + sailing type left blank, then submit.
+    $page->select('#activity_type', 'sailing');
+    $page->press('Log Activity');
+    $page->assertAttributeContains('#sailing_type', 'class', 'select-error');
+
+    // Switching activity type away from sailing clears the now-irrelevant
+    // sailing-type (event_type) error.
+    $page->select('#activity_type', 'maintenance');
+    $page->assertAttributeDoesntContain('#sailing_type', 'class', 'select-error');
+});

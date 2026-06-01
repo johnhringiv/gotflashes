@@ -42,6 +42,22 @@ if (! function_exists('e2eCheckStructure')) {
             test()->markTestSkipped("HTML validator not available at {$validatorUrl}");
         }
     }
+
+    function e2eAssertNoTooltipOverflow($page): void
+    {
+        // At a mobile width, force every DaisyUI tooltip bubble visible (they only
+        // render on :hover, which synthetic events can't trigger), then assert that
+        // doing so didn't widen the page. We compare against a baseline captured
+        // with tooltips closed so pre-existing horizontal overflow (e.g. a wide
+        // admin table) isn't mistaken for a tooltip problem — we only catch overflow
+        // the tooltips themselves introduce. NOTE: a tooltip inside an
+        // overflow-x-auto container (e.g. leaderboard table headers) scrolls within
+        // the table rather than widening the document, so it isn't asserted here.
+        $page->resize(390, 844);
+        $page->script('window.__baseScrollWidth = document.documentElement.scrollWidth');
+        $page->script("document.querySelectorAll('.tooltip').forEach(el => el.classList.add('tooltip-open'))");
+        $page->assertScript('document.documentElement.scrollWidth <= window.__baseScrollWidth', true);
+    }
 }
 
 foreach ($publicPaths as $path) {
@@ -75,4 +91,36 @@ foreach ($adminPaths as $path) {
     });
 
     it("passes W3C validation on {$path} (admin)")->skip('Fix HTML errors first — see #34');
+}
+
+// Mobile tooltip-overflow regression guard (pages that render tooltips).
+$tooltipPublicPaths = ['/register', '/leaderboard'];
+$tooltipAuthPaths = ['/logbook', '/profile'];
+$tooltipAdminPaths = ['/admin/sailor-logs', '/admin/fulfillment'];
+
+foreach ($tooltipPublicPaths as $path) {
+    it("has no tooltip overflow at mobile width on {$path}", function () use ($path) {
+        $page = visit($path);
+        e2eAssertNoTooltipOverflow($page);
+    });
+}
+
+foreach ($tooltipAuthPaths as $path) {
+    it("has no tooltip overflow at mobile width on {$path} (auth)", function () use ($path) {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $page = visit($path);
+        e2eAssertNoTooltipOverflow($page);
+    });
+}
+
+foreach ($tooltipAdminPaths as $path) {
+    it("has no tooltip overflow at mobile width on {$path} (admin)", function () use ($path) {
+        $user = User::factory()->create();
+        $user->is_admin = true;
+        $user->save();
+        $this->actingAs($user);
+        $page = visit($path);
+        e2eAssertNoTooltipOverflow($page);
+    });
 }

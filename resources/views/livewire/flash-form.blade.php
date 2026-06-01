@@ -51,7 +51,7 @@
                     <div class="label">
                         <span class="label-text">Activity Type</span>
                     </div>
-                    <select wire:model.defer="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
+                    <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
                         <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
                         <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
@@ -71,14 +71,14 @@
                     <div class="label">
                         <span class="label-text flex items-center gap-1" id="sailing-type-label">
                             Sailing Type
-                            <div class="tooltip tooltip-right" data-tip="Helps the Class understand our constituents">
+                            <div class="tooltip tooltip-right tooltip-clamp" data-tip="Helps the Class understand our constituents">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                         </span>
                     </div>
-                    <select wire:model.defer="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
+                    <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
                             class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
                             {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
                         <option value="" disabled {{ $event_type ? '' : 'selected' }}>

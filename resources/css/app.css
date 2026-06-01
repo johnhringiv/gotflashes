@@ -167,9 +167,12 @@
     pointer-events: auto;
 }
 
-/* Cap the hint bubble's width so the (tooltip-right) bubble doesn't run off the
-   right edge of a narrow mobile viewport; it wraps to a few lines instead. */
-.floating-label-visible label .tooltip::before {
+/* Cap specific tooltip-right hints that would otherwise run off the right edge
+   on a narrow mobile viewport (district/fleet fields + any element marked
+   .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
+   Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
+.floating-label-visible label .tooltip::before,
+.tooltip-clamp::before {
     max-width: 12rem;
 }
 
