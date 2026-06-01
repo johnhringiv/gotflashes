@@ -51,6 +51,9 @@
                     <div class="label">
                         <span class="label-text">Activity Type</span>
                     </div>
+                    {{-- .live (not .defer): syncs on change so updated() can clear this field's
+                         validation error in real time. Worth the per-change render() since the
+                         existingDates query it triggers is cached per request. --}}
                     <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
                         <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>

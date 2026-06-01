@@ -58,7 +58,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Resend verification or cancel email changes
   - Real-time validation ensures data quality
 - **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
-- **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Progress Tracking**: Visual progress bars and award badges (10/25/50-day tiers) on your dashboard
 - **Award Fulfillment Dashboard** (Admin only): Manage physical award mailings
   - Track award status: Earned → Processing → Sent
   - Batch operations with checkbox selection
@@ -224,8 +224,10 @@ composer test
 
 **Test Organization:**
 - `tests/Feature/` - Full HTTP request/response workflows
+- `tests/Browser/` - End-to-end browser tests (Pest 4 + Playwright)
 - `tests/Unit/` - Individual components in isolation
-- All tests use `RefreshDatabase` for clean state
+- `tests/js/` - Vitest JavaScript unit tests
+- Feature/Unit tests use `RefreshDatabase`; browser tests use `LazilyRefreshDatabase`
 
 ### Code Quality & Linting
 
@@ -310,7 +312,9 @@ gotflashes/
 │   └── framework/          # Framework cache, sessions, views
 ├── tests/
 │   ├── Feature/            # Feature tests (HTTP workflows)
-│   └── Unit/               # Unit tests (isolated logic)
+│   ├── Browser/            # End-to-end browser tests (Pest 4 + Playwright)
+│   ├── Unit/               # Unit tests (isolated logic)
+│   └── js/                 # Vitest JavaScript tests
 ├── .github/                # GitHub Actions workflows
 ├── composer.json           # PHP dependencies
 ├── package.json            # Node dependencies
@@ -325,7 +329,7 @@ gotflashes/
 ## Documentation
 
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
-- **[Membership Year-End Logic](docs/membership-year-end-logic.md)**: Year-specific membership system documentation
+- **[Year-Specific Membership Logic](docs/membership-year-end-logic.md)**: Per-year district/fleet membership system with carry-forward
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
 ## Configuration

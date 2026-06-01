@@ -302,13 +302,19 @@ class AdminAwardsDashboardTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
+        // Pin emails explicitly: the dashboard search matches name OR email, and the
+        // factory default (fake()->unique()->safeEmail()) can randomly produce an email
+        // containing "john" for Jane — which would match the "John" search below and make
+        // this test flaky. Deterministic emails keep the search term from colliding.
         $user1 = User::factory()->create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'email' => 'john.doe@example.com',
         ]);
         $user2 = User::factory()->create([
             'first_name' => 'Jane',
             'last_name' => 'Smith',
+            'email' => 'jane.smith@example.com',
         ]);
 
         // Both users earn 10-day awards

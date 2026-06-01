@@ -8,18 +8,22 @@ beforeEach(function () {
     $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
 });
 
-function e2eSubmitNonSailingFlash($page, string $activityType, string $date): void
-{
-    // Use Livewire direct call — the flatpickr + wire:model.defer combo doesn't
-    // reliably sync dates/activity_type when using UI interactions
-    $page->script("
-        const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
-        const wireId = formEl.getAttribute('wire:id');
-        const comp = Livewire.find(wireId);
-        comp.set('dates', ['{$date}']);
-        comp.set('activity_type', '{$activityType}');
-        comp.call('save');
-    ");
+// Guarded against redeclaration: Pest loads test files into a shared scope, so
+// a same-named helper in another file would otherwise fatal.
+if (! function_exists('e2eSubmitNonSailingFlash')) {
+    function e2eSubmitNonSailingFlash($page, string $activityType, string $date): void
+    {
+        // Use a direct Livewire call — flatpickr doesn't reliably sync the
+        // selected dates to Livewire via UI interaction in tests.
+        $page->script("
+            const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
+            const wireId = formEl.getAttribute('wire:id');
+            const comp = Livewire.find(wireId);
+            comp.set('dates', ['{$date}']);
+            comp.set('activity_type', '{$activityType}');
+            comp.call('save');
+        ");
+    }
 }
 
 it('shows warning toast when logging 6th non-sailing day', function () {

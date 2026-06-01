@@ -115,7 +115,7 @@ The following activities may count toward your annual total:
 
 **Award Calculation:**
 - **Qualifying Days** = Sailing Days + Logged Non-Sailing Days (up to 5 per year)
-- All logged activities count toward awards (system prevents logging ineligible activities)
+- Sailing days always count; non-sailing days count toward awards only up to the first 5 per year
 - Awards are based on calendar year (January 1 - December 31)
 
 **Date Restrictions:**
@@ -132,9 +132,9 @@ The following activities may count toward your annual total:
 
 ### 2.2 Award Tiers
 Participants earn recognition at the following annual milestones:
-- **10 days**: First tier award (badge image: `got-10-badge.png`)
-- **25 days**: Second tier award (badge image: `got-25-badge.png`)
-- **50+ days**: Third tier award (badge image: `got-50-badge.png`, including Burgee eligibility with burgee image: `burgee-50.jpg`)
+- **10 days**: First tier award (badge image: `got_10_transparent.png`)
+- **25 days**: Second tier award (badge image: `got_25_transparent.png`)
+- **50+ days**: Third tier award (badge image: `got_50_transparent.png`, including Burgee eligibility with burgee image: `burgee_50_transparent.png`)
 
 **Award Badge Display:**
 - Award badges are displayed as images, not text labels
@@ -206,9 +206,9 @@ Users should see their current annual progress:
 
 **Progress Display Thresholds:**
 - Below 10 days: No award badges shown (not even empty placeholders)
-- At 10 days: Bronze badge (10-day award) appears
-- At 25 days: Bronze and Silver badges appear
-- At 50+ days: All three badges appear (Bronze, Silver, Gold)
+- At 10 days: 10-day badge appears
+- At 25 days: 10-day and 25-day badges appear
+- At 50+ days: All three badges appear (10-day, 25-day, 50-day)
 - "Next Award" indicator shows:
   - Below 10 days: "10 days" with days remaining countdown (e.g., "3 days to go")
   - At 10-24 days: "25 days" with days remaining countdown
@@ -228,14 +228,14 @@ Public leaderboards to encourage friendly competition and community engagement.
 
 **Three Leaderboard Types:**
 1. **Sailor (Individual)**: Rank sailors by total qualifying days
-   - Display: Rank, Name, Days Logged, Fleet, District, Yacht Club
+   - Display: Rank, Name, District, Fleet #, Yacht Club, Days Sailed
    - Only includes users with at least one activity in current year
 2. **Fleet**: Rank fleets by total days logged by fleet members
-   - Display: Rank, Fleet Number, Fleet Name, Total Days, Member Count
+   - Display: Rank, Fleet # (fleet number and name combined), Sailors, Days Sailed
    - Only includes fleets with at least one member who has activities in current year
    - Unaffiliated users (no fleet) are excluded
 3. **District**: Rank districts by total days logged by district members
-   - Display: Rank, District Name, Total Days, Member Count
+   - Display: Rank, District, Sailors, Days Sailed
    - Only includes districts with at least one member who has activities in current year
    - Unaffiliated users (no district) are excluded
 
@@ -270,6 +270,7 @@ The award fulfillment system provides administrators with tools to manage the ph
 - Search by participant name or email
 - Export selected awards to CSV for mailing label generation
 - Discrepancy warnings when participants drop below award thresholds after processing
+- Marking an award as **Sent** emails the participant a notification that their award has been mailed (sent only to users with a verified email; delivery failures are logged and do not block the status change)
 
 **Data Displayed:**
 - Participant name, email, and mailing address
@@ -335,14 +336,13 @@ Admin users only.
 
 ### Potential Enhancements (Out of Scope for Initial Release)
 - Email notifications to award administrators when users reach award thresholds
-- Email notifications to users when they earn awards
 - **Historical year views**: Summary of each previous year's achievements, total days and awards earned per year, complete activity logs from prior years (read-only), with only current year activities counting toward current year awards
-- Export activity reports to PDF or CSV
 - Award certificates (downloadable PDFs)
 - Social sharing features
+- **Branding**: U32 image + transparent images without the barcode
 ---
 
-## 8. Success Metrics
+## 9. Success Metrics
 
 ### Key Performance Indicators
 - Number of registered participants year-over-year
@@ -366,12 +366,6 @@ Admin users only.
 
 ---
 
-## 9. Open Questions for Stakeholders
-
-1. **Name of Awards**: What are the specific names/types of awards for each tier (10, 25, 50 days)?
-2. **Branding**: U32 Image + transparent images without the barcode
----
-
 ## Document Control
 
-**Last Updated**: October 29, 2025
+**Last Updated**: June 1, 2026

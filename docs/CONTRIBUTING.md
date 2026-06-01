@@ -74,7 +74,7 @@ The project uses automated pre-commit hooks via Husky. If checks fail, your comm
 - **PHP**: Laravel Pint (PSR-12) + PHPStan level 5
 - **JavaScript**: ESLint
 - **CSS**: Stylelint
-- **Testing**: PHPUnit (168+ tests)
+- **Testing**: PHPUnit (feature + unit) and Pest 4 browser tests
 
 ### Testing
 
@@ -122,6 +122,22 @@ php artisan e2e:seed --scenario=base --reset
 | `delivered+admin@resend.dev` | Admin user |
 | `delivered+fresh@resend.dev` | No flashes, no affiliations |
 | `delivered+unverified@resend.dev` | Unverified email |
+
+### Email in Development (Mail Allowlist)
+
+To prevent accidentally emailing real addresses from dev/staging, `MailAllowlistProvider`
+intercepts every outgoing message and **silently drops** any whose recipient domain is not
+on an allowlist (blocked sends are logged to the `security` channel). This is a development
+safety net only — it is not a product feature.
+
+- **Enabled by default in non-production** (`local`, `staging`, `testing`); **off in production**.
+- Override with `MAIL_ALLOWLIST_ENABLED` (`true`/`false`). An empty/unset value keeps the
+  default (enforce outside production).
+- `MAIL_ALLOWED_DOMAINS` is a comma-separated domain list; it defaults to `resend.dev`, which
+  is why the canonical test users above use `@resend.dev` addresses (their mail is delivered).
+
+To send to a different domain locally, add it to `MAIL_ALLOWED_DOMAINS`, or set
+`MAIL_ALLOWLIST_ENABLED=false` to disable the guard entirely.
 
 ## Branching Strategy
 
@@ -209,7 +225,7 @@ Fixed:
 
 Technical:
 - Optimized database queries with proper date filtering
-- Added 4 new test cases (186 tests total)
+- Expanded test coverage for multi-date entry and grace-period boundaries
 ```
 
 ## Pull Request Process
