@@ -139,6 +139,21 @@ return [
             'formatter' => Monolog\Formatter\JsonFormatter::class,
         ],
 
+        // Database backup logging
+        'backup' => [
+            'driver' => 'stack',
+            'channels' => ['backup_file', 'stdout'],
+            'ignore_exceptions' => false,
+        ],
+
+        'backup_file' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/backup.log'),
+            'level' => 'info',
+            'days' => 90,
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+        ],
+
         // Database query logging
         'query' => [
             'driver' => 'stack',

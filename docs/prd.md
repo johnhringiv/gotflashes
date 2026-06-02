@@ -322,6 +322,16 @@ Admin users only.
 - Historical data retained indefinitely (read-only after grace period)
 - One activity per date per user (duplicate prevention enforced)
 
+#### Database Backup
+- **Purpose**: Daily local-disk backup of the SQLite database using SQLite3's native backup API (WAL-mode-aware, produces a consistent snapshot even with active journaling)
+- **Schedule**: Runs daily at 02:00 via `Schedule::command('db:backup')->daily()->at('02:00')` in `routes/console.php` (the Docker `scheduler` process runs `schedule:run` every 60 seconds)
+- **Implementation**: `app/Console/Commands/BackupDatabase.php` (`php artisan db:backup`)
+- **Source**: `database_path('data/database.sqlite')`
+- **Output**: `storage_path('app/backups')/database-backup-{Y-m-d}.sqlite` (permissions `0640`)
+- **Validation**: Each backup is reopened read-only and verified with `PRAGMA integrity_check` before success is reported; a backup that fails the check is deleted and the command exits non-zero
+- **Retention**: 90 days (`RETENTION_DAYS` constant); the retention pass also removes orphaned `-wal`/`-shm` sidecar files. Pass `--no-cleanup` to skip retention
+- **Monitoring**: Successes and failures are logged to the `backup` log channel (`storage/logs/backup.log`); failures log at error level
+
 ### 7.3 Security
 - Secure user authentication and password protection
 - Email verification system with expiring tokens

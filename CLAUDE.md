@@ -37,7 +37,18 @@ APP_ENV=testing php artisan config:clear --ansi && APP_ENV=testing php artisan t
 php artisan migrate               # Run migrations
 php artisan migrate:fresh         # Fresh DB (destroys all data)
 php artisan tinker                # REPL for database interaction
+php artisan db:backup             # Backup SQLite DB to storage/app/backups (--no-cleanup skips retention)
 ```
+
+### Database Backup
+- Daily local-disk backup of the SQLite database using SQLite3's native backup API (WAL-mode-aware)
+- **Command**: `app/Console/Commands/BackupDatabase.php` (`php artisan db:backup`)
+- **Schedule**: `Schedule::command('db:backup')->daily()->at('02:00')` in `routes/console.php`; the Docker `scheduler` process (`docker/supervisord.conf`) runs `schedule:run` every 60 seconds
+- **Source**: `database_path('data/database.sqlite')` → **Output**: `storage_path('app/backups')/database-backup-{Y-m-d}.sqlite` (mode `0640`)
+- **Validation**: backup reopened read-only and checked with `PRAGMA integrity_check`; invalid backups are deleted and the command exits non-zero
+- **Retention**: 90 days (`RETENTION_DAYS`); retention pass also clears orphaned `-wal`/`-shm` files. `--no-cleanup` skips retention
+- **Monitoring**: success/failure logged to the `backup` channel (`storage/logs/backup.log`); failures at error level
+- Tests: `tests/Feature/BackupDatabaseTest.php`
 
 ### Making Admin Users
 ```bash
@@ -351,6 +362,7 @@ This allows tracking of:
   - CSV export for mailing labels
   - Filtering and search capabilities
   - Admin action logging
+- ✅ Automated daily SQLite database backups (validated, WAL-aware, 90-day retention, logged to `backup` channel)
 
 **Planned:**
 - 📋 Historical year views (read-only previous years)

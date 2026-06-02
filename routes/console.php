@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Daily database backup at 2:00 AM
+// Daily database backup at 2:00 AM (UTC)
 Schedule::command('db:backup')->daily()->at('02:00');

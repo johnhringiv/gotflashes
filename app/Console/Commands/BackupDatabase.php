@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use SQLite3;
 
 class BackupDatabase extends Command
@@ -18,9 +19,7 @@ class BackupDatabase extends Command
         $sourcePath = database_path('data/database.sqlite');
 
         if (! file_exists($sourcePath)) {
-            $this->error('Database file not found at: '.$sourcePath);
-
-            return Command::FAILURE;
+            return $this->failBackup('Database file not found at: '.$sourcePath, ['source' => $sourcePath]);
         }
 
         $date = now()->format('Y-m-d');
@@ -42,16 +41,49 @@ class BackupDatabase extends Command
 
             $source->backup($destination);
 
+            // The backup copies the source's WAL journal mode, which leaves
+            // -wal/-shm sidecars next to the file. Switching to DELETE mode
+            // checkpoints the journal into the main file and drops the
+            // sidecars, so the backup is a single self-contained .sqlite.
+            $destination->exec('PRAGMA journal_mode=DELETE');
+
             $source->close();
             $destination->close();
-        } catch (\Exception $e) {
-            $this->error('Failed to create backup: '.$e->getMessage());
 
-            return Command::FAILURE;
+            // Remove any sidecars left behind (defensive; DELETE mode should
+            // have already cleaned these up on close).
+            @unlink("{$backupPath}-wal");
+            @unlink("{$backupPath}-shm");
+        } catch (\Exception $e) {
+            @unlink($backupPath);
+
+            return $this->failBackup('Failed to create backup: '.$e->getMessage(), [
+                'source' => $sourcePath,
+                'backup' => $backupPath,
+                'exception' => $e->getMessage(),
+            ]);
         }
+
+        // Validate the backup is a readable SQLite database before reporting success.
+        // A corrupted backup is worse than no backup.
+        if (! $this->isValidBackup($backupPath)) {
+            @unlink($backupPath);
+
+            return $this->failBackup('Backup failed integrity check and was removed: '.$filename, [
+                'source' => $sourcePath,
+                'backup' => $backupPath,
+            ]);
+        }
+
+        // Restrict permissions: readable by owner/group only.
+        @chmod($backupPath, 0640);
 
         $size = round(filesize($backupPath) / 1024, 1);
         $this->info("Backup created: {$filename} ({$size} KB)");
+        Log::channel('backup')->info('Database backup created', [
+            'backup' => $backupPath,
+            'size_kb' => $size,
+        ]);
 
         // Cleanup old backups
         if (! $this->option('no-cleanup')) {
@@ -59,6 +91,35 @@ class BackupDatabase extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Reopen the backup read-only and verify it passes SQLite's integrity check.
+     */
+    private function isValidBackup(string $backupPath): bool
+    {
+        try {
+            $db = new SQLite3($backupPath, SQLITE3_OPEN_READONLY);
+            $result = $db->querySingle('PRAGMA integrity_check');
+            $db->close();
+
+            return $result === 'ok';
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Log an error and return a FAILURE exit code.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function failBackup(string $message, array $context = []): int
+    {
+        $this->error($message);
+        Log::channel('backup')->error($message, $context);
+
+        return Command::FAILURE;
     }
 
     private function cleanupOldBackups(): void
@@ -71,6 +132,9 @@ class BackupDatabase extends Command
             if (preg_match('/database-backup-(\d{4}-\d{2}-\d{2})\.sqlite$/', $file, $matches)) {
                 if ($matches[1] < $cutoffDate) {
                     unlink($file);
+                    // Remove orphaned WAL/SHM sidecar files if present.
+                    @unlink("{$file}-wal");
+                    @unlink("{$file}-shm");
                     $deleted++;
                 }
             }
@@ -78,6 +142,10 @@ class BackupDatabase extends Command
 
         if ($deleted > 0) {
             $this->info("Cleaned up {$deleted} backups older than {$cutoffDate}");
+            Log::channel('backup')->info('Cleaned up old backups', [
+                'deleted' => $deleted,
+                'cutoff' => $cutoffDate,
+            ]);
         }
     }
 }
