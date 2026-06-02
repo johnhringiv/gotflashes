@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ExportController extends Controller
@@ -76,7 +77,7 @@ class ExportController extends Controller
                     foreach ($flashes as $flash) {
                         // Format date as Y-m-d without time
                         // @phpstan-ignore-next-line
-                        $dateValue = $flash->date instanceof \Carbon\Carbon
+                        $dateValue = $flash->date instanceof Carbon
                             ? $flash->date->format('Y-m-d')
                             : $flash->date;
 

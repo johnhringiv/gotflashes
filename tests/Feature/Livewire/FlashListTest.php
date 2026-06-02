@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Livewire;
 
+use App\Livewire\FlashForm;
 use App\Livewire\FlashList;
 use App\Models\Flash;
 use App\Models\User;
@@ -340,7 +341,7 @@ class FlashListTest extends TestCase
 
         // Now test the edit form
         $formComponent = Livewire::actingAs($user)
-            ->test(\App\Livewire\FlashForm::class, ['flash' => $flash, 'submitText' => 'Update'])
+            ->test(FlashForm::class, ['flash' => $flash, 'submitText' => 'Update'])
             ->set('activity_type', 'maintenance')
             ->set('notes', 'Updated notes')
             ->call('save');

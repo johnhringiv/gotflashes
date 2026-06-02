@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the G.O.T. Flashes Challenge Trac
 
 ### Prerequisites
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher
 - Composer
 - Node.js & NPM
 - SQLite

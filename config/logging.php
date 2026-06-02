@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
@@ -90,7 +91,7 @@ return [
             'path' => storage_path('logs/structured.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
             'replace_placeholders' => true,
         ],
 
@@ -106,7 +107,7 @@ return [
             'path' => storage_path('logs/performance.log'),
             'level' => 'info',
             'days' => 7,
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
         ],
 
         // Security and authentication logging
@@ -121,7 +122,7 @@ return [
             'path' => storage_path('logs/security.log'),
             'level' => 'info',
             'days' => 30,
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
         ],
 
         // Admin action logging
@@ -136,7 +137,7 @@ return [
             'path' => storage_path('logs/admin.log'),
             'level' => 'info',
             'days' => 90,
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
         ],
 
         // Database backup logging
@@ -151,7 +152,7 @@ return [
             'path' => storage_path('logs/backup.log'),
             'level' => 'info',
             'days' => 90,
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
         ],
 
         // Database query logging
@@ -172,7 +173,7 @@ return [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),
             'handler' => StreamHandler::class,
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
             'handler_with' => [
                 'stream' => 'php://stdout',
             ],

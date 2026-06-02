@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Flash;
 use App\Services\DateRangeService;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -50,7 +51,7 @@ class FlashList extends Component
             return;
         }
 
-        $flash = \App\Models\Flash::findOrFail($this->deletingFlashId);
+        $flash = Flash::findOrFail($this->deletingFlashId);
 
         // Authorization check using Laravel's authorize method
         $this->authorize('delete', $flash);

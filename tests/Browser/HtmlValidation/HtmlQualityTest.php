@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 $validatorUrl = env('HTML_VALIDATOR_URL', 'http://localhost:8888');
@@ -38,7 +39,7 @@ if (! function_exists('e2eCheckStructure')) {
 
                 expect($errors)->toBeEmpty('W3C errors: '.$errors->pluck('message')->join('; '));
             }
-        } catch (\Illuminate\Http\Client\ConnectionException) {
+        } catch (ConnectionException) {
             test()->markTestSkipped("HTML validator not available at {$validatorUrl}");
         }
     }

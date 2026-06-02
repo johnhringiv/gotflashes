@@ -3,12 +3,13 @@
 use App\Models\District;
 use App\Models\Fleet;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 it('registers a new user with district + fleet and lands on /logbook', function () {
     $district = District::first();
     $fleet = Fleet::where('district_id', $district->id)->first();
 
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     // Wait for TomSelect to initialize (it fetches data from /api/districts-and-fleets)
@@ -46,7 +47,7 @@ it('registers a new user with district + fleet and lands on /logbook', function 
 it('registers a new user with district and fleet set to None', function () {
     $district = District::first();
 
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     $page->assertPresent('.ts-wrapper');
@@ -72,7 +73,7 @@ it('registers a new user with district and fleet set to None', function () {
 });
 
 it('registers a fully unaffiliated user', function () {
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'Unaff')
@@ -126,7 +127,7 @@ it('shows validation error when date_of_birth is in the future', function () {
 });
 
 it('requires district and fleet selection on registration', function () {
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     // Fill all required fields except district/fleet
@@ -153,7 +154,7 @@ it('requires district and fleet selection on registration', function () {
 
 it('requires fleet when district is set on registration', function () {
     $district = District::first();
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'NoFleet')
@@ -235,7 +236,7 @@ it('clears fleet error when user picks a fleet after district', function () {
 });
 
 it('shows verification banner immediately after registration', function () {
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'Banner')

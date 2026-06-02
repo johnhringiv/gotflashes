@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class)->in('Feature', 'Unit');
-uses(Tests\TestCase::class, LazilyRefreshDatabase::class)->in('Browser');
+uses(TestCase::class)->in('Feature', 'Unit');
+uses(TestCase::class, LazilyRefreshDatabase::class)->in('Browser');

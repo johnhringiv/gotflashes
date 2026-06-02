@@ -6,7 +6,7 @@ use App\Models\District;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\District>
+ * @extends Factory<District>
  */
 class DistrictFactory extends Factory
 {

@@ -107,7 +107,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 
 ## Technology Stack
 
-- **Backend**: Laravel 12 (PHP 8.2+)
+- **Backend**: Laravel 13 (PHP 8.3+)
 - **Database**: SQLite with WAL mode
 - **Email**: Resend (transactional email delivery)
   - Email verification for new accounts and email changes
@@ -128,7 +128,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 ## Getting Started
 
 ### Prerequisites
-- PHP 8.2+
+- PHP 8.3+
 - Composer
 - Node.js & NPM
 - SQLite

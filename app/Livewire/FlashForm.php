@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Flash;
 use App\Services\DateRangeService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -248,7 +249,7 @@ class FlashForm extends Component
      * Get allowed date range (cached per request).
      * Computed properties are recalculated on new requests (e.g., after $refresh).
      */
-    #[\Livewire\Attributes\Computed]
+    #[Computed]
     public function dateRange(): array
     {
         return DateRangeService::getAllowedDateRange();
@@ -260,7 +261,7 @@ class FlashForm extends Component
      * (e.g., during wire:model.blur syncs). After save/delete, $refresh creates a new
      * request which recalculates this property with fresh data.
      */
-    #[\Livewire\Attributes\Computed]
+    #[Computed]
     public function existingDates(): array
     {
         [$minDate, $maxDate] = $this->dateRange();

@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\BasicAuthMiddleware;
+use App\Http\Middleware\ContentSecurityPolicy;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,10 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
                      Request::HEADER_X_FORWARDED_PROTO
         );
 
-        $middleware->append(\App\Http\Middleware\ContentSecurityPolicy::class);
-        $middleware->append(\App\Http\Middleware\BasicAuthMiddleware::class);
+        $middleware->append(ContentSecurityPolicy::class);
+        $middleware->append(BasicAuthMiddleware::class);
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin' => AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

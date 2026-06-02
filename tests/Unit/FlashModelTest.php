@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Flash;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +18,7 @@ class FlashModelTest extends TestCase
         $user = User::factory()->create();
         $flash = Flash::factory()->forUser($user)->create();
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $flash->user());
+        $this->assertInstanceOf(BelongsTo::class, $flash->user());
         $this->assertEquals($user->id, $flash->user->id);
     }
 
@@ -25,7 +27,7 @@ class FlashModelTest extends TestCase
         $user = User::factory()->create();
         $flash = Flash::factory()->forUser($user)->onDate('2025-01-01')->create();
 
-        $this->assertInstanceOf(\Carbon\Carbon::class, $flash->date);
+        $this->assertInstanceOf(Carbon::class, $flash->date);
     }
 
     public function test_sail_number_is_cast_to_integer(): void

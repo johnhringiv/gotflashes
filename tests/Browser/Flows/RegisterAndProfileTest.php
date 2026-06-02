@@ -3,6 +3,7 @@
 use App\Models\District;
 use App\Models\Fleet;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
@@ -12,7 +13,7 @@ it('registering with district/fleet shows them on /profile', function () {
     $district = District::first();
     $fleet = Fleet::where('district_id', $district->id)->first();
 
-    $unique = \Illuminate\Support\Str::random(8);
+    $unique = Str::random(8);
     $page = visit('/register');
 
     $page->fill('[wire\\:model\\.blur="first_name"]', 'RegProf')
