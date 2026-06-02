@@ -2,7 +2,7 @@
 
 <div class="password-input-wrapper w-full">
     <input type="password"
-           @if($wireModel) wire:model.blur="{{ $wireModel }}" @endif
+           @if($wireModel) wire:model.live.blur="{{ $wireModel }}" @endif
            @if($name) name="{{ $name }}" @endif
            @if($id) id="{{ $id }}" @endif
            placeholder="{{ $placeholder }}"

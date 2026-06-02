@@ -143,7 +143,7 @@ Routes in `routes/web.php`:
 
 **Tech Stack:**
 - Blade templates (server-rendered)
-- Livewire v3 (reactive components for flash form)
+- Livewire v4 (reactive components for flash form)
 - Tailwind CSS v4 (utility-first CSS)
 - Vanilla JavaScript (minimal, progressive enhancement)
 - Vite for asset bundling
@@ -445,32 +445,29 @@ Livewire.hook('morph.added', ({ el }) => {
 
 ### Livewire Performance Best Practices
 
-**Use appropriate wire:model modifiers to minimize re-renders:**
-- `wire:model.defer` - Syncs on form submission (best for forms with many fields)
-- `wire:model.blur` - Syncs when field loses focus (good for text inputs, prevents query-per-keystroke)
-- `wire:model.live` - Syncs on every keystroke (use sparingly, only when real-time updates needed)
-- `wire:model` - Syncs on input event (avoid for text fields, causes unnecessary renders)
+**Use appropriate wire:model modifiers to minimize re-renders (Livewire v4 semantics):**
+- `wire:model` - Deferred by default; value is held client-side and synced on the next network request (e.g. a `save()` action). This is the v4 default (v3's `.defer` is no longer needed).
+- `wire:model.live` - Network sync on every input event (use sparingly; v4 runs these in parallel for faster typing)
+- `wire:model.live.blur` - Network sync when the field loses focus (this is v3's old `.blur` behavior; in v4 the bare `.blur` only controls *client-side* sync timing, so add `.live` when you need the server round-trip)
+- `.renderless` modifier - sync without triggering a re-render (avoid if the field's `updated()` hook must update the DOM, e.g. showing/clearing a validation error)
 
-**Example: FlashForm optimization**
+**Example: FlashForm / ProfileForm fields**
 ```blade
-{{-- GOOD: Only syncs when user leaves field --}}
-<input wire:model.blur="location" />
-<textarea wire:model.blur="notes" />
-
-{{-- BAD: Syncs on every keystroke, triggers render() + DB queries --}}
-<input wire:model="location" />
+{{-- These fields drive updated() hooks (resetValidation / validateOnly) that need
+     the server round-trip AND a re-render, so .live.blur is required in v4: --}}
+<input wire:model.live.blur="location" />
+<textarea wire:model.live.blur="notes" />
 ```
 
 **Why this matters:**
-- Every Livewire sync triggers `render()` which may run database queries
+- Every Livewire network sync triggers `render()` which may run database queries
 - FlashForm's `render()` queries `existingDates` on every render
-- Using `wire:model` on a notes textarea = database query per keystroke
-- Using `wire:model.blur` = database query only when field loses focus
+- FlashForm.updated() runs `resetValidation()`; ProfileForm.updated() runs `validateOnly()` — both need the sync-on-blur to fire, which is why those fields use `.live.blur` rather than the deferred default
 
-**Rule of thumb:**
-- Required fields that drive UI logic: `wire:model.live` or `wire:model`
-- Optional text fields: `wire:model.blur`
-- Form submission: `wire:model.defer`
+**Rule of thumb (v4):**
+- Required fields that drive UI logic: `wire:model.live`
+- Fields that live-validate or clear errors on blur: `wire:model.live.blur`
+- Fields only needed at submit time: plain `wire:model` (deferred)
 
 ### Testing Strategy
 
