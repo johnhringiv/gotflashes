@@ -113,6 +113,11 @@ Simple custom auth implementation (not using full Laravel Breeze package):
 - Password hashing via bcrypt (Laravel default)
 - Session-based authentication
 
+**Session & CSRF lifetime:** Session driver is `database`, `SESSION_LIFETIME` is 120 minutes, and CSRF tokens are tied to the session. A form left open past the session lifetime carries a stale token. Rather than dead-ending on Laravel's generic 419 "Page Expired" screen, `bootstrap/app.php` registers a render callback that converts the resulting `HttpException(419)` (Laravel maps `TokenMismatchException` to this before render callbacks run, so match on status 419) into a recoverable response:
+- Standard form posts (login) → redirect back with old input (minus passwords) and a `session('warning')` flash, shown automatically by the layout's toast system; the reloaded page has a fresh token
+- AJAX forms (forgot/reset password, which submit via `fetch` + `response.json()`) → JSON 419 with a `message`, surfaced as an error toast by their existing fetch handlers
+- Tests: `tests/Feature/Auth/StaleCsrfTest.php` (note: Laravel skips CSRF validation under `runningUnitTests()`, so the test throws the exception via an inline route rather than posting a bad token)
+
 ### Authorization
 
 **Policies** (`app/Policies/FlashPolicy.php`):

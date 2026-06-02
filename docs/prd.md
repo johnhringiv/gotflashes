@@ -338,6 +338,14 @@ Admin users only.
 - Role-based access control (regular users and award administrators)
 - Industry-standard security practices
 
+#### Session & CSRF Token Lifetime
+- **Session driver**: `database`; `SESSION_LIFETIME` 120 minutes; `SESSION_EXPIRE_ON_CLOSE` false
+- CSRF tokens are tied to the session lifetime, so a form left open past 120 minutes carries a stale token
+- **Stale-token recovery**: a `TokenMismatchException` (HTTP 419) no longer dead-ends on Laravel's "Page Expired" screen. Handled in `bootstrap/app.php`:
+  - Standard form posts (login) are redirected back to a fresh page (with old input minus passwords) and shown a "Your session expired. Please try again." warning toast — the reloaded form carries a fresh token
+  - AJAX forms (forgot/reset password) receive a JSON 419 with a message their `fetch` handler surfaces as an error toast asking the user to refresh
+- Test coverage: `tests/Feature/Auth/StaleCsrfTest.php`
+
 *For technical architecture and implementation details, see [README.md](../README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).*
 
 ---
