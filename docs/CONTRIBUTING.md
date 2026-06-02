@@ -19,8 +19,8 @@ PHP 8.5 is not in the standard Ubuntu repos (Noble 24.04 ships 8.3), so add the
 ```bash
 sudo add-apt-repository -y ppa:ondrej/php
 sudo apt update
-sudo apt install -y php8.5-cli php8.5-xml php8.5-sqlite3 php8.5-mbstring \
-  php8.5-curl php8.5-intl php8.5-zip php8.5-bcmath composer git-lfs
+sudo apt install -y php8.5-cli php8.5-mbstring php8.5-sqlite3 php8.5-xml \
+  php8.5-curl composer git-lfs
 ```
 If you have more than one PHP version installed, make 8.5 the default:
 ```bash
