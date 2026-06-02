@@ -35,7 +35,7 @@ it('edit then cancel preserves original data', function () {
     // Change the location in the modal
     $page->script("
         const modal = document.querySelector('.modal.modal-open');
-        const input = modal.querySelector('input[wire\\\\:model\\\\.blur=\"location\"]');
+        const input = modal.querySelector('input[wire\\\\:model\\\\.live\\\\.blur=\"location\"]');
         if (input) {
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
             setter.call(input, 'Changed Lake');

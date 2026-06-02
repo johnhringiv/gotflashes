@@ -20,7 +20,7 @@ it('initiates email change and shows pending-email banner', function () {
     $page = visit('/profile');
 
     // Change the email field
-    $page->fill('[wire\\:model\\.blur="email"]', 'delivered+newemail@resend.dev')
+    $page->fill('[wire\\:model\\.live\\.blur="email"]', 'delivered+newemail@resend.dev')
         ->pressAndWaitFor('Save Changes', 2);
 
     $page->waitForText('Pending Email Change', 5);

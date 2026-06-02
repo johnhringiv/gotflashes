@@ -33,12 +33,12 @@ it('renders profile form pre-filled with user data', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    $page->assertValue('[wire\\:model\\.blur="first_name"]', 'Jane');
-    $page->assertValue('[wire\\:model\\.blur="last_name"]', 'Doe');
-    $page->assertValue('[wire\\:model\\.blur="email"]', $this->user->email);
-    $page->assertValue('[wire\\:model\\.blur="address_line1"]', '123 Sail St');
-    $page->assertValue('[wire\\:model\\.blur="city"]', 'Seattle');
-    $page->assertValue('[wire\\:model\\.blur="yacht_club"]', 'Seattle YC');
+    $page->assertValue('[wire\\:model\\.live\\.blur="first_name"]', 'Jane');
+    $page->assertValue('[wire\\:model\\.live\\.blur="last_name"]', 'Doe');
+    $page->assertValue('[wire\\:model\\.live\\.blur="email"]', $this->user->email);
+    $page->assertValue('[wire\\:model\\.live\\.blur="address_line1"]', '123 Sail St');
+    $page->assertValue('[wire\\:model\\.live\\.blur="city"]', 'Seattle');
+    $page->assertValue('[wire\\:model\\.live\\.blur="yacht_club"]', 'Seattle YC');
 });
 
 it('shows district/fleet pre-selected in TomSelect', function () {
@@ -56,26 +56,28 @@ it('updates first_name and last_name and persists after reload', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    $page->fill('[wire\\:model\\.blur="first_name"]', 'Janet')
-        ->fill('[wire\\:model\\.blur="last_name"]', 'Smith')
-        ->pressAndWaitFor('Save Changes', 2);
+    trackLivewireRequests($page);
+    fillLive($page, '[wire\\:model\\.live\\.blur="first_name"]', 'Janet');
+    fillLive($page, '[wire\\:model\\.live\\.blur="last_name"]', 'Smith');
+    $page->pressAndWaitFor('Save Changes', 2);
 
     $page->assertSee('updated');
 
     $page2 = visit('/profile');
-    $page2->assertValue('[wire\\:model\\.blur="first_name"]', 'Janet');
-    $page2->assertValue('[wire\\:model\\.blur="last_name"]', 'Smith');
+    $page2->assertValue('[wire\\:model\\.live\\.blur="first_name"]', 'Janet');
+    $page2->assertValue('[wire\\:model\\.live\\.blur="last_name"]', 'Smith');
 });
 
 it('updates address fields', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    $page->fill('[wire\\:model\\.blur="address_line1"]', '456 Harbor Dr')
-        ->fill('[wire\\:model\\.blur="city"]', 'Portland')
-        ->fill('[wire\\:model\\.blur="state"]', 'OR')
-        ->fill('[wire\\:model\\.blur="zip_code"]', '97201')
-        ->pressAndWaitFor('Save Changes', 2);
+    trackLivewireRequests($page);
+    fillLive($page, '[wire\\:model\\.live\\.blur="address_line1"]', '456 Harbor Dr');
+    fillLive($page, '[wire\\:model\\.live\\.blur="city"]', 'Portland');
+    fillLive($page, '[wire\\:model\\.live\\.blur="state"]', 'OR');
+    fillLive($page, '[wire\\:model\\.live\\.blur="zip_code"]', '97201');
+    $page->pressAndWaitFor('Save Changes', 2);
 
     $page->assertSee('updated');
 
@@ -88,8 +90,9 @@ it('updates yacht_club', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    $page->fill('[wire\\:model\\.blur="yacht_club"]', 'Portland YC')
-        ->pressAndWaitFor('Save Changes', 2);
+    trackLivewireRequests($page);
+    fillLive($page, '[wire\\:model\\.live\\.blur="yacht_club"]', 'Portland YC');
+    $page->pressAndWaitFor('Save Changes', 2);
 
     $page->assertSee('updated');
 
