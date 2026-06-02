@@ -23,8 +23,8 @@ export async function initializeDistrictFleetSelects(config) {
         return null;
     }
 
-    let districts = [];
-    let fleets = [];
+    let districts;
+    let fleets;
 
     // Fetch data from API (combined endpoint for better performance and to avoid SQLite locking)
     try {
