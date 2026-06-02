@@ -20,7 +20,7 @@ COPY public ./public
 RUN npm run build
 
 # Stage 2: Build PHP dependencies and extensions
-FROM php:8.4-fpm-alpine AS php-builder
+FROM php:8.5-fpm-alpine AS php-builder
 
 WORKDIR /app
 
@@ -54,7 +54,7 @@ RUN mkdir -p public/vendor && \
     cp -r vendor/livewire/livewire/dist public/vendor/livewire
 
 # Stage 3: Production runtime image
-FROM php:8.4-fpm-alpine
+FROM php:8.5-fpm-alpine
 
 # Copy compiled PHP extensions from builder
 COPY --from=php-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
