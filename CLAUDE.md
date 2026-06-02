@@ -116,8 +116,12 @@ Routes in `routes/web.php`:
 - `/register` - Registration form and handler
 - `/login` - Login form and handler
 - `/logout` - Logout (POST only)
-- `/flashes` - Resource routes (index, store, edit, update, destroy) - auth required
+- `/logbook` - Activity logbook (index, store, update, destroy) plus `/logbook/{id}/edit` - auth required
+- `/profile` - View/edit profile - auth required
+- `/export/user-data` - CSV export of profile + activity - auth required
 - `/leaderboard` - Public leaderboard with three tabs: sailor, fleet, district
+- `/password/*`, `/verify-email/{token}` - Password reset and email verification
+- `/admin/fulfillment`, `/admin/sailor-logs` - Admin dashboards - auth + admin required
 
 ### Frontend Architecture
 
@@ -315,7 +319,7 @@ This allows tracking of:
 - ✅ UI with Tailwind CSS v4 and DaisyUI components
 - ✅ Award tier calculations (10, 25, 50 days)
 - ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
-- ✅ Award badge images (got-10-badge.png, got-25-badge.png, got-50-badge.png, burgee-50.jpg)
+- ✅ Award badge images (got_10_transparent.png, got_25_transparent.png, got_50_transparent.png, burgee_50_transparent.png)
 - ✅ Separate earned awards card with gradient background
 - ✅ Non-sailing day cap enforcement (5 per year) in all queries
 - ✅ Warning toast when logging non-sailing day after reaching 5-day limit
@@ -525,13 +529,16 @@ The only thing not tested: flatpickr actually using the data (which is flatpickr
 - Descriptive test names: `test_users_can_create_flash_with_minimal_data()`
 - Arrange-Act-Assert pattern in all tests
 
-**Current Coverage:**
-- 186 tests with 573+ assertions
-- 100% coverage of existing features
-- Authentication, authorization, CRUD, validation, leaderboards, progress tracking all tested
-- Grace period boundary testing (January vs February)
-- Concurrent duplicate submission handling
-- Empty array validation
+**Current Coverage (by area, not by count):**
+- **Auth & account** (`tests/Feature/Auth`, `tests/Feature`): login/logout/remember-me, registration + validation, password reset (throttle, token expiry, end-to-end), email verification + email-change pending pattern, resend rate limiting
+- **Logbook / flashes** (`tests/Feature`, `tests/Feature/Livewire`): create (single + multi-date), edit, delete, duplicate prevention, event-type validation, ordering, grace-period boundaries, concurrent/empty-array validation
+- **Progress & awards** (`tests/Feature`): tier calculations, non-sailing 5/yr cap, badge thresholds
+- **Leaderboards** (`tests/Feature`): sailor/fleet/district, year scoping, tie-breaking, pagination
+- **Admin** (`tests/Feature`): award fulfillment + batch ops + CSV, sailor logs filters, role-based access, award-sent email (verified vs unverified, status-change-only)
+- **Profile / export** (`tests/Feature`, `tests/Browser/Profile`): profile edit, email change, user-data CSV export
+- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (flatpickr, TomSelect, toasts), multi-page flows
+- **Unit** (`tests/Unit`): User/Flash/Member models, `FlashPolicy`, `DateRangeService` grace logic
+- Known gap: `MailAllowlistProvider` (dev-only mail safety net) has no dedicated test
 
 **Running Tests:**
 ```bash

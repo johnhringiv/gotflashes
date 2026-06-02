@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\District;
+use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
 use App\Rules\UserProfileRules;
@@ -43,15 +45,45 @@ class RegistrationForm extends Component
     public string $country = 'United States';
 
     // Lightning Class Info
-    public ?int $district_id = null;
+    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
+    // until register() normalizes it to null after validation.
+    public mixed $district_id = null;
 
-    public ?int $fleet_id = null;
+    public mixed $fleet_id = null;
 
     public string $yacht_club = '';
 
     public function rules()
     {
-        return UserProfileRules::rules(null, true);
+        $rules = UserProfileRules::rules(null, true);
+        // Override district/fleet to require explicit selection ('none' or a valid id).
+        // null/''/0 = untouched. These run for both validateOnly() (per-field on blur/change)
+        // and validate() (on submit). 'nullable' is intentionally omitted — it short-circuits
+        // closures on null values.
+        $rules['district_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    $fail('Please select a district or choose Unaffiliated/None.');
+                } elseif ($value !== 'none' && ! District::where('id', $value)->exists()) {
+                    $fail('The selected district is invalid.');
+                }
+            },
+        ];
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    $fail('Please select a fleet or choose None.');
+                } elseif ($value !== 'none' && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // Every fleet belongs to a district, so the fleet must exist
+                    // AND belong to the selected district. This rejects both a
+                    // cross-district fleet and a fleet with no district selected
+                    // (the frontend filters by district and auto-sets it).
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
+
+        return $rules;
     }
 
     public function messages()
@@ -61,14 +93,25 @@ class RegistrationForm extends Component
 
     public function updated($propertyName)
     {
-        // For password fields, validate both together
+        // 'confirmed' rule on 'password' already checks password_confirmation,
+        // so validate via the 'password' field name for both. Calling
+        // validateOnly('password_confirmation') would match no rule, and
+        // Livewire's resetErrorBag([]) wipes the entire bag in that case.
         if ($propertyName === 'password' || $propertyName === 'password_confirmation') {
             $this->validateOnly('password');
-            $this->validateOnly('password_confirmation');
-        } else {
-            // Validate the field that was just updated
-            $this->validateOnly($propertyName);
+
+            return;
         }
+
+        // District/fleet are cleared programmatically (picking a district clears
+        // the fleet), so don't flag them while empty — that would error an
+        // untouched field. They still validate on submit.
+        if (in_array($propertyName, ['district_id', 'fleet_id'], true)
+            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            return;
+        }
+
+        $this->validateOnly($propertyName);
     }
 
     public function register()
@@ -88,17 +131,18 @@ class RegistrationForm extends Component
             return;
         }
 
-        // Normalize affiliation IDs before validation (handles 'none', '', null, 0 -> null)
-        // This ensures 0 values pass nullable validation instead of failing exists check
-        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
-            $this->district_id = null;
-        }
-        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
-            $this->fleet_id = null;
-        }
+        // Validation uses rules() which includes district/fleet "explicit selection required" closures.
+        // 'none' is accepted as a valid explicit choice — normalized to null after validation passes.
+        $validated = $this->validate();
 
-        // Validate using shared rules (including password for registration)
-        $validated = $this->validate(UserProfileRules::rules(null, true));
+        if ($this->district_id === 'none') {
+            $this->district_id = null;
+            $validated['district_id'] = null;
+        }
+        if ($this->fleet_id === 'none') {
+            $this->fleet_id = null;
+            $validated['fleet_id'] = null;
+        }
 
         // Create user and membership in a transaction
         $user = DB::transaction(function () use ($validated) {

@@ -2,7 +2,7 @@
     <div class="card-body">
         <h1 class="text-3xl font-bold text-center mb-6">Edit Profile</h1>
 
-        <form wire:submit="save">
+        <form wire:submit="save" novalidate>
             <x-user-profile-fields>
                 <x-slot:passwordFields>
                     @if($hasPendingEmail)

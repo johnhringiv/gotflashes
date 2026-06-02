@@ -80,8 +80,8 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'female',
-            'district_id' => 0, // Livewire converts 'none' to 0
-            'fleet_id' => 0,
+            'district_id' => 'none', // Livewire converts 'none' to 0
+            'fleet_id' => 'none',
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -111,7 +111,7 @@ class RegistrationWithMembershipsTest extends TestCase
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'non_binary',
             'district_id' => $district->id,
-            'fleet_id' => 0,
+            'fleet_id' => 'none',
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -126,33 +126,53 @@ class RegistrationWithMembershipsTest extends TestCase
         $this->assertNull($membership->fleet_id);
     }
 
-    public function test_user_can_register_with_only_fleet(): void
+    public function test_registration_rejects_a_fleet_without_a_district(): void
     {
+        // Every fleet belongs to a district, so a fleet with no district selected
+        // is invalid and must be rejected.
         $fleet = Fleet::first();
 
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'prefer_not_to_say',
-            'district_id' => 0,
+            'district_id' => 'none',
             'fleet_id' => $fleet->id,
         ]);
 
         Livewire::test(RegistrationForm::class)
             ->fill($data)
             ->call('register')
-            ->assertRedirect('/logbook');
+            ->assertHasErrors('fleet_id')
+            ->assertNoRedirect();
 
-        $user = User::where('email', 'test@example.com')->first();
-        $membership = $user->currentMembership();
+        $this->assertNull(User::where('email', 'test@example.com')->first());
+    }
 
-        $this->assertNull($membership->district_id);
-        $this->assertEquals($fleet->id, $membership->fleet_id);
+    public function test_registration_rejects_a_fleet_from_a_different_district(): void
+    {
+        // The fleet must belong to the *selected* district, not just exist.
+        $fleet = Fleet::first();
+        $otherDistrict = District::where('id', '!=', $fleet->district_id)->firstOrFail();
+
+        $data = array_merge($this->getBaseRegistrationData(), [
+            'gender' => 'prefer_not_to_say',
+            'district_id' => $otherDistrict->id,
+            'fleet_id' => $fleet->id,
+        ]);
+
+        Livewire::test(RegistrationForm::class)
+            ->fill($data)
+            ->call('register')
+            ->assertHasErrors('fleet_id')
+            ->assertNoRedirect();
+
+        $this->assertNull(User::where('email', 'test@example.com')->first());
     }
 
     public function test_registration_fails_with_invalid_district_id(): void
     {
         $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => 99999, // Invalid ID
-            'fleet_id' => 0,
+            'fleet_id' => 'none',
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -205,8 +225,8 @@ class RegistrationWithMembershipsTest extends TestCase
     public function test_user_without_district_or_fleet_still_creates_membership(): void
     {
         $data = array_merge($this->getBaseRegistrationData(), [
-            'district_id' => 0,
-            'fleet_id' => 0,
+            'district_id' => 'none',
+            'fleet_id' => 'none',
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -252,8 +272,10 @@ class RegistrationWithMembershipsTest extends TestCase
         ]);
     }
 
-    public function test_registration_with_null_values_instead_of_none_string(): void
+    public function test_registration_with_null_values_is_rejected(): void
     {
+        // Untouched (null) district/fleet must fail — user has to explicitly pick
+        // an affiliation or "Unaffiliated/None". Prevents accidental unaffiliated registrations.
         $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => null,
             'fleet_id' => null,
@@ -262,13 +284,6 @@ class RegistrationWithMembershipsTest extends TestCase
         Livewire::test(RegistrationForm::class)
             ->fill($data)
             ->call('register')
-            ->assertRedirect('/logbook');
-
-        $user = User::where('email', 'test@example.com')->first();
-        $membership = $user->currentMembership();
-
-        $this->assertNotNull($membership);
-        $this->assertNull($membership->district_id);
-        $this->assertNull($membership->fleet_id);
+            ->assertHasErrors(['district_id', 'fleet_id']);
     }
 }

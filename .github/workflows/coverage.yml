@@ -1,0 +1,81 @@
+name: Tests & Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+
+jobs:
+  coverage:
+    name: PHPUnit + Browser Tests with Coverage
+    runs-on: ubuntu-latest
+
+    services:
+      html-validator:
+        image: ghcr.io/validator/validator
+        ports:
+          - 8888:8888
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_sqlite
+          coverage: pcov
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Setup Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p database/data && touch database/data/database.sqlite
+          php artisan migrate --force
+
+      - name: Run PHPUnit tests with coverage
+        run: |
+          APP_ENV=testing php artisan config:clear
+          ./vendor/bin/pest tests/Feature tests/Unit --coverage-clover=coverage-phpunit.xml
+        env:
+          APP_ENV: testing
+
+      - name: Run Browser tests with coverage
+        run: |
+          ./vendor/bin/pest tests/Browser --parallel --coverage-clover=coverage-browser.xml
+        env:
+          APP_ENV: testing
+          HTML_VALIDATOR_URL: http://localhost:8888
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-phpunit.xml,./coverage-browser.xml
+          flags: phpunit,browser
+          verbose: true
+          fail_ci_if_error: false

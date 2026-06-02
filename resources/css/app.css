@@ -143,6 +143,13 @@
     padding: 0.75rem;
 }
 
+/* Native selects keep DaisyUI's fixed height, so the 0.75rem vertical padding
+   above shrinks the text box below the line-height and clips descenders (the
+   "g" in "Select gender"). Trim the vertical padding so the glyph fits. */
+.floating-label-visible select {
+    padding-block: 0.5rem;
+}
+
 .floating-label-visible label {
     position: absolute;
     left: 0.75rem;
@@ -153,6 +160,34 @@
     background: oklch(96% 0.003 245deg);
     padding: 0 0.25rem;
     z-index: 10;
+}
+
+/* Tooltip inside a floating label (district/fleet) must stay hoverable. */
+.floating-label-visible label .tooltip {
+    pointer-events: auto;
+}
+
+/* Cap specific tooltip-right hints that would otherwise run off the right edge
+   on a narrow mobile viewport (district/fleet fields + any element marked
+   .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
+   Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
+.floating-label-visible label .tooltip::before,
+.tooltip-clamp::before {
+    max-width: 12rem;
+}
+
+/* While a field's tooltip is hovered, lift the whole field above its grid
+   neighbor so the tooltip isn't covered by the adjacent field's label. */
+.floating-label-visible:has(.tooltip:hover) {
+    z-index: 60;
+}
+
+/* Hide these tooltips instantly rather than fading: the z-index lift above
+   drops the moment the hover ends, so a fading tooltip would briefly show
+   the neighbor field painted over it. */
+.floating-label-visible label .tooltip::before,
+.floating-label-visible label .tooltip::after {
+    transition: none;
 }
 
 /* TomSelect customization with Lightning Class theme colors */
@@ -202,6 +237,11 @@
     border: 1px solid var(--color-base-300);
     border-radius: var(--radius-selector);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    /* Keep the selected item and the search input on one line. Without this,
+       focusing an already-selected single select on a narrow (mobile) viewport
+       wraps the input onto a second line and grows the control. */
+    flex-wrap: nowrap;
 }
 
 .ts-wrapper.single .ts-control input {
@@ -223,6 +263,34 @@
 
 .ts-wrapper.single .ts-control:hover {
     border-color: var(--color-primary);
+}
+
+/* Error state — red ring on the TomSelect box, mirroring DaisyUI select-error.
+   Toggled via the .ts-has-error class on the field's @error wrapper in
+   user-profile-fields.blade.php (the native <select> is hidden, so the class
+   must live on a parent the validation error can reach).
+   The single visible border lives on .ts-wrapper (TomSelect copies DaisyUI's
+   .select.select-bordered there, which is full-width and matches the text
+   inputs). Its inset box-shadows draw top/bottom lines that hide a plain red
+   border, so we replace them with a flat error ring on all four edges. On focus
+   DaisyUI draws a dark 2px outline, so we recolor that to the error color (same
+   as .input-error on the text fields). The inner .ts-control is taller and
+   horizontally inset, so we strip its border/ring to avoid a misaligned double
+   line. */
+.ts-has-error .ts-wrapper.select {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 1px var(--color-error);
+}
+
+.ts-has-error .ts-wrapper.select.focus {
+    outline-color: var(--color-error);
+}
+
+.ts-has-error .ts-wrapper.single .ts-control,
+.ts-has-error .ts-wrapper.focus .ts-control,
+.ts-has-error .ts-wrapper.single .ts-control:hover {
+    border-color: transparent;
+    box-shadow: none;
 }
 
 /* Flatpickr calendar customization with brand colors */

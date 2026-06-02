@@ -31,3 +31,10 @@ todo.md
 /coverage
 *.img
 docs/*-plan.md
+
+# Playwright auth state
+tests/e2e/fixtures/.auth/
+test-results/
+playwright-report/
+tests/Browser/Screenshots/
+.claude/worktrees/

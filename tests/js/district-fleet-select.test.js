@@ -261,7 +261,7 @@ describe('District and Fleet TomSelect Integration', () => {
             expect(result.districtTomSelect.setValue).not.toHaveBeenCalled();
         });
 
-        it('should call onFleetChange with null when fleet is set to "none"', async () => {
+        it('should call onFleetChange with "none" when fleet is set to "none"', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select',
@@ -271,7 +271,9 @@ describe('District and Fleet TomSelect Integration', () => {
             result.districtTomSelect.getValue.mockReturnValue('');
             result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, 'none');
 
-            expect(onFleetChangeSpy).toHaveBeenCalledWith(null);
+            // 'none' is sent literally so the server can distinguish an explicit
+            // "Unaffiliated/None" choice from an untouched/auto-cleared field.
+            expect(onFleetChangeSpy).toHaveBeenCalledWith('none');
         });
     });
 
@@ -322,7 +324,7 @@ describe('District and Fleet TomSelect Integration', () => {
             expect(onDistrictChangeSpy).toHaveBeenCalledWith('1');
         });
 
-        it('should call onDistrictChange with null when "none" is selected', async () => {
+        it('should call onDistrictChange with "none" when "none" is selected', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select',
@@ -331,7 +333,9 @@ describe('District and Fleet TomSelect Integration', () => {
 
             result.districtTomSelect.options.onChange.call(result.districtTomSelect, 'none');
 
-            expect(onDistrictChangeSpy).toHaveBeenCalledWith(null);
+            // 'none' is sent literally for explicit "Unaffiliated" so the server
+            // can distinguish it from a cleared/empty district.
+            expect(onDistrictChangeSpy).toHaveBeenCalledWith('none');
         });
     });
 
