@@ -25,34 +25,42 @@ branch/PR off `develop` (or after this branch merges). None are blockers.
 - **Verify:** browser suite + manual — flash form, leaderboard tabs, toasts
   still reactive under the stricter CSP; watch console for CSP violations.
 - **Effort:** small.
+- **STATUS: DONE** (commit enabling csp_safe). Verified: full `tests/Browser`
+  157 passed serial **and** `--parallel`, standard suite 382 passed, console
+  clean, manual login→reactive-select→Livewire save+toast works.
+- **Gotcha discovered:** the CSP Alpine build parses `wire:` expressions with a
+  restricted (no-eval) evaluator, so a handler named after a JS reserved word
+  breaks **silently**. `wire:click="delete"` was read as the `delete` *operator*
+  and no-op'd → the delete-confirm modal stopped working. Fixed by renaming
+  `FlashList::delete()` → `deleteFlash()`. **Lesson: under csp_safe, never name a
+  `wire:`-bound method after a JS keyword** (delete/new/in/for/class/default/…).
 
-### PR2 — Replace morph hooks with the v4 interceptor API *(robustness)*
-- **Why:** the flatpickr/TomSelect/password reinit rides on
-  `morph.added`/`morph.updated` + `requestAnimationFrame` — the timing-sensitive
-  pattern CLAUDE.md flags as production-fragile. v4's
-  `Livewire.interceptRequest({ onMorph, onRender })` is the purpose-built
-  "after-DOM-morph" hook, removing the rAF guesswork.
-- **Files (5):** `multi-date-picker.js`, `flash-form.js`, `user-profile-form.js`,
-  `password-toggle.js`, `verification-banner.js`. (`toast.js`/`sailor-logs.js`
-  use `Livewire.on` events — stable, leave alone.)
-- **Approach:** migrate one component at a time behind existing init guards;
-  browser-verify each (esp. the flatpickr "logged date becomes disabled after
-  save" flow) before the next.
-- **Note:** this is *also* the API needed for the race-fix "latest-wins" option
-  below (see Part 2) — the two efforts may share the interceptor groundwork.
-- **Effort:** medium.
+### PR2 — Replace morph hooks with the v4 interceptor API — *RE-ASSESSED: SKIP*
+Original idea: swap `morph.added`/`morph.updated` + `requestAnimationFrame` reinit
+for `interceptRequest({ onMorph })`.
 
-### PR3 — Islands / deferred load *(optional perf, lowest priority)*
-- **Why:** ProgressCard re-renders on every `flash-saved`/`flash-deleted`;
-  Leaderboard paginates. `@island` lets regions update independently;
-  `#[Defer]`/lazy can load below-the-fold content after first paint.
-- **Candidates:** ProgressCard (defer/island), Leaderboard tabs (island per tab).
-- **Bonus:** islands isolate a region's re-render, which is also a *structural*
-  mitigation for the race in Part 2 (an island's response won't morph fields
-  outside it).
-- **Effort:** medium. Pursue only if perf warrants.
+**Verified the premise is false:** in Livewire 4 the `morph.added`/`morph.updated`
+hooks **still exist and work** (the browser suite is 157-green using them, incl.
+the flatpickr "logged date becomes disabled after save" flow, under csp_safe).
+So this is not a fix — it's a refactor of timing-sensitive, currently-working
+reinit JS (5 files), with **marginal benefit and real regression risk** (re-
+introducing the flatpickr/TomSelect fragility we just stabilized). The `onMorph`
+interceptor is also per-request, not per-added-element, so our element-detection
+reinit would need restructuring, not a clean swap.
 
-**Recommended order:** PR1 → PR2 → (PR3 if warranted).
+**Recommendation: do NOT do this.** Revisit only if the morph hooks are actually
+deprecated/removed in a future Livewire release, or if we adopt the interceptor
+for the race "latest-wins" (Part 2) and want to consolidate then.
+
+### PR3 — Islands / deferred load — *OPTIONAL, deferred (no current pain)*
+- `@island` / `#[Defer]` are genuine v4 features, but ProgressCard and Leaderboard
+  work fine and there's **no measured perf problem**. Adopting islands now is
+  speculative optimization with added structural complexity for unproven gain.
+- **Recommendation: defer** until there's an actual perf need. (Note: islands are
+  only a *tangential* mitigation for the Part 2 race — see that section.)
+
+**Net:** PR1 was the real, shipped win. PR2/PR3 are refactors/optimizations of
+working code — deliberately not pursued.
 
 ---
 
