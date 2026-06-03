@@ -13,6 +13,7 @@ it('logs a single sailing day via the date picker', function () {
     $this->actingAs($user);
 
     $page = visit('/logbook');
+    trackLivewireRequests($page);
 
     // Open the date picker
     $page->click('#date-picker');
@@ -23,15 +24,20 @@ it('logs a single sailing day via the date picker', function () {
 
     // Close the calendar
     $page->script("document.querySelector('#date-picker')._flatpickr.close()");
+    settleLivewire($page);
 
-    // Select activity type and event type
+    // Select activity type, then event type — settle each so the live syncs
+    // (incl. the morph that enables the sailing-type select) land before submit.
     $page->select('#activity_type', 'sailing');
+    settleLivewire($page);
     $page->select('#sailing_type', 'regatta');
+    settleLivewire($page);
 
     // Submit
     $page->pressAndWaitFor('Log Activity', 2);
 
     // Verify success toast
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash logged successfully');
 });
@@ -53,6 +59,7 @@ it('logs multiple dates in one submission', function () {
         comp.call('save');
     ");
     // Verify success toast with plural message
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'flashes logged successfully');
 });
@@ -96,6 +103,7 @@ it('does not require event_type for maintenance', function () {
         comp.call('save');
     ");
     // Should see success toast
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash logged successfully');
 });
@@ -116,6 +124,7 @@ it('does not require event_type for race_committee', function () {
         comp.call('save');
     ");
     // Should see success toast
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash logged successfully');
 });
@@ -125,20 +134,24 @@ it('clears the date picker after a successful save', function () {
     $this->actingAs($user);
 
     $page = visit('/logbook');
+    trackLivewireRequests($page);
 
     // Open the date picker and pick a day
     $page->click('#date-picker');
     $page->assertVisible('.flatpickr-calendar.open');
     $page->script("document.querySelector('.flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay)').click()");
     $page->script("document.querySelector('#date-picker')._flatpickr.close()");
+    settleLivewire($page);
 
     // Select activity type
     $page->select('#activity_type', 'maintenance');
+    settleLivewire($page);
 
     // Submit
     $page->pressAndWaitFor('Log Activity', 2);
 
     // Wait for toast to confirm save completed
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
 
     // Date picker value should be empty after successful save

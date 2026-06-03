@@ -38,16 +38,21 @@ describe('flatpickr calendar', function () {
 
     it('clearAndReinit runs after save — picker is empty and dates show as has-entry', function () {
         $page = visit('/logbook');
+        trackLivewireRequests($page);
 
         $page->click('#date-picker');
         $page->assertVisible('.flatpickr-calendar.open');
         $page->script("document.querySelector('.flatpickr-calendar.open .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay)').click()");
         $page->script("document.querySelector('#date-picker')._flatpickr.close()");
+        settleLivewire($page);
 
         $page->select('#activity_type', 'sailing');
+        settleLivewire($page);
         $page->select('#sailing_type', 'club_race');
+        settleLivewire($page);
         $page->pressAndWaitFor('Log Activity', 2);
 
+        waitForToast($page, 'success');
         $page->assertVisible('#toast-container .alert-success');
         $page->assertValue('#date-picker', '');
     });

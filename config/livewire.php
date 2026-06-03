@@ -157,4 +157,23 @@ return [
     */
 
     'pagination_theme' => 'tailwind',
+
+    /*
+    |---------------------------------------------------------------------------
+    | CSP-Safe Mode
+    |---------------------------------------------------------------------------
+    |
+    | When enabled, Livewire loads Alpine's CSP-compatible build, which does not
+    | use eval(). This lets us drop 'unsafe-eval' from the Content-Security-Policy
+    | (see app/Http/Middleware/ContentSecurityPolicy.php). Safe here because the
+    | app authors no custom Alpine expressions — only Livewire's own directives.
+    |
+    | WARNING: setting this back to false requires re-adding 'unsafe-eval' to the
+    | CSP middleware, or Livewire/Alpine will break. Also note the CSP build's
+    | restricted parser reads JS keywords literally — never name a wire:-bound
+    | method after a reserved word (delete/new/class/default/in/for/...).
+    |
+    */
+
+    'csp_safe' => true,
 ];

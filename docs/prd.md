@@ -322,11 +322,29 @@ Admin users only.
 - Historical data retained indefinitely (read-only after grace period)
 - One activity per date per user (duplicate prevention enforced)
 
+#### Database Backup
+- **Purpose**: Daily local-disk backup of the SQLite database using SQLite3's native backup API (WAL-mode-aware, produces a consistent snapshot even with active journaling)
+- **Schedule**: Runs daily at 02:00 via `Schedule::command('db:backup')->daily()->at('02:00')` in `routes/console.php` (the Docker `scheduler` process runs `schedule:run` every 60 seconds)
+- **Implementation**: `app/Console/Commands/BackupDatabase.php` (`php artisan db:backup`)
+- **Source**: `database_path('data/database.sqlite')`
+- **Output**: `storage_path('app/backups')/database-backup-{Y-m-d}.sqlite` (permissions `0640`)
+- **Validation**: Each backup is reopened read-only and verified with `PRAGMA integrity_check` before success is reported; a backup that fails the check is deleted and the command exits non-zero
+- **Retention**: 90 days (`RETENTION_DAYS` constant); the retention pass also removes orphaned `-wal`/`-shm` sidecar files. Pass `--no-cleanup` to skip retention
+- **Monitoring**: Successes and failures are logged to the `backup` log channel (`storage/logs/backup.log`); failures log at error level
+
 ### 7.3 Security
 - Secure user authentication and password protection
 - Email verification system with expiring tokens
 - Role-based access control (regular users and award administrators)
 - Industry-standard security practices
+
+#### Session & CSRF Token Lifetime
+- **Session driver**: `database`; `SESSION_LIFETIME` 120 minutes; `SESSION_EXPIRE_ON_CLOSE` false
+- CSRF tokens are tied to the session lifetime, so a form left open past 120 minutes carries a stale token
+- **Stale-token recovery**: a `TokenMismatchException` (HTTP 419) no longer dead-ends on Laravel's "Page Expired" screen. Handled in `bootstrap/app.php`:
+  - Standard form posts (login) are redirected back to a fresh page (with old input minus passwords) and shown a "Your session expired. Please try again." warning toast — the reloaded form carries a fresh token
+  - AJAX forms (forgot/reset password) receive a JSON 419 with a message their `fetch` handler surfaces as an error toast asking the user to refresh
+- Test coverage: `tests/Feature/Auth/StaleCsrfTest.php`
 
 *For technical architecture and implementation details, see [README.md](../README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).*
 

@@ -143,7 +143,7 @@
 
                     <div class="modal-action">
                         <button wire:click="cancelDelete" class="btn">Cancel</button>
-                        <button wire:click="delete" class="btn btn-error">Delete</button>
+                        <button wire:click="deleteFlash" class="btn btn-error">Delete</button>
                     </div>
                 </div>
                 <div class="modal-backdrop" wire:click="cancelDelete"></div>

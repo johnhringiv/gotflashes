@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Livewire;
 
+use App\Livewire\FlashForm;
 use App\Livewire\FlashList;
 use App\Models\Flash;
 use App\Models\User;
@@ -96,7 +97,7 @@ class FlashListTest extends TestCase
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
             ->assertSet('deletingFlashId', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('flash-deleted')
             ->assertDispatched('toast');
 
@@ -111,7 +112,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('toast');
     }
 
@@ -124,7 +125,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user1)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertForbidden();
 
         // Verify flash was NOT deleted
@@ -144,7 +145,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertForbidden();
 
         // Verify flash was NOT deleted
@@ -167,7 +168,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('flash-deleted');
 
         $this->assertDatabaseMissing('flashes', ['id' => $flash->id]);
@@ -340,7 +341,7 @@ class FlashListTest extends TestCase
 
         // Now test the edit form
         $formComponent = Livewire::actingAs($user)
-            ->test(\App\Livewire\FlashForm::class, ['flash' => $flash, 'submitText' => 'Update'])
+            ->test(FlashForm::class, ['flash' => $flash, 'submitText' => 'Update'])
             ->set('activity_type', 'maintenance')
             ->set('notes', 'Updated notes')
             ->call('save');

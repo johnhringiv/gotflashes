@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the G.O.T. Flashes Challenge Trac
 
 ### Prerequisites
 
-- PHP 8.2 or higher
+- PHP 8.5 or higher
 - Composer
 - Node.js & NPM
 - SQLite
@@ -14,9 +14,17 @@ Thank you for your interest in contributing to the G.O.T. Flashes Challenge Trac
 
 ### Ubuntu/Debian (including WSL)
 
-Install PHP, Composer, and required extensions:
+PHP 8.5 is not in the standard Ubuntu repos (Noble 24.04 ships 8.3), so add the
+[ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) PPA, then install PHP, Composer, and required extensions:
 ```bash
-sudo apt install composer php8.3-xml php8.3-sqlite3 git-lfs
+sudo add-apt-repository -y ppa:ondrej/php
+sudo apt update
+sudo apt install -y php8.5-cli php8.5-mbstring php8.5-sqlite3 php8.5-xml \
+  php8.5-curl php8.5-intl composer git-lfs
+```
+If you have more than one PHP version installed, make 8.5 the default:
+```bash
+sudo update-alternatives --set php /usr/bin/php8.5
 ```
 
 ### Node.js via nvm (recommended)

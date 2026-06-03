@@ -107,7 +107,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 
 ## Technology Stack
 
-- **Backend**: Laravel 12 (PHP 8.2+)
+- **Backend**: Laravel 13 (PHP 8.5+)
 - **Database**: SQLite with WAL mode
 - **Email**: Resend (transactional email delivery)
   - Email verification for new accounts and email changes
@@ -117,7 +117,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Tailwind CSS v4 (self-hosted, no CDN)
   - DaisyUI (component library)
   - Blade templates
-  - Livewire v3 (reactive components for dynamic date range updates)
+  - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
   - Flatpickr (multi-date calendar picker)
   - Tom-Select (searchable dropdowns)
@@ -128,7 +128,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 ## Getting Started
 
 ### Prerequisites
-- PHP 8.2+
+- PHP 8.5+
 - Composer
 - Node.js & NPM
 - SQLite
@@ -278,7 +278,7 @@ gotflashes/
 │   ├── Http/
 │   │   ├── Controllers/     # Request handling (Auth, Flash, Leaderboard, Profile, Admin)
 │   │   └── Middleware/      # Request middleware
-│   ├── Livewire/            # Livewire v3 components (FlashForm, Leaderboard, ProgressCard)
+│   ├── Livewire/            # Livewire v4 components (FlashForm, Leaderboard, ProgressCard)
 │   ├── Models/              # Eloquent models (User, Flash, Member, District, Fleet)
 │   ├── Policies/            # Authorization policies (FlashPolicy)
 │   ├── Providers/           # Service providers (AppServiceProvider, ObservabilityServiceProvider)

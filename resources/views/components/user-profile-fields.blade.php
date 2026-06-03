@@ -4,7 +4,7 @@
     <!-- First Name -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
-               wire:model.blur="first_name"
+               wire:model.live.blur="first_name"
                placeholder="John"
                class="input input-bordered w-full @error('first_name') input-error @enderror"
                required>
@@ -19,7 +19,7 @@
     <!-- Last Name -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
-               wire:model.blur="last_name"
+               wire:model.live.blur="last_name"
                placeholder="Doe"
                class="input input-bordered w-full @error('last_name') input-error @enderror"
                required>
@@ -35,7 +35,7 @@
 <!-- Email -->
 <div class="mb-6 floating-label-visible">
     <input type="email"
-           wire:model.blur="email"
+           wire:model.live.blur="email"
            placeholder="mail@example.com"
            class="input input-bordered w-full @error('email') input-error @enderror"
            required>
@@ -53,7 +53,7 @@
     <!-- Date of Birth -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
-               wire:model.blur="date_of_birth"
+               wire:model.live.blur="date_of_birth"
                placeholder="YYYY-MM-DD"
                class="input input-bordered w-full @error('date_of_birth') input-error @enderror"
                maxlength="10"
@@ -68,7 +68,7 @@
 
     <!-- Gender -->
     <div class="mb-6 floating-label-visible">
-        <select wire:model.blur="gender" class="select select-bordered w-full @error('gender') select-error @enderror" required>
+        <select wire:model.live.blur="gender" class="select select-bordered w-full @error('gender') select-error @enderror" required>
             <option value="" disabled>Select gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -89,7 +89,7 @@
 <!-- Street Address -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
-           wire:model.blur="address_line1"
+           wire:model.live.blur="address_line1"
            placeholder="123 Main Street"
            class="input input-bordered w-full @error('address_line1') input-error @enderror"
            required>
@@ -104,7 +104,7 @@
 <!-- Address Line 2 -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
-           wire:model.blur="address_line2"
+           wire:model.live.blur="address_line2"
            placeholder="Apt 4B"
            class="input input-bordered w-full">
     <label>Address Line 2 (optional)</label>
@@ -114,7 +114,7 @@
     <!-- City -->
     <div class="mb-6 floating-label-visible md:col-span-1">
         <input type="text"
-               wire:model.blur="city"
+               wire:model.live.blur="city"
                placeholder="San Diego"
                class="input input-bordered w-full @error('city') input-error @enderror"
                required>
@@ -129,7 +129,7 @@
     <!-- State -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
-               wire:model.blur="state"
+               wire:model.live.blur="state"
                placeholder="CA"
                class="input input-bordered w-full @error('state') input-error @enderror"
                required>
@@ -144,7 +144,7 @@
     <!-- Zip Code -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
-               wire:model.blur="zip_code"
+               wire:model.live.blur="zip_code"
                placeholder="92101"
                class="input input-bordered w-full @error('zip_code') input-error @enderror"
                required>
@@ -160,7 +160,7 @@
 <!-- Country -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
-           wire:model.blur="country"
+           wire:model.live.blur="country"
            placeholder="United States"
            class="input input-bordered w-full @error('country') input-error @enderror"
            required>
@@ -234,7 +234,7 @@
 <!-- Yacht Club -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
-           wire:model.blur="yacht_club"
+           wire:model.live.blur="yacht_club"
            placeholder="e.g., San Diego Yacht Club"
            class="input input-bordered w-full @error('yacht_club') input-error @enderror">
     <label>Yacht Club</label>

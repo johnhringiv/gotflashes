@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Flash;
 use App\Services\DateRangeService;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -44,13 +45,16 @@ class FlashList extends Component
         $this->deletingFlashId = null;
     }
 
-    public function delete()
+    // NOTE: must NOT be named `delete` — under Livewire's csp_safe Alpine build,
+    // `wire:click="delete"` is parsed as the JS `delete` operator and silently
+    // no-ops. Keep this a non-reserved method name.
+    public function deleteFlash()
     {
         if (! $this->deletingFlashId) {
             return;
         }
 
-        $flash = \App\Models\Flash::findOrFail($this->deletingFlashId);
+        $flash = Flash::findOrFail($this->deletingFlashId);
 
         // Authorization check using Laravel's authorize method
         $this->authorize('delete', $flash);

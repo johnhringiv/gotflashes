@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Livewire\RegistrationForm;
+use App\Models\District;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -39,7 +40,7 @@ class ValidateOnlyTest extends TestCase
      */
     public function test_picking_district_does_not_clear_fleet_error(): void
     {
-        $district = \App\Models\District::first();
+        $district = District::first();
 
         Livewire::test(RegistrationForm::class)
             ->call('register')

@@ -47,7 +47,7 @@ it('updates a flash and reflects the change in the list', function () {
     // Change the location using the input inside the modal
     $page->script(<<<'JS'
         const modal = document.querySelector('.modal.modal-open');
-        const locationInput = modal.querySelector('input[wire\\:model\\.blur="location"]');
+        const locationInput = modal.querySelector('input[wire\\:model\\.live\\.blur="location"]');
         locationInput.value = '';
         locationInput.dispatchEvent(new Event('input', { bubbles: true }));
     JS);
@@ -56,7 +56,7 @@ it('updates a flash and reflects the change in the list', function () {
     // Fill the new location in the modal's location field
     $page->script(<<<'JS'
         const modal = document.querySelector('.modal.modal-open');
-        const locationInput = modal.querySelector('input[wire\\:model\\.blur="location"]');
+        const locationInput = modal.querySelector('input[wire\\:model\\.live\\.blur="location"]');
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
         nativeInputValueSetter.call(locationInput, 'Chesapeake Bay');
         locationInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -67,6 +67,7 @@ it('updates a flash and reflects the change in the list', function () {
     $page->pressAndWaitFor('Update Activity', 2);
 
     // Wait for the update to complete
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash updated successfully');
 

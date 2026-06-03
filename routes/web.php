@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\ResetPassword;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LogbookController;
+use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\VerifyEmailChangeController;
 use Illuminate\Support\Facades\Route;
@@ -97,4 +98,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 // Fallback route for 404 errors - must be last
 // This ensures 404 pages go through the web middleware stack (session, auth, etc.)
 // Uses controller instead of closure to support route caching
-Route::fallback(\App\Http\Controllers\NotFoundController::class);
+Route::fallback(NotFoundController::class);

@@ -23,8 +23,11 @@ export async function initializeDistrictFleetSelects(config) {
         return null;
     }
 
-    let districts = [];
-    let fleets = [];
+    // No `= []` default on purpose: ESLint's no-useless-assignment flags it
+    // (immediately overwritten in the try). The catch below returns early, so
+    // these are never read while still undefined.
+    let districts;
+    let fleets;
 
     // Fetch data from API (combined endpoint for better performance and to avoid SQLite locking)
     try {

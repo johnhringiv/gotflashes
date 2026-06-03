@@ -20,7 +20,7 @@ COPY public ./public
 RUN npm run build
 
 # Stage 2: Build PHP dependencies and extensions
-FROM php:8.4-fpm-alpine AS php-builder
+FROM php:8.5-fpm-alpine AS php-builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN apk upgrade --no-cache && apk --no-cache add \
     sqlite-dev
 
 # Install PHP extensions (only what's needed)
-RUN docker-php-ext-install pdo_sqlite mbstring pcntl opcache
+RUN docker-php-ext-install pdo_sqlite mbstring pcntl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -54,7 +54,7 @@ RUN mkdir -p public/vendor && \
     cp -r vendor/livewire/livewire/dist public/vendor/livewire
 
 # Stage 3: Production runtime image
-FROM php:8.4-fpm-alpine
+FROM php:8.5-fpm-alpine
 
 # Copy compiled PHP extensions from builder
 COPY --from=php-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/

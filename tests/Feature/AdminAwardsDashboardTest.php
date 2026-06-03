@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AwardFulfillment;
 use App\Models\Flash;
 use App\Models\User;
+use App\Notifications\AwardSentNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -676,7 +677,7 @@ class AdminAwardsDashboardTest extends TestCase
         // Assert email was sent
         \Notification::assertSentTo(
             $user,
-            \App\Notifications\AwardSentNotification::class,
+            AwardSentNotification::class,
             function ($notification) {
                 return $notification->year === now()->year && $notification->tier === 10;
             }
@@ -783,8 +784,8 @@ class AdminAwardsDashboardTest extends TestCase
             ->call('bulkMarkAsSent');
 
         // Assert both emails were sent
-        \Notification::assertSentTo($user1, \App\Notifications\AwardSentNotification::class);
-        \Notification::assertSentTo($user2, \App\Notifications\AwardSentNotification::class);
+        \Notification::assertSentTo($user1, AwardSentNotification::class);
+        \Notification::assertSentTo($user2, AwardSentNotification::class);
         \Notification::assertCount(2);
     }
 }
