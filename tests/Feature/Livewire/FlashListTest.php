@@ -97,7 +97,7 @@ class FlashListTest extends TestCase
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
             ->assertSet('deletingFlashId', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('flash-deleted')
             ->assertDispatched('toast');
 
@@ -112,7 +112,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('toast');
     }
 
@@ -125,7 +125,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user1)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertForbidden();
 
         // Verify flash was NOT deleted
@@ -145,7 +145,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertForbidden();
 
         // Verify flash was NOT deleted
@@ -168,7 +168,7 @@ class FlashListTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('flash-deleted');
 
         $this->assertDatabaseMissing('flashes', ['id' => $flash->id]);

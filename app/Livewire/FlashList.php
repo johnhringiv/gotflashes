@@ -45,7 +45,10 @@ class FlashList extends Component
         $this->deletingFlashId = null;
     }
 
-    public function delete()
+    // NOTE: must NOT be named `delete` — under Livewire's csp_safe Alpine build,
+    // `wire:click="delete"` is parsed as the JS `delete` operator and silently
+    // no-ops. Keep this a non-reserved method name.
+    public function deleteFlash()
     {
         if (! $this->deletingFlashId) {
             return;
