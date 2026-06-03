@@ -57,6 +57,7 @@ it('marks selected awards as Processing with confirmation', function () {
     $page->click('.modal-action button.btn-info, dialog button.btn-info');
     // Wait for the Livewire round-trip to persist (success toast) before the DB read.
     // Scope to the toast container so it can't match the modal body's "processing".
+    $page->waitForText('marked as processing');
     $page->assertSeeIn('#toast-container', 'marked as processing');
 
     // Verify in database
@@ -91,6 +92,7 @@ it('marks selected awards as Sent with confirmation', function () {
     // Confirm
     $page->click('.modal-action button.btn-success, dialog button.btn-success');
     // Wait for the Livewire round-trip to persist (success toast) before the DB read
+    $page->waitForText('marked as sent');
     $page->assertSeeIn('#toast-container', 'marked as sent');
     // Verify in database
     $fulfillment = AwardFulfillment::where('user_id', $this->sailor->id)
@@ -162,6 +164,7 @@ it('removes fulfillment records (resets to Earned)', function () {
     // Click the reset button
     $page->click('.modal-action button.btn-warning, dialog button.btn-warning');
     // Wait for the Livewire round-trip to persist (success toast) before the DB read
+    $page->waitForText('reset to Earned');
     $page->assertSeeIn('#toast-container', 'reset to Earned');
     // Verify fulfillment was deleted
     expect(AwardFulfillment::where('user_id', $this->sailor->id)

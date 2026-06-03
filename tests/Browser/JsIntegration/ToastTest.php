@@ -24,6 +24,7 @@ it('shows success toast after flash save', function () {
         comp.call('save');
     ");
 
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'logged');
 });
@@ -35,6 +36,7 @@ it('shows success toast after flash delete', function () {
     $page->click('Delete');
     $page->assertVisible('.modal.modal-open');
     $page->click('.modal.modal-open .btn-error');
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'deleted');
 });
@@ -56,6 +58,7 @@ it('shows warning toast when logging 6th non-sailing day', function () {
         comp.call('save');
     ");
 
+    waitForToast($page, 'warning');
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertSeeIn('#toast-container', 'non-sailing');
 });
@@ -77,6 +80,7 @@ it('toast carries correct alert class (dynamic class safelist)', function () {
         comp.call('save');
     ");
 
+    waitForToast($page, 'warning');
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertAttributeContains('#toast-container .alert', 'class', 'alert-warning');
 });

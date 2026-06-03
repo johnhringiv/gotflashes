@@ -67,6 +67,7 @@ it('updates a flash and reflects the change in the list', function () {
     $page->pressAndWaitFor('Update Activity', 2);
 
     // Wait for the update to complete
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash updated successfully');
 

@@ -66,6 +66,7 @@ it('deletes a flash after confirmation and updates the list', function () {
     $page->click('.modal.modal-open .btn-error');
 
     // Should see success toast
+    waitForToast($page, 'success');
     $page->assertVisible('#toast-container .alert-success');
     $page->assertSeeIn('#toast-container', 'Flash deleted');
 

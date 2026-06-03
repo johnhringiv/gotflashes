@@ -40,6 +40,7 @@ it('shows warning toast when logging 6th non-sailing day', function () {
 
     e2eSubmitNonSailingFlash($page, 'maintenance', '2027-01-07');
 
+    waitForToast($page, 'warning');
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertSeeIn('#toast-container', 'non-sailing');
 });
@@ -56,6 +57,7 @@ it('still saves the 6th non-sailing day despite the warning', function () {
 
     e2eSubmitNonSailingFlash($page, 'race_committee', '2027-01-07');
 
+    waitForToast($page, 'warning');
     $page->assertVisible('#toast-container .alert-warning');
     expect($user->flashes()->count())->toBe(6);
 });
@@ -74,6 +76,7 @@ it('counts both maintenance and race_committee toward the same 5-day cap', funct
 
     e2eSubmitNonSailingFlash($page, 'race_committee', '2027-01-07');
 
+    waitForToast($page, 'warning');
     $page->assertVisible('#toast-container .alert-warning');
     $page->assertSeeIn('#toast-container', 'non-sailing');
 });

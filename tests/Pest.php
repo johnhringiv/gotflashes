@@ -73,6 +73,29 @@ function fillLive($page, string $selector, string $value)
     return $page;
 }
 
+/**
+ * Wait (condition-based) until a toast of the given variant has rendered.
+ *
+ * Toasts are dispatched asynchronously after a Livewire save round-trip, and
+ * assertVisible() is a point-in-time check with no retry — so under load the
+ * toast may not be in the DOM yet when the assertion fires. This resolves as
+ * soon as the toast element appears (no fixed sleep).
+ */
+function waitForToast($page, string $variant = 'success'): void
+{
+    $selector = json_encode('#toast-container .alert-'.$variant);
+    $page->script(
+        '(async () => { await new Promise((resolve) => {'.
+        ' const start = Date.now();'.
+        ' (function check() {'.
+        '   if (document.querySelector('.$selector.')) return resolve();'.
+        '   if (Date.now() - start > 8000) return resolve();'.
+        '   setTimeout(check, 25);'.
+        ' })();'.
+        '}); })()'
+    );
+}
+
 /** Fill the shared registration/profile personal-info fields, serializing each .live.blur sync. */
 function fillRegistrationForm($page, array $data): void
 {
