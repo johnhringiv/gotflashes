@@ -103,17 +103,31 @@ whichever field's confirming response doesn't land last.
 Serializing the fills (let RA fully complete so the confirmed snapshot includes
 A *before* RB is built) eliminates it — RB then carries `{A:valA}` in its base.
 
-### Real-world exposure
-- The danger window per field is **one server round-trip**. On localhost
-  (~10–50ms) it's humanly unhittable. On a **high-latency connection**
-  (300–800ms) the window widens to where a fast tab-and-type user could slip in.
-- A user would see a field they just typed **blank out / revert**, a **false
-  "required"** on submit (re-typing + resubmit "works the second time"), or
-  flickering validation errors. Always transient; **no server-side corruption,
-  no security impact.**
+### Real-world exposure — vanishingly small (even on a phone / poor connection)
+The race needs two field changes whose requests **overlap**: you leave field A
+(fires A's request) and then leave field B *within A's round-trip window*.
+
+- The gap between "leave A" and "leave B" = **the time spent typing in B** — for
+  a person filling name/email/address, that's **several seconds per field**.
+- A round-trip, even on a rough mobile connection, is ~**0.3–2s**.
+- So A's request completes *seconds before* B is ever left → the requests don't
+  overlap → no clobber. A **worse** connection widens the window, but human
+  typing speed (seconds/field) stays far above it, so the gap still doesn't
+  close. Triggering it would require **tab-tab-tabbing through fields in under a
+  second**, which isn't how anyone fills a form they're actually completing.
+- The browser tests only hit it because Playwright's `fill()` is **instant** —
+  it fires all ~11 blurs within milliseconds, faster than any network answers.
+  That's the harness, not a user.
 - **Browser autofill likely does NOT trigger it** — it sets values without
   per-field `blur`, so the `.live.blur` syncs don't fire until submit, and
   `wire:submit` bundles everything in one request.
+- **One residual edge:** typing the *last* field and *instantly* tapping Submit
+  on a slow link could show a transient "field required" for a filled field —
+  but `wire:submit` generally bundles the still-dirty value, and worst case is a
+  re-tap. Always transient; **no data loss, corruption, or security impact.**
+
+**Verdict:** not a real user-facing reliability problem. The test harness's
+instant fill is the only thing that reliably reproduces it.
 
 ### This is a known Livewire limitation
 Maintainer position (livewire discussion #8466): **"not a bug per-se" — a design
@@ -159,16 +173,29 @@ plus `composer check` (382 Unit/Feature + Pint + PHPStan + vitest) — all green
    a stale response/morph (not just observe/cancel). If it can't, this hits the
    same "no native support" wall the community describes.
 3. **Islands (PR3):** isolating the form (or sub-regions) limits what a response
-   re-renders, structurally reducing cross-field clobber.
+   re-renders. Only helps at **per-field/section granularity** (a field's response
+   can't morph a field in another island), which is heavy and not islands' intended
+   use; it does **not** fix the within-island race. So islands are *tangential*
+   here, not the clean fix — their real value is perf (ProgressCard / Leaderboard).
 
-### Recommendation
-Given maintainers treat this as by-design and our real-user exposure is only the
-slow-network/fast-tabber edge case, the **test-level fix is a defensible stopping
-point**. If we want full closure *with* live validation, **spike the interceptor
-latest-wins (option 2)** and prove it by reverting the test helpers to instant
-`fill()` — if the suite then passes reliably with no test-side waits, the app
-genuinely protects real users. If the spike shows the interceptor can't skip a
-stale morph, fall back to the committed test fix (and consider islands).
+### Recommendation — WON'T DO unless reported
+**Decision:** stop at the committed **test-level fix**. Do **not** build the
+app-level closure (interceptor latest-wins) speculatively.
+
+Rationale: maintainers treat the race as by-design; our real-world exposure is
+**vanishingly small** (see "Real-world exposure" above — human typing is seconds
+per field, far slower than any round-trip, so requests don't overlap during
+normal use); and the only reliable reproducer is the test harness's instant
+`fill()`, which the committed serialization fix already handles. Closing it
+app-side would mean either losing per-field live validation (option 1) or
+shipping the "hacky," unverified interceptor pattern (option 2) — cost without a
+real user benefit.
+
+**Revisit only if** we get an actual field report of a user seeing a filled field
+blank itself out (or a spurious "required" on a filled field). At that point,
+spike the **interceptor latest-wins (option 2)** and prove it by reverting the
+test helpers to instant `fill()`: if the suite then passes reliably with no
+test-side waits, the app genuinely protects real users.
 
 ---
 
