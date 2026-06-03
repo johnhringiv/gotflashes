@@ -75,8 +75,13 @@ class BackupDatabase extends Command
             ]);
         }
 
-        // Restrict permissions: readable by owner/group only.
-        @chmod($backupPath, 0640);
+        // Restrict permissions: readable by owner/group only. Log if it fails,
+        // since locking down the backup is an explicit security goal.
+        if (! @chmod($backupPath, 0640)) {
+            Log::channel('backup')->warning('Could not set backup file permissions to 0640', [
+                'backup' => $backupPath,
+            ]);
+        }
 
         $size = round(filesize($backupPath) / 1024, 1);
         $this->info("Backup created: {$filename} ({$size} KB)");
@@ -100,12 +105,18 @@ class BackupDatabase extends Command
     {
         try {
             $db = new SQLite3($backupPath, SQLITE3_OPEN_READONLY);
-            $result = $db->querySingle('PRAGMA integrity_check');
-            $db->close();
-
-            return $result === 'ok';
         } catch (\Exception $e) {
             return false;
+        }
+
+        // try/finally so the connection is always closed, even if the
+        // integrity check throws on a corrupt backup.
+        try {
+            return $db->querySingle('PRAGMA integrity_check') === 'ok';
+        } catch (\Exception $e) {
+            return false;
+        } finally {
+            $db->close();
         }
     }
 
@@ -131,11 +142,16 @@ class BackupDatabase extends Command
         foreach (glob("{$backupDir}/database-backup-*.sqlite") as $file) {
             if (preg_match('/database-backup-(\d{4}-\d{2}-\d{2})\.sqlite$/', $file, $matches)) {
                 if ($matches[1] < $cutoffDate) {
-                    unlink($file);
-                    // Remove orphaned WAL/SHM sidecar files if present.
-                    @unlink("{$file}-wal");
-                    @unlink("{$file}-shm");
-                    $deleted++;
+                    // Silenced + logged (rather than a bare unlink that throws a raw
+                    // PHP warning) so a permissions error surfaces in the backup log.
+                    if (@unlink($file)) {
+                        // Remove orphaned WAL/SHM sidecar files if present.
+                        @unlink("{$file}-wal");
+                        @unlink("{$file}-shm");
+                        $deleted++;
+                    } else {
+                        Log::channel('backup')->warning('Could not delete old backup', ['backup' => $file]);
+                    }
                 }
             }
         }

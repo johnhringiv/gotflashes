@@ -92,6 +92,20 @@ class BackupDatabaseTest extends TestCase
         }
     }
 
+    public function test_backup_fails_when_destination_cannot_be_written(): void
+    {
+        // Occupy today's backup path with a directory so SQLite3 can't create
+        // the file — exercises the backup-creation failure path (catch + log).
+        $occupied = $this->todaysBackupPath();
+        @mkdir($occupied, 0750, true);
+
+        try {
+            $this->artisan('db:backup', ['--no-cleanup' => true])->assertFailed();
+        } finally {
+            @rmdir($occupied);
+        }
+    }
+
     public function test_cleanup_removes_old_backups(): void
     {
         $old = "{$this->backupDir}/database-backup-2020-01-01.sqlite";

@@ -55,6 +55,8 @@ function settleLivewire($page): void
                 (function check() {
                     const idle = (window.__lwInflight || 0) === 0;
                     if (idle && Date.now() - start >= 250) return resolve();
+                    // 8000 is a safety ceiling, NOT a delay — we resolve as soon
+                    // as Livewire is idle; this just prevents a hang on error.
                     if (Date.now() - start > 8000) return resolve();
                     setTimeout(check, 25);
                 })();
