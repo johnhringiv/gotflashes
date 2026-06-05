@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Models\User;
 use App\Services\EmailSuggestionService;
 
 /**
@@ -30,7 +31,9 @@ trait SuggestsEmailCorrections
             return;
         }
 
-        $this->email = $this->emailSuggestion;
+        // Normalize on apply too: the service already lowercases, but this keeps
+        // the stored value consistent regardless of how the suggestion was built.
+        $this->email = User::normalizeEmail($this->emailSuggestion);
         $this->emailSuggestion = null;
         $this->resetErrorBag('email');
         $this->validateOnly('email');

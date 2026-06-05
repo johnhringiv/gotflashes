@@ -116,6 +116,10 @@ class EmailSuggestionService
 
         // 2) Otherwise correct the second-level and top-level parts separately,
         //    which catches compound typos like "gmial.con".
+        // Split on the FIRST dot: for compound TLDs like "co.uk" the full
+        // remainder matches a TOP_LEVEL_DOMAINS entry directly. For deeper
+        // hostnames the parts won't match any list and we fall through to no
+        // suggestion — the intended safe behavior.
         $dotPos = strpos($domain, '.');
         $secondLevel = substr($domain, 0, $dotPos);
         $topLevel = substr($domain, $dotPos + 1);
@@ -158,6 +162,9 @@ class EmailSuggestionService
         $bestDistance = PHP_INT_MAX;
 
         foreach ($candidates as $candidate) {
+            // Byte-index first-char comparison is intentional: candidates (and
+            // typical email domains) are ASCII. A multibyte input simply won't
+            // match any ASCII candidate's first byte, yielding no suggestion.
             if (strlen($candidate) < $minCandidateLength || $candidate[0] !== $input[0]) {
                 continue;
             }

@@ -42,6 +42,16 @@ class EmailSuggestionLivewireTest extends TestCase
             ->assertHasNoErrors('email');
     }
 
+    public function test_applying_with_no_suggestion_is_a_noop(): void
+    {
+        Livewire::test(RegistrationForm::class)
+            ->set('email', 'sailor@gmail.com')
+            ->assertSet('emailSuggestion', null)
+            ->call('applyEmailSuggestion')
+            ->assertSet('email', 'sailor@gmail.com')
+            ->assertSet('emailSuggestion', null);
+    }
+
     public function test_profile_form_surfaces_a_suggestion_for_a_typo(): void
     {
         $user = User::factory()->create(['email' => 'current@example.com']);
