@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\SuggestsEmailCorrections;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class ProfileForm extends Component
 {
+    use SuggestsEmailCorrections;
+
     // Personal Information
     public string $first_name = '';
 
@@ -94,6 +97,7 @@ class ProfileForm extends Component
         // uniqueness check runs against the same value we'll store.
         if ($propertyName === 'email') {
             $this->email = User::normalizeEmail($this->email);
+            $this->refreshEmailSuggestion();
         }
 
         // District/fleet are cleared programmatically (picking a district clears

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\SuggestsEmailCorrections;
 use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
@@ -16,6 +17,8 @@ use Livewire\Component;
 
 class RegistrationForm extends Component
 {
+    use SuggestsEmailCorrections;
+
     // Personal Information
     public string $first_name = '';
 
@@ -99,6 +102,7 @@ class RegistrationForm extends Component
         // the raw property, so it must be normalized here too.
         if ($propertyName === 'email') {
             $this->email = User::normalizeEmail($this->email);
+            $this->refreshEmailSuggestion();
         }
 
         // 'confirmed' rule on 'password' already checks password_confirmation,
