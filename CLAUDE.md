@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**G.O.T. Flashes Challenge Tracker** - A Laravel 12 web application for tracking Lightning Class sailing activity. The goal is to encourage sailors to get on the water by recognizing annual sailing days through awards at 10, 25, and 50+ day milestones.
+**G.O.T. Flashes Challenge Tracker** - A Laravel 13 web application for tracking Lightning Class sailing activity. The goal is to encourage sailors to get on the water by recognizing annual sailing days through awards at 10, 25, and 50+ day milestones.
 
 **Key Concept**: "Get Out There - FLASHES" encourages Lightning sailors to get their boats off the dock. Users log sailing days and optional non-sailing days (boat maintenance, race committee work) toward annual awards. Up to 5 non-sailing days count toward award totals per year.
 
@@ -37,7 +37,18 @@ APP_ENV=testing php artisan config:clear --ansi && APP_ENV=testing php artisan t
 php artisan migrate               # Run migrations
 php artisan migrate:fresh         # Fresh DB (destroys all data)
 php artisan tinker                # REPL for database interaction
+php artisan db:backup             # Backup SQLite DB to storage/app/backups (--no-cleanup skips retention)
 ```
+
+### Database Backup
+- Daily local-disk backup of the SQLite database using SQLite3's native backup API (WAL-mode-aware)
+- **Command**: `app/Console/Commands/BackupDatabase.php` (`php artisan db:backup`)
+- **Schedule**: `Schedule::command('db:backup')->daily()->at('02:00')` in `routes/console.php`; the Docker `scheduler` process (`docker/supervisord.conf`) runs `schedule:run` every 60 seconds
+- **Source**: `database_path('data/database.sqlite')` → **Output**: `storage_path('app/backups')/database-backup-{Y-m-d}.sqlite` (mode `0640`)
+- **Validation**: backup reopened read-only and checked with `PRAGMA integrity_check`; invalid backups are deleted and the command exits non-zero
+- **Retention**: 90 days (`RETENTION_DAYS`); retention pass also clears orphaned `-wal`/`-shm` files. `--no-cleanup` skips retention
+- **Monitoring**: success/failure logged to the `backup` channel (`storage/logs/backup.log`); failures at error level
+- Tests: `tests/Feature/BackupDatabaseTest.php`
 
 ### Making Admin Users
 ```bash
@@ -102,6 +113,11 @@ Simple custom auth implementation (not using full Laravel Breeze package):
 - Password hashing via bcrypt (Laravel default)
 - Session-based authentication
 
+**Session & CSRF lifetime:** Session driver is `database`, `SESSION_LIFETIME` is 120 minutes, and CSRF tokens are tied to the session. A form left open past the session lifetime carries a stale token. Rather than dead-ending on Laravel's generic 419 "Page Expired" screen, `bootstrap/app.php` registers a render callback that converts the resulting `HttpException(419)` (Laravel maps `TokenMismatchException` to this before render callbacks run, so match on status 419) into a recoverable response:
+- Standard form posts (login) → redirect back with old input (minus passwords) and a `session('warning')` flash, shown automatically by the layout's toast system; the reloaded page has a fresh token
+- AJAX forms (forgot/reset password, which submit via `fetch` + `response.json()`) → JSON 419 with a `message`, surfaced as an error toast by their existing fetch handlers
+- Tests: `tests/Feature/Auth/StaleCsrfTest.php` (note: Laravel skips CSRF validation under `runningUnitTests()`, so the test throws the exception via an inline route rather than posting a bad token)
+
 ### Authorization
 
 **Policies** (`app/Policies/FlashPolicy.php`):
@@ -116,14 +132,18 @@ Routes in `routes/web.php`:
 - `/register` - Registration form and handler
 - `/login` - Login form and handler
 - `/logout` - Logout (POST only)
-- `/flashes` - Resource routes (index, store, edit, update, destroy) - auth required
+- `/logbook` - Activity logbook (index, store, update, destroy) plus `/logbook/{id}/edit` - auth required
+- `/profile` - View/edit profile - auth required
+- `/export/user-data` - CSV export of profile + activity - auth required
 - `/leaderboard` - Public leaderboard with three tabs: sailor, fleet, district
+- `/password/*`, `/verify-email/{token}` - Password reset and email verification
+- `/admin/fulfillment`, `/admin/sailor-logs` - Admin dashboards - auth + admin required
 
 ### Frontend Architecture
 
 **Tech Stack:**
 - Blade templates (server-rendered)
-- Livewire v3 (reactive components for flash form)
+- Livewire v4 (reactive components for flash form)
 - Tailwind CSS v4 (utility-first CSS)
 - Vanilla JavaScript (minimal, progressive enhancement)
 - Vite for asset bundling
@@ -240,7 +260,7 @@ Routes in `routes/web.php`:
 - Level 5 static analysis
 - Analyzes: app/, routes/, database/
 - Excludes: database/migrations/
-- Memory limit: 256M
+- Memory limit: 512M
 - Config: `phpstan.neon`
 
 ### GitHub Actions
@@ -315,7 +335,7 @@ This allows tracking of:
 - ✅ UI with Tailwind CSS v4 and DaisyUI components
 - ✅ Award tier calculations (10, 25, 50 days)
 - ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
-- ✅ Award badge images (got-10-badge.png, got-25-badge.png, got-50-badge.png, burgee-50.jpg)
+- ✅ Award badge images (got_10_transparent.png, got_25_transparent.png, got_50_transparent.png, burgee_50_transparent.png)
 - ✅ Separate earned awards card with gradient background
 - ✅ Non-sailing day cap enforcement (5 per year) in all queries
 - ✅ Warning toast when logging non-sailing day after reaching 5-day limit
@@ -347,6 +367,7 @@ This allows tracking of:
   - CSV export for mailing labels
   - Filtering and search capabilities
   - Admin action logging
+- ✅ Automated daily SQLite database backups (validated, WAL-aware, 90-day retention, logged to `backup` channel)
 
 **Planned:**
 - 📋 Historical year views (read-only previous years)
@@ -424,32 +445,29 @@ Livewire.hook('morph.added', ({ el }) => {
 
 ### Livewire Performance Best Practices
 
-**Use appropriate wire:model modifiers to minimize re-renders:**
-- `wire:model.defer` - Syncs on form submission (best for forms with many fields)
-- `wire:model.blur` - Syncs when field loses focus (good for text inputs, prevents query-per-keystroke)
-- `wire:model.live` - Syncs on every keystroke (use sparingly, only when real-time updates needed)
-- `wire:model` - Syncs on input event (avoid for text fields, causes unnecessary renders)
+**Use appropriate wire:model modifiers to minimize re-renders (Livewire v4 semantics):**
+- `wire:model` - Deferred by default; value is held client-side and synced on the next network request (e.g. a `save()` action). This is the v4 default (v3's `.defer` is no longer needed).
+- `wire:model.live` - Network sync on every input event (use sparingly; v4 runs these in parallel for faster typing)
+- `wire:model.live.blur` - Network sync when the field loses focus (this is v3's old `.blur` behavior; in v4 the bare `.blur` only controls *client-side* sync timing, so add `.live` when you need the server round-trip)
+- `.renderless` modifier - sync without triggering a re-render (avoid if the field's `updated()` hook must update the DOM, e.g. showing/clearing a validation error)
 
-**Example: FlashForm optimization**
+**Example: FlashForm / ProfileForm fields**
 ```blade
-{{-- GOOD: Only syncs when user leaves field --}}
-<input wire:model.blur="location" />
-<textarea wire:model.blur="notes" />
-
-{{-- BAD: Syncs on every keystroke, triggers render() + DB queries --}}
-<input wire:model="location" />
+{{-- These fields drive updated() hooks (resetValidation / validateOnly) that need
+     the server round-trip AND a re-render, so .live.blur is required in v4: --}}
+<input wire:model.live.blur="location" />
+<textarea wire:model.live.blur="notes" />
 ```
 
 **Why this matters:**
-- Every Livewire sync triggers `render()` which may run database queries
+- Every Livewire network sync triggers `render()` which may run database queries
 - FlashForm's `render()` queries `existingDates` on every render
-- Using `wire:model` on a notes textarea = database query per keystroke
-- Using `wire:model.blur` = database query only when field loses focus
+- FlashForm.updated() runs `resetValidation()`; ProfileForm.updated() runs `validateOnly()` — both need the sync-on-blur to fire, which is why those fields use `.live.blur` rather than the deferred default
 
-**Rule of thumb:**
-- Required fields that drive UI logic: `wire:model.live` or `wire:model`
-- Optional text fields: `wire:model.blur`
-- Form submission: `wire:model.defer`
+**Rule of thumb (v4):**
+- Required fields that drive UI logic: `wire:model.live`
+- Fields that live-validate or clear errors on blur: `wire:model.live.blur`
+- Fields only needed at submit time: plain `wire:model` (deferred)
 
 ### Testing Strategy
 
@@ -525,13 +543,16 @@ The only thing not tested: flatpickr actually using the data (which is flatpickr
 - Descriptive test names: `test_users_can_create_flash_with_minimal_data()`
 - Arrange-Act-Assert pattern in all tests
 
-**Current Coverage:**
-- 186 tests with 573+ assertions
-- 100% coverage of existing features
-- Authentication, authorization, CRUD, validation, leaderboards, progress tracking all tested
-- Grace period boundary testing (January vs February)
-- Concurrent duplicate submission handling
-- Empty array validation
+**Current Coverage (by area, not by count):**
+- **Auth & account** (`tests/Feature/Auth`, `tests/Feature`): login/logout/remember-me, registration + validation, password reset (throttle, token expiry, end-to-end), email verification + email-change pending pattern, resend rate limiting
+- **Logbook / flashes** (`tests/Feature`, `tests/Feature/Livewire`): create (single + multi-date), edit, delete, duplicate prevention, event-type validation, ordering, grace-period boundaries, concurrent/empty-array validation
+- **Progress & awards** (`tests/Feature`): tier calculations, non-sailing 5/yr cap, badge thresholds
+- **Leaderboards** (`tests/Feature`): sailor/fleet/district, year scoping, tie-breaking, pagination
+- **Admin** (`tests/Feature`): award fulfillment + batch ops + CSV, sailor logs filters, role-based access, award-sent email (verified vs unverified, status-change-only)
+- **Profile / export** (`tests/Feature`, `tests/Browser/Profile`): profile edit, email change, user-data CSV export
+- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (flatpickr, TomSelect, toasts), multi-page flows
+- **Unit** (`tests/Unit`): User/Flash/Member models, `FlashPolicy`, `DateRangeService` grace logic
+- Known gap: `MailAllowlistProvider` (dev-only mail safety net) has no dedicated test
 
 **Running Tests:**
 ```bash

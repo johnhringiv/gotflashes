@@ -47,7 +47,7 @@ class ComponentCommunicationTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('flash-deleted');
     }
 
@@ -100,7 +100,7 @@ class ComponentCommunicationTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete');
+            ->call('deleteFlash');
 
         // Simulate the event being received
         $progressCard->dispatch('flash-deleted');
@@ -209,7 +209,7 @@ class ComponentCommunicationTest extends TestCase
         Livewire::actingAs($user)
             ->test(FlashList::class)
             ->call('confirmDelete', $flash->id)
-            ->call('delete')
+            ->call('deleteFlash')
             ->assertDispatched('toast');
     }
 

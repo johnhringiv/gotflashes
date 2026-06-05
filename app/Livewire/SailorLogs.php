@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Flash;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -177,8 +178,8 @@ class SailorLogs extends AdminComponent
             // Stream flashes in chunks
             $query->chunk(100, function ($flashes) use ($handle, $selectedYear) {
                 foreach ($flashes as $flash) {
-                    /** @var \App\Models\Flash $flash */
-                    /** @var \App\Models\User $user */
+                    /** @var Flash $flash */
+                    /** @var User $user */
                     $user = $flash->user;
                     $membership = $user->membershipForYear($selectedYear);
 

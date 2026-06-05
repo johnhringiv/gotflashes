@@ -1,24 +1,33 @@
-# Membership Year-End Logic
+# Year-Specific Membership Logic
 
 ## Overview
 
-The G.O.T. Flashes application tracks district and fleet memberships using a **year-end snapshot** approach. This means users are considered members of the district and fleet they are affiliated with at the end of each calendar year, regardless of any mid-year changes.
+The G.O.T. Flashes application tracks district and fleet memberships **per calendar year**.
+Each year a user has activity is associated with the district/fleet they were affiliated with
+**for that year**, so historical leaderboards and exports remain accurate even when a user
+changes affiliation over time.
+
+Affiliations are resolved with **query-time carry-forward**: if a user has no membership row
+for a given year, the system uses their most recent membership from a prior year. There is no
+pre-computed year-end snapshot — affiliations are resolved when queries run.
 
 ## Business Rules
 
-### 1. Year-End Snapshot Model
+### 1. Per-Year Membership Model
 
-**Core Principle:** Users are credited to the district and fleet they belong to on December 31st of each year for leaderboard purposes.
+**Core Principle:** A user's flashes for a given year are credited to the district/fleet on
+their membership record for that year. If no record exists for that year, the most recent
+prior-year membership is carried forward.
 
 **Rationale:**
-- Allows users to change affiliations mid-year (e.g., moving to a new district)
-- Provides a fair and consistent way to aggregate leaderboard standings
-- Simplifies multi-year leaderboard calculations
-- Prevents gaming the system by switching affiliations to top-performing groups
+- Allows users to change affiliations over time while preserving historical accuracy
+- Provides a fair, consistent way to aggregate leaderboard standings per year
+- Avoids a maintenance job: new years "just work" by carrying forward the last known affiliation
+- Prevents gaming the system by retroactively switching affiliations on prior years
 
 ### 2. Membership Records
 
-The `members` table tracks year-end affiliations:
+The `members` table tracks per-year affiliations:
 
 ```
 members
@@ -31,144 +40,131 @@ members
 
 **Key Constraints:**
 - One membership record per user per year
-- Both district_id and fleet_id are nullable (for unaffiliated users)
-- Cascade delete when user is deleted
-- Set null when district/fleet is deleted
+- Both `district_id` and `fleet_id` are nullable (for unaffiliated users)
+- Cascade delete when the user is deleted
+- Set null when a district/fleet is deleted
 
-### 3. When Membership Records Are Created
+### 3. When Membership Records Are Created or Updated
 
 **At Registration:**
-- When a user registers, a membership record is created for the current year
-- Uses the district_id and fleet_id selected during registration
-- If user selects "Unaffiliated/None", both fields are set to null
+- A membership record is created for the **current year** only
+  (`RegistrationForm`, via `UserDataService::buildMemberData(...)`)
+- Uses the `district_id` / `fleet_id` selected during registration
+- If the user selects "Unaffiliated/None", both fields are null
 
-**Year-End Snapshot (December 31st):**
-- For existing users, a membership record for the next year should be created based on their current affiliation
-- This snapshot happens automatically (future implementation: scheduled job)
-- Captures the user's district/fleet status as of December 31st at 11:59 PM
+**On Profile Update:**
+- Updating district/fleet in the profile writes to the **current year's** membership row
+  (created if absent), leaving prior years untouched (historical preservation)
 
-**Mid-Year Updates:**
-- Users can update their profile to change district/fleet affiliation
-- Changes are reflected immediately in their current year membership record
-- Previous years' membership records remain unchanged (historical preservation)
+**Future years (carry-forward):**
+- Membership rows are **not** pre-created for future years (there is no scheduled snapshot job)
+- When a query targets a year the user has no row for, the most recent membership with
+  `year <= target` is used. See [§6 Carry-Forward Resolution](#6-carry-forward-resolution).
 
 ### 4. Leaderboard Calculations
 
-**Sailor Leaderboard:**
-- Uses flash counts from `flashes` table (filtered by year)
-- Uses district/fleet from `members` table (filtered by year)
-- Example: User's 2025 flashes are credited to their 2025 membership district/fleet
+All three leaderboards resolve each user's affiliation for the selected year via the
+carry-forward subquery (`Leaderboard.php`), then aggregate:
 
-**Fleet Leaderboard:**
-- Aggregates all sailors' flashes by their year-end fleet affiliation
-- Groups by `members.fleet_id` for the specified year
-- Shows total flashes for all members of each fleet
-
-**District Leaderboard:**
-- Aggregates all sailors' flashes by their year-end district affiliation
-- Groups by `members.district_id` for the specified year
-- Shows total flashes for all members of each district
+- **Sailor Leaderboard:** flash counts from `flashes` (filtered by year), district/fleet from
+  the carried-forward membership for that year.
+- **Fleet Leaderboard:** aggregates sailors' qualifying flashes grouped by their carried-forward
+  `fleet_id` for the year; unaffiliated users are excluded.
+- **District Leaderboard:** same, grouped by carried-forward `district_id`.
 
 ### 5. Unaffiliated Users
 
-Users who select "Unaffiliated/None" or "None":
-- Have `district_id` and/or `fleet_id` set to null in members table
-- Their flashes count toward their personal totals
+Users with `district_id` and/or `fleet_id` set to null for the resolved year:
+- Have their flashes count toward their personal totals
 - Do **not** contribute to district or fleet leaderboard totals
 - Still appear on the sailor leaderboard
 
-### 6. Edge Cases
+### 6. Carry-Forward Resolution
 
-**New Users Mid-Year:**
-- Create membership record for current year with selected affiliations
-- Appear on current year leaderboards immediately
+When no membership row exists for the exact target year, the most recent membership with
+`year <= target` is used. This is implemented in two places:
 
-**User Changes Affiliation Mid-Year:**
-- Update current year membership record with new district/fleet
-- All flashes for that year are credited to the new affiliation
-- Previous years' affiliations remain unchanged
-
-**User Deletes Account:**
-- Membership records are cascade deleted
-- Historical leaderboard data no longer includes their contributions
-
-**District/Fleet Deleted:**
-- Membership records set district_id/fleet_id to null (set null on delete)
-- Affected users become "unaffiliated" for that year
-- Historical data preserved but not attributed to deleted district/fleet
-
-### 7. Implementation Details
-
-**User Model Methods:**
+**Leaderboard (SQL subquery)** — `app/Livewire/Leaderboard.php`:
 ```php
-// Get membership for specific year
-$user->membershipForYear(2025); // Returns Member|null
-
-// Get current year membership
-$user->currentMembership(); // Returns Member|null
-
-// Access district through membership
-$membership = $user->currentMembership();
-$district = $membership?->district;
-$fleet = $membership?->fleet;
+// Most recent membership <= target year, per user
+$mostRecentMembership = DB::table('members as m1')
+    ->select('m1.*')
+    ->joinSub(
+        DB::table('members')
+            ->select('user_id', DB::raw('MAX(year) as max_year'))
+            ->where('year', '<=', $year)
+            ->groupBy('user_id'),
+        'm2',
+        fn ($join) => $join
+            ->on('m1.user_id', '=', 'm2.user_id')
+            ->on('m1.year', '=', 'm2.max_year'),
+    );
 ```
 
-**Leaderboard Queries:**
+**User model (PHP)** — `app/Models/User.php`:
 ```php
-// Join members table to get year-end affiliations
-User::join('members', 'users.id', '=', 'members.user_id')
-    ->where('members.year', 2025)
-    ->where('members.district_id', $districtId)
-    ->withFlashesCount(2025)
-    ->get();
+public function membershipForYear(int $year): ?Member
+{
+    // Exact match first, then carry forward from the most recent prior year
+    return $this->members->firstWhere('year', $year)
+        ?? $this->members->where('year', '<', $year)->sortByDesc('year')->first();
+}
+
+public function currentMembership(): ?Member
+{
+    return $this->membershipForYear(now()->year);
+}
 ```
 
-### 8. Future Considerations
+> **Note:** `ExportController` currently joins memberships on an **exact** `members.year = flash year`
+> match (no carry-forward), so an exported flash in a year with no membership row shows as
+> unaffiliated. This differs from the leaderboard/`User` carry-forward behavior and is tracked
+> as a code inconsistency to reconcile.
 
-**Year-End Snapshot Job:**
-- Scheduled task runs on December 31st at 11:59 PM
-- Creates membership records for next year based on current year's final state
-- Ensures continuity for users who don't update their profile
+### 7. Edge Cases
 
-**Grace Period:**
-- Allow users to update previous year's affiliation until January 31st
-- Useful for corrections or users who moved late in December
-- After grace period, previous years become read-only
+**New users mid-year:**
+- Membership row created for the current year; appear on current-year leaderboards immediately.
 
-**Historical Views:**
-- Users can view their affiliation history
-- Show which district/fleet they were in for each year
-- Display year-by-year flash contributions
+**User changes affiliation:**
+- The current year's membership row is updated; all of that year's flashes are credited to the
+  new district/fleet. Prior years remain unchanged.
 
-**Award Certificates:**
-- Use membership records to print correct district/fleet on certificates
-- Ensures accuracy even when viewing historical awards
+**User queried for a year with no membership row:**
+- Carry-forward uses the most recent prior membership (leaderboards/`User`); export treats it
+  as unaffiliated (see note above).
+
+**User deletes account:**
+- Membership records are cascade-deleted; historical leaderboard data no longer includes them.
+
+**District/Fleet deleted:**
+- Affected membership rows have `district_id`/`fleet_id` set to null; those users become
+  unaffiliated for the affected years. Historical flash data is preserved but unattributed.
+
+### 8. Implementation Notes & Possible Future Work
+
+- **User model methods:** `members()` (HasMany), `membershipForYear(int $year)`,
+  `currentMembership()` — see [§6](#6-carry-forward-resolution).
+- **Reconcile export resolution:** align `ExportController` with the carry-forward model used
+  elsewhere (see note in §6).
+- **Year-end snapshot job (not implemented):** a scheduled task could materialize next-year
+  membership rows on Jan 1 instead of relying on query-time carry-forward. Not currently needed —
+  carry-forward already produces correct results — but listed for awareness.
 
 ## Query Examples
 
-### Current Year Sailor Leaderboard
+### Sailor leaderboard for a year (carry-forward membership)
 ```php
-$sailors = User::select('users.*')
-    ->join('members', 'users.id', '=', 'members.user_id')
-    ->where('members.year', now()->year)
-    ->withFlashesCount(now()->year)
-    ->orderBy('flashes_count', 'desc')
+$members = $mostRecentMembership; // subquery from §6 (year <= $year)
+
+$sailors = DB::table('users')
+    ->joinSub($members, 'members', 'members.user_id', '=', 'users.id')
+    ->where('members.year', '<=', $year)
+    // ... join per-year flash counts, order by qualifying flashes ...
     ->paginate(15);
 ```
 
-### Fleet Leaderboard for Specific Year
-```php
-$fleets = Fleet::select('fleets.*')
-    ->selectRaw('COUNT(DISTINCT members.user_id) as member_count')
-    ->selectRaw('SUM(qualifying_flashes) as total_flashes')
-    ->join('members', 'fleets.id', '=', 'members.fleet_id')
-    ->where('members.year', $year)
-    ->groupBy('fleets.id')
-    ->orderBy('total_flashes', 'desc')
-    ->get();
-```
-
-### User's Affiliation History
+### A user's affiliation history
 ```php
 $history = $user->members()
     ->with(['district', 'fleet'])
@@ -178,9 +174,9 @@ $history = $user->members()
 
 ## Testing Considerations
 
-When testing the membership system:
-1. Verify membership record created at registration
-2. Test mid-year affiliation changes update current year only
-3. Confirm leaderboards use correct year's membership data
-4. Validate unaffiliated users don't appear in fleet/district totals
-5. Test multi-year scenarios with different affiliations per year
+1. Verify a membership record is created at registration (current year only).
+2. Profile affiliation changes update the current year's row, not prior years.
+3. Leaderboards resolve the correct membership per year, including carry-forward when no row
+   exists for the target year.
+4. Unaffiliated users don't appear in fleet/district totals.
+5. Multi-year scenarios with different affiliations per year resolve correctly.

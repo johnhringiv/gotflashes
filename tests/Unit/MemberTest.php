@@ -6,6 +6,7 @@ use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -120,7 +121,7 @@ class MemberTest extends TestCase
 
     public function test_user_cannot_have_duplicate_membership_for_same_year(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         $user = User::factory()->create();
         $district = District::first();

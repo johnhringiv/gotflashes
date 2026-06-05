@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\RegistrationForm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -21,7 +22,7 @@ class EmailVerificationTest extends TestCase
     {
         Notification::fake();
 
-        Livewire::test(\App\Livewire\RegistrationForm::class)
+        Livewire::test(RegistrationForm::class)
             ->set('first_name', 'John')
             ->set('last_name', 'Doe')
             ->set('email', 'john@example.com')

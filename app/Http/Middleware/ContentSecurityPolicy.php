@@ -29,10 +29,12 @@ class ContentSecurityPolicy
             : (file_exists(public_path('hot')) ? ' http://127.0.0.1:5173 ws://127.0.0.1:5173' : '');
 
         // Build CSP directives
-        // Note: 'unsafe-eval' is required for Livewire 3 / Alpine.js reactive expressions
+        // 'unsafe-eval' is intentionally NOT present: Livewire's 'csp_safe' config
+        // (config/livewire.php) loads Alpine's CSP build, which avoids eval(). If
+        // csp_safe is ever disabled, Livewire/Alpine will need 'unsafe-eval' back.
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval'".$viteDevServer,
+            "script-src 'self' 'nonce-{$nonce}'".$viteDevServer,
             "style-src 'self' 'unsafe-inline'".$viteDevServer,
             "img-src 'self' data:".$viteDevServer,
             "font-src 'self' data:",

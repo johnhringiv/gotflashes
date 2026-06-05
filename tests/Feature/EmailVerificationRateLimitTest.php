@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\RegistrationForm;
 use App\Models\User;
+use App\Notifications\VerifyEmailChange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -172,7 +174,7 @@ class EmailVerificationRateLimitTest extends TestCase
         }
 
         // Count how many notifications were actually sent
-        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
+        Notification::assertSentTimes(VerifyEmailChange::class, 1);
     }
 
     public function test_banner_resend_is_rate_limited(): void
@@ -195,7 +197,7 @@ class EmailVerificationRateLimitTest extends TestCase
         }
 
         // Should only send 1 email despite 20 attempts
-        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
+        Notification::assertSentTimes(VerifyEmailChange::class, 1);
     }
 
     public function test_banner_and_profile_share_same_rate_limit(): void
@@ -221,7 +223,7 @@ class EmailVerificationRateLimitTest extends TestCase
             ->assertDispatched('toast');
 
         // Should only send 1 email total (they share the same rate limit key)
-        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
+        Notification::assertSentTimes(VerifyEmailChange::class, 1);
     }
 
     public function test_registration_is_rate_limited_per_ip(): void
@@ -246,7 +248,7 @@ class EmailVerificationRateLimitTest extends TestCase
         // First 5 registrations should succeed
         for ($i = 0; $i < 5; $i++) {
             $data = array_merge($baseData, ['email' => "test{$i}@example.com"]);
-            Livewire::test(\App\Livewire\RegistrationForm::class)
+            Livewire::test(RegistrationForm::class)
                 ->set('first_name', $data['first_name'])
                 ->set('last_name', $data['last_name'])
                 ->set('email', $data['email'])
@@ -259,6 +261,8 @@ class EmailVerificationRateLimitTest extends TestCase
                 ->set('state', $data['state'])
                 ->set('zip_code', $data['zip_code'])
                 ->set('country', $data['country'])
+                ->set('district_id', 'none')
+                ->set('fleet_id', 'none')
                 ->call('register');
 
             $this->assertDatabaseHas('users', ['email' => $data['email']]);
@@ -266,7 +270,7 @@ class EmailVerificationRateLimitTest extends TestCase
 
         // 6th registration should be rate limited
         $data = array_merge($baseData, ['email' => 'test6@example.com']);
-        Livewire::test(\App\Livewire\RegistrationForm::class)
+        Livewire::test(RegistrationForm::class)
             ->set('first_name', $data['first_name'])
             ->set('last_name', $data['last_name'])
             ->set('email', $data['email'])
@@ -279,6 +283,8 @@ class EmailVerificationRateLimitTest extends TestCase
             ->set('state', $data['state'])
             ->set('zip_code', $data['zip_code'])
             ->set('country', $data['country'])
+            ->set('district_id', 'none')
+            ->set('fleet_id', 'none')
             ->call('register')
             ->assertDispatched('toast');
 
@@ -311,7 +317,7 @@ class EmailVerificationRateLimitTest extends TestCase
         // Register 4 users (within both rate limits)
         for ($i = 0; $i < 4; $i++) {
             $data = array_merge($baseData, ['email' => "test{$i}@example.com"]);
-            Livewire::test(\App\Livewire\RegistrationForm::class)
+            Livewire::test(RegistrationForm::class)
                 ->set('first_name', $data['first_name'])
                 ->set('last_name', $data['last_name'])
                 ->set('email', $data['email'])
@@ -324,12 +330,14 @@ class EmailVerificationRateLimitTest extends TestCase
                 ->set('state', $data['state'])
                 ->set('zip_code', $data['zip_code'])
                 ->set('country', $data['country'])
+                ->set('district_id', 'none')
+                ->set('fleet_id', 'none')
                 ->call('register');
         }
 
         // Should have sent 3 emails (email rate limit is 3 per hour)
         // 4th registration succeeds but email is rate limited
-        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 3);
+        Notification::assertSentTimes(VerifyEmailChange::class, 3);
     }
 
     public function test_registration_records_user_rate_limit_preventing_immediate_resend(): void
@@ -340,7 +348,7 @@ class EmailVerificationRateLimitTest extends TestCase
         Notification::fake();
 
         // Register a new user
-        Livewire::test(\App\Livewire\RegistrationForm::class)
+        Livewire::test(RegistrationForm::class)
             ->set('first_name', 'Test')
             ->set('last_name', 'User')
             ->set('email', 'newuser@example.com')
@@ -353,6 +361,8 @@ class EmailVerificationRateLimitTest extends TestCase
             ->set('state', 'TS')
             ->set('zip_code', '12345')
             ->set('country', 'US')
+            ->set('district_id', 'none')
+            ->set('fleet_id', 'none')
             ->call('register');
 
         // Get the newly created user
@@ -373,7 +383,7 @@ class EmailVerificationRateLimitTest extends TestCase
 
         // Should only have sent 1 email total (the initial registration email)
         // The banner resend should be blocked by rate limit
-        Notification::assertSentTimes(\App\Notifications\VerifyEmailChange::class, 1);
+        Notification::assertSentTimes(VerifyEmailChange::class, 1);
     }
 
     public function test_banner_shows_cooldown_seconds(): void

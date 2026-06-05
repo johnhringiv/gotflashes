@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ExportController extends Controller
@@ -64,35 +65,26 @@ class ExportController extends Controller
                 $user->yacht_club ?? '',
             ];
 
+            // Load memberships (with their district/fleet) once so the carry-forward
+            // resolution below is in-memory and stays consistent with the rest of the
+            // app — see User::membershipForYear(), which the Leaderboard mirrors.
+            $user->loadMissing('members.district', 'members.fleet');
+
             // Stream flashes data in chunks
             $user->flashes()
-                ->leftJoin('members', function ($join) {
-                    $join->on('members.user_id', '=', 'flashes.user_id')
-                        ->whereRaw("members.year = CAST(strftime('%Y', flashes.date) AS INTEGER)");
-                })
-                ->leftJoin('districts', 'members.district_id', '=', 'districts.id')
-                ->leftJoin('fleets', 'members.fleet_id', '=', 'fleets.id')
-                ->select([
-                    'flashes.date',
-                    'flashes.activity_type',
-                    'flashes.event_type',
-                    'flashes.location',
-                    'flashes.sail_number',
-                    'flashes.notes',
-                    'flashes.created_at',
-                    'flashes.updated_at',
-                    'districts.name as district_name',
-                    'fleets.fleet_number',
-                    'fleets.fleet_name',
-                ])
-                ->orderBy('flashes.date', 'desc')
-                ->chunk(100, function ($flashes) use ($handle, $userData) {
+                ->orderBy('date', 'desc')
+                ->chunk(100, function ($flashes) use ($handle, $userData, $user) {
                     foreach ($flashes as $flash) {
                         // Format date as Y-m-d without time
                         // @phpstan-ignore-next-line
-                        $dateValue = $flash->date instanceof \Carbon\Carbon
+                        $dateValue = $flash->date instanceof Carbon
                             ? $flash->date->format('Y-m-d')
                             : $flash->date;
+
+                        // Resolve affiliation via the canonical carry-forward method
+                        // (uses the most recent membership on or before the flash year),
+                        // not an exact-year match — so the CSV agrees with the leaderboard.
+                        $member = $user->membershipForYear((int) substr((string) $dateValue, 0, 4));
 
                         // Merge pre-built user data with flash data
                         fputcsv($handle, array_merge($userData, [
@@ -101,9 +93,9 @@ class ExportController extends Controller
                             $flash->event_type ?? '',
                             $flash->location ?? '',
                             $flash->sail_number ?? '',
-                            $flash->district_name ?? '',
-                            $flash->fleet_number ?? '',
-                            $flash->fleet_name ?? '',
+                            data_get($member, 'district.name', ''),
+                            data_get($member, 'fleet.fleet_number', ''),
+                            data_get($member, 'fleet.fleet_name', ''),
                             $flash->notes ?? '',
                             $flash->created_at ?? '',
                             $flash->updated_at ?? '',

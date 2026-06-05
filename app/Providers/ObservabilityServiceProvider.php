@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Http\Middleware\AuthenticationLoggingMiddleware;
 use App\Http\Middleware\RequestLoggingMiddleware;
 use App\Listeners\QueryLogListener;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Event;
@@ -61,7 +64,7 @@ class ObservabilityServiceProvider extends ServiceProvider
         }
 
         // Log authentication events
-        Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
+        Event::listen(Login::class, function ($event) {
             Log::channel('security')->info('User logged in', [
                 'event' => 'login_success',
                 'user_id' => $event->user->id,
@@ -74,7 +77,7 @@ class ObservabilityServiceProvider extends ServiceProvider
             session()->put('login_timestamp', now());
         });
 
-        Event::listen(\Illuminate\Auth\Events\Failed::class, function ($event) {
+        Event::listen(Failed::class, function ($event) {
             Log::channel('security')->warning('Authentication failed', [
                 'event' => 'auth_failed',
                 'email' => $event->credentials['email'] ?? null,
@@ -83,7 +86,7 @@ class ObservabilityServiceProvider extends ServiceProvider
             ]);
         });
 
-        Event::listen(\Illuminate\Auth\Events\Registered::class, function ($event) {
+        Event::listen(Registered::class, function ($event) {
             Log::channel('security')->info('New user registered', [
                 'event' => 'user_registered',
                 'user_id' => $event->user->id,

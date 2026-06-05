@@ -88,12 +88,14 @@
             </div>
         </div>
 
-        <!-- Call to Action -->
-        <div class="text-center mt-8 mb-8">
-            <div class="alert alert-success">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Ready to start tracking? Use the Sign Up button above to create your account and join the challenge!</span>
+        <!-- Call to Action (guests only — prompts account creation) -->
+        @guest
+            <div class="text-center mt-8 mb-8">
+                <div class="alert alert-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Ready to start tracking? <a href="/register" class="link link-neutral font-semibold">Sign up here</a> to create your account and join the challenge!</span>
+                </div>
             </div>
-        </div>
+        @endguest
     </div>
 </x-layout>

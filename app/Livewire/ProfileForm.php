@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Fleet;
 use App\Models\Member;
 use App\Rules\UserProfileRules;
 use App\Services\EmailVerificationService;
@@ -36,9 +37,11 @@ class ProfileForm extends Component
     public string $country = '';
 
     // Lightning Class Info (from current membership)
-    public ?int $district_id = null;
+    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
+    // until save() normalizes it to null after validation.
+    public mixed $district_id = null;
 
-    public ?int $fleet_id = null;
+    public mixed $fleet_id = null;
 
     public string $yacht_club = '';
 
@@ -86,6 +89,14 @@ class ProfileForm extends Component
 
     public function updated($propertyName)
     {
+        // District/fleet are cleared programmatically (picking a district clears
+        // the fleet), so don't flag them while empty — that would error an
+        // untouched field. They still validate on save.
+        if (in_array($propertyName, ['district_id', 'fleet_id'], true)
+            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            return;
+        }
+
         // Validate the field that was just updated
         $this->validateOnly($propertyName);
     }
@@ -94,16 +105,36 @@ class ProfileForm extends Component
     {
         $user = auth()->user();
 
-        // Convert "none" values to null before validation
-        if ($this->district_id === null || $this->district_id === 0) {
+        // Capture raw values to distinguish "explicit None" ('none') from auto-clear (null)
+        // before normalization. JS sends 'none' for an explicit pick; null for auto-clear.
+        $fleetRaw = $this->fleet_id;
+        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
         }
-        if ($this->fleet_id === null || $this->fleet_id === 0) {
+        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
             $this->fleet_id = null;
         }
 
-        // Validate using shared rules
-        $validated = $this->validate(UserProfileRules::rules((string) $user->id, false));
+        // Detect "district changed, fleet was auto-cleared, user didn't re-select".
+        // Auto-clear is identified by: district differs from DB AND fleet arrived as raw null
+        // (an explicit None pick would have arrived as 'none').
+        $originalDistrict = $user->currentMembership()?->district_id;
+        $rules = UserProfileRules::rules((string) $user->id, false);
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) use ($originalDistrict, $fleetRaw) {
+                $districtChanged = $this->district_id !== $originalDistrict;
+                if ($districtChanged && $fleetRaw === null) {
+                    $fail('Please select a fleet or choose None.');
+                } elseif ($value !== null && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // Every fleet belongs to a district, so the fleet must exist
+                    // AND belong to the selected district — rejecting a cross-district
+                    // fleet or a fleet with no district selected.
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
+
+        $validated = $this->validate($rules);
 
         // Check if email has changed
         $emailChanged = $validated['email'] !== $user->email;

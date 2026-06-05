@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,10 +35,10 @@ class Flash extends Model
      * Determine if this flash can be edited/deleted.
      * A flash is editable if its date falls within the allowed date range (minDate to maxDate).
      *
-     * @param  \Carbon\Carbon  $minDate  The minimum allowed date (from grace period logic)
-     * @param  \Carbon\Carbon  $maxDate  The maximum allowed date (typically now + 1 day)
+     * @param  Carbon  $minDate  The minimum allowed date (from grace period logic)
+     * @param  Carbon  $maxDate  The maximum allowed date (typically now + 1 day)
      */
-    public function isEditable(\Carbon\Carbon $minDate, \Carbon\Carbon $maxDate): bool
+    public function isEditable(Carbon $minDate, Carbon $maxDate): bool
     {
         return $this->date >= $minDate && $this->date <= $maxDate;
     }

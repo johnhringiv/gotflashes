@@ -1,6 +1,11 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\MailAllowlistProvider;
+use App\Providers\ObservabilityServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\ObservabilityServiceProvider::class,
+    AppServiceProvider::class,
+    MailAllowlistProvider::class,
+    ObservabilityServiceProvider::class,
 ];

@@ -4,7 +4,10 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Notifications\ResetPasswordNotification;
+use Carbon\Carbon;
+use Database\Factories\UserFactory;
 use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use CanResetPassword, HasFactory, Notifiable;
 
     /**
@@ -183,7 +186,7 @@ class User extends Authenticatable
     {
         // If flashes relationship is already loaded, use it (avoids N+1 queries)
         if ($this->relationLoaded('flashes')) {
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Flash> $flashes */
+            /** @var Collection<int, Flash> $flashes */
             $flashes = $this->flashes;
 
             $sailingCount = $flashes
@@ -273,13 +276,13 @@ class User extends Authenticatable
      *
      * @param  int  $year  The year to check
      * @param  int  $tier  The award tier (10, 25, or 50)
-     * @return \Carbon\Carbon|null The date threshold was reached, or null if not reached
+     * @return Carbon|null The date threshold was reached, or null if not reached
      */
-    public function thresholdDateForYear(int $year, int $tier): ?\Carbon\Carbon
+    public function thresholdDateForYear(int $year, int $tier): ?Carbon
     {
         // If flashes relationship is already loaded, use it (avoids N+1 queries)
         if ($this->relationLoaded('flashes')) {
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Flash> $flashesCollection */
+            /** @var Collection<int, Flash> $flashesCollection */
             $flashesCollection = $this->flashes;
 
             $flashes = $flashesCollection
@@ -309,7 +312,7 @@ class User extends Authenticatable
 
             // Check if we've crossed the threshold
             if ($cumulativeTotal >= $tier) {
-                return \Carbon\Carbon::parse($flash->date);
+                return Carbon::parse($flash->date);
             }
         }
 

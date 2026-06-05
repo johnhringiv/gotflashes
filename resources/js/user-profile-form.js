@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof Livewire !== 'undefined') {
     Livewire.hook('morph.added', ({ el }) => {
         // Check if date of birth input was added
-        if (el.querySelector && el.querySelector('input[wire\\:model\\.blur="date_of_birth"]')) {
+        if (el.querySelector && el.querySelector('input[wire\\:model\\.live\\.blur="date_of_birth"]')) {
             initializeUserProfileForm();
         }
     });
@@ -25,8 +25,8 @@ function initializeUserProfileForm() {
     // Get Livewire component for syncing (if available)
     const livewireComponent = window.Livewire?.find(districtSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));
 
-    // Initialize date of birth validator (formatting only - wire:model.blur handles sync)
-    const dobInput = document.querySelector('input[wire\\:model\\.blur="date_of_birth"]') ||
+    // Initialize date of birth validator (formatting only - wire:model.live.blur handles sync)
+    const dobInput = document.querySelector('input[wire\\:model\\.live\\.blur="date_of_birth"]') ||
                      document.querySelector('input[name="date_of_birth"]');
 
     if (dobInput && !dobInput._dobValidatorInitialized) {

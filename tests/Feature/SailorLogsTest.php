@@ -97,8 +97,11 @@ class SailorLogsTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
-        $userJohn = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
-        $userJane = User::factory()->create(['first_name' => 'Jane', 'last_name' => 'Smith']);
+        // Pin emails explicitly: the search matches name OR email, and the factory default
+        // (fake()->unique()->safeEmail()) can randomly produce an email containing "john"
+        // for Jane — which would match the "John" search below and make this test flaky.
+        $userJohn = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe', 'email' => 'john.doe@example.com']);
+        $userJane = User::factory()->create(['first_name' => 'Jane', 'last_name' => 'Smith', 'email' => 'jane.smith@example.com']);
 
         Flash::factory()->create([
             'user_id' => $userJohn->id,

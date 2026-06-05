@@ -68,4 +68,7 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'allowlist_enabled' => env('MAIL_ALLOWLIST_ENABLED'),
+    'allowed_domains' => env('MAIL_ALLOWED_DOMAINS', 'resend.dev'),
+
 ];

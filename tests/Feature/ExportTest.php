@@ -260,6 +260,47 @@ class ExportTest extends TestCase
         $this->assertTrue($flash2025Found, 'Flash from 2025 should be in export');
     }
 
+    public function test_export_carries_forward_membership_for_a_year_without_a_record(): void
+    {
+        // The leaderboard and User::membershipForYear() carry a membership forward
+        // to later years the user didn't re-register; the export must agree, or the
+        // same flashes get a fleet on the leaderboard but a blank one in the CSV.
+        $district = District::factory()->create(['name' => 'District 5']);
+        $fleet = Fleet::factory()->create([
+            'district_id' => $district->id,
+            'fleet_number' => 1230,
+            'fleet_name' => 'Mission Bay Fleet',
+        ]);
+
+        $user = User::factory()->create();
+
+        // Membership recorded only for 2024 (user never re-registered for 2025).
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $district->id,
+            'fleet_id' => $fleet->id,
+            'year' => 2024,
+        ]);
+
+        // A flash in 2025 — no 2025 membership row exists.
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2025-03-20',
+            'activity_type' => 'sailing',
+        ]);
+
+        // Sanity check: the model carries forward, so the export should match it.
+        $this->assertEquals($fleet->id, $user->membershipForYear(2025)->fleet_id);
+
+        $content = $this->actingAs($user)->get(route('export.user-data'))->streamedContent();
+
+        $row = collect(explode("\n", $content))->first(fn ($line) => str_contains($line, '2025-03-20'));
+        $this->assertNotNull($row, 'Flash from 2025 should be in export');
+        $this->assertStringContainsString('District 5', $row);
+        $this->assertStringContainsString('1230', $row);
+        $this->assertStringContainsString('Mission Bay Fleet', $row);
+    }
+
     public function test_export_only_includes_authenticated_users_data(): void
     {
         $user1 = User::factory()->create();

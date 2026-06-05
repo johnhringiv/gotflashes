@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AwardFulfillment;
 use App\Models\Flash;
 use App\Models\User;
+use App\Notifications\AwardSentNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -302,13 +303,19 @@ class AdminAwardsDashboardTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
+        // Pin emails explicitly: the dashboard search matches name OR email, and the
+        // factory default (fake()->unique()->safeEmail()) can randomly produce an email
+        // containing "john" for Jane — which would match the "John" search below and make
+        // this test flaky. Deterministic emails keep the search term from colliding.
         $user1 = User::factory()->create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'email' => 'john.doe@example.com',
         ]);
         $user2 = User::factory()->create([
             'first_name' => 'Jane',
             'last_name' => 'Smith',
+            'email' => 'jane.smith@example.com',
         ]);
 
         // Both users earn 10-day awards
@@ -670,7 +677,7 @@ class AdminAwardsDashboardTest extends TestCase
         // Assert email was sent
         \Notification::assertSentTo(
             $user,
-            \App\Notifications\AwardSentNotification::class,
+            AwardSentNotification::class,
             function ($notification) {
                 return $notification->year === now()->year && $notification->tier === 10;
             }
@@ -777,8 +784,8 @@ class AdminAwardsDashboardTest extends TestCase
             ->call('bulkMarkAsSent');
 
         // Assert both emails were sent
-        \Notification::assertSentTo($user1, \App\Notifications\AwardSentNotification::class);
-        \Notification::assertSentTo($user2, \App\Notifications\AwardSentNotification::class);
+        \Notification::assertSentTo($user1, AwardSentNotification::class);
+        \Notification::assertSentTo($user2, AwardSentNotification::class);
         \Notification::assertCount(2);
     }
 }

@@ -1,5 +1,7 @@
 # G.O.T. Flashes Challenge Tracker
 
+[![codecov](https://codecov.io/gh/johnhringiv/gotflashes/graph/badge.svg)](https://codecov.io/gh/johnhringiv/gotflashes)
+
 A web application for tracking Lightning Class sailing activity and managing the G.O.T. Flashes Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
 **G.O.T. Flashes** stands for "**Get Out There** - FLASHES" - encouraging Lightning sailors to get their boats off the dock and onto the water!
@@ -56,7 +58,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Resend verification or cancel email changes
   - Real-time validation ensures data quality
 - **Data Export**: Download complete profile and activity history as CSV with year-appropriate district/fleet data
-- **Progress Tracking**: Visual progress bars and award badges (Bronze/Silver/Gold) on your dashboard
+- **Progress Tracking**: Visual progress bars and award badges (10/25/50-day tiers) on your dashboard
 - **Award Fulfillment Dashboard** (Admin only): Manage physical award mailings
   - Track award status: Earned → Processing → Sent
   - Batch operations with checkbox selection
@@ -105,7 +107,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 
 ## Technology Stack
 
-- **Backend**: Laravel 12 (PHP 8.2+)
+- **Backend**: Laravel 13 (PHP 8.5+)
 - **Database**: SQLite with WAL mode
 - **Email**: Resend (transactional email delivery)
   - Email verification for new accounts and email changes
@@ -115,7 +117,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Tailwind CSS v4 (self-hosted, no CDN)
   - DaisyUI (component library)
   - Blade templates
-  - Livewire v3 (reactive components for dynamic date range updates)
+  - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
   - Flatpickr (multi-date calendar picker)
   - Tom-Select (searchable dropdowns)
@@ -126,7 +128,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 ## Getting Started
 
 ### Prerequisites
-- PHP 8.2+
+- PHP 8.5+
 - Composer
 - Node.js & NPM
 - SQLite
@@ -222,8 +224,10 @@ composer test
 
 **Test Organization:**
 - `tests/Feature/` - Full HTTP request/response workflows
+- `tests/Browser/` - End-to-end browser tests (Pest 4 + Playwright)
 - `tests/Unit/` - Individual components in isolation
-- All tests use `RefreshDatabase` for clean state
+- `tests/js/` - Vitest JavaScript unit tests
+- Feature/Unit tests use `RefreshDatabase`; browser tests use `LazilyRefreshDatabase`
 
 ### Code Quality & Linting
 
@@ -274,7 +278,7 @@ gotflashes/
 │   ├── Http/
 │   │   ├── Controllers/     # Request handling (Auth, Flash, Leaderboard, Profile, Admin)
 │   │   └── Middleware/      # Request middleware
-│   ├── Livewire/            # Livewire v3 components (FlashForm, Leaderboard, ProgressCard)
+│   ├── Livewire/            # Livewire v4 components (FlashForm, Leaderboard, ProgressCard)
 │   ├── Models/              # Eloquent models (User, Flash, Member, District, Fleet)
 │   ├── Policies/            # Authorization policies (FlashPolicy)
 │   ├── Providers/           # Service providers (AppServiceProvider, ObservabilityServiceProvider)
@@ -308,7 +312,9 @@ gotflashes/
 │   └── framework/          # Framework cache, sessions, views
 ├── tests/
 │   ├── Feature/            # Feature tests (HTTP workflows)
-│   └── Unit/               # Unit tests (isolated logic)
+│   ├── Browser/            # End-to-end browser tests (Pest 4 + Playwright)
+│   ├── Unit/               # Unit tests (isolated logic)
+│   └── js/                 # Vitest JavaScript tests
 ├── .github/                # GitHub Actions workflows
 ├── composer.json           # PHP dependencies
 ├── package.json            # Node dependencies
@@ -323,7 +329,7 @@ gotflashes/
 ## Documentation
 
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
-- **[Membership Year-End Logic](docs/membership-year-end-logic.md)**: Year-specific membership system documentation
+- **[Year-Specific Membership Logic](docs/membership-year-end-logic.md)**: Per-year district/fleet membership system with carry-forward
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
 ## Configuration

@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Flash;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -25,7 +27,7 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->flashes());
+        $this->assertInstanceOf(HasMany::class, $user->flashes());
     }
 
     public function test_user_can_have_multiple_flashes(): void
@@ -64,6 +66,6 @@ class UserModelTest extends TestCase
             'date_of_birth' => '1990-01-01',
         ]);
 
-        $this->assertInstanceOf(\Carbon\Carbon::class, $user->date_of_birth);
+        $this->assertInstanceOf(Carbon::class, $user->date_of_birth);
     }
 }

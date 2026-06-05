@@ -1,5 +1,5 @@
 <div>
-    <form wire:submit="save">
+    <form wire:submit="save" novalidate>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <!-- Date(s) - order-1 on mobile, col 1 on desktop -->
@@ -51,7 +51,10 @@
                     <div class="label">
                         <span class="label-text">Activity Type</span>
                     </div>
-                    <select wire:model.defer="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
+                    {{-- .live (not .defer): syncs on change so updated() can clear this field's
+                         validation error in real time. Worth the per-change render() since the
+                         existingDates query it triggers is cached per request. --}}
+                    <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
                         <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
                         <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
@@ -71,14 +74,14 @@
                     <div class="label">
                         <span class="label-text flex items-center gap-1" id="sailing-type-label">
                             Sailing Type
-                            <div class="tooltip tooltip-right" data-tip="Helps the Class understand our constituents">
+                            <div class="tooltip tooltip-right tooltip-clamp" data-tip="Helps the Class understand our constituents">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                         </span>
                     </div>
-                    <select wire:model.defer="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
+                    <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
                             class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
                             {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
                         <option value="" disabled {{ $event_type ? '' : 'selected' }}>
@@ -99,7 +102,7 @@
 
             <!-- Location - order-4 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-4 md:order-2">
-                <input type="text" wire:model.blur="location"
+                <input type="text" wire:model.live.blur="location"
                        placeholder="Lake Norman, NC"
                        class="input input-bordered w-full" maxlength="255">
                 <label>Location (optional)</label>
@@ -107,7 +110,7 @@
 
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-5 md:order-4">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.blur="sail_number"
+                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.live.blur="sail_number"
                        id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}"
                        placeholder="15234"
                        class="input input-bordered w-full">
@@ -117,7 +120,7 @@
 
         <!-- Notes -->
         <div class="mb-6 floating-label-visible">
-            <textarea wire:model.blur="notes" rows="3"
+            <textarea wire:model.live.blur="notes" rows="3"
                       placeholder="Tell us about your day on the water..."
                       class="textarea textarea-bordered w-full"></textarea>
             <label>Notes (optional)</label>

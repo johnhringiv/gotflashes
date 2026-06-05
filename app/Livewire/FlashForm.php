@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Flash;
 use App\Services\DateRangeService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -47,6 +48,22 @@ class FlashForm extends Component
             $this->location = $this->flash->location ?? '';
             $this->sail_number = $this->flash->sail_number ?? '';
             $this->notes = $this->flash->notes ?? '';
+        }
+    }
+
+    public function updated($propertyName)
+    {
+        // Clear a field's validation error the moment the user changes it, so
+        // errors from a failed submit don't linger until the next submit. The
+        // date picker syncs 'dates'/'date' via Livewire .set(), and the selects
+        // use wire:model.live, so all error-bearing fields trigger this.
+        $this->resetValidation($propertyName);
+
+        // event_type (sailing type) is only required when activity_type is
+        // sailing, so changing the activity type can make its error stale —
+        // clear it too rather than leave it hanging.
+        if ($propertyName === 'activity_type') {
+            $this->resetValidation('event_type');
         }
     }
 
@@ -232,7 +249,7 @@ class FlashForm extends Component
      * Get allowed date range (cached per request).
      * Computed properties are recalculated on new requests (e.g., after $refresh).
      */
-    #[\Livewire\Attributes\Computed]
+    #[Computed]
     public function dateRange(): array
     {
         return DateRangeService::getAllowedDateRange();
@@ -244,7 +261,7 @@ class FlashForm extends Component
      * (e.g., during wire:model.blur syncs). After save/delete, $refresh creates a new
      * request which recalculates this property with fresh data.
      */
-    #[\Livewire\Attributes\Computed]
+    #[Computed]
     public function existingDates(): array
     {
         [$minDate, $maxDate] = $this->dateRange();
