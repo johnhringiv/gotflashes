@@ -37,6 +37,10 @@ District and fleet affiliations are tracked per calendar year. When users regist
 
 **Note**: Users don't need to own a Lightning - crews and anyone who sails on Lightnings can participate.
 
+**Email Handling:**
+- Email addresses are case-insensitive — stored in lowercase, so casing or whitespace differences can't create duplicate accounts, and sign-in works regardless of how the address is typed.
+- Inline typo detection: when the email's domain looks like a misspelling of a common provider (e.g. `gmial.com`), the form shows an advisory "Did you mean …?" suggestion that the user can click to apply. It never blocks submission — the verification email remains the authoritative check.
+
 **Email Verification:**
 - New users receive a verification email upon registration with a 24-hour token expiration
 - Users can immediately access and use all application features without verifying their email (soft verification)
@@ -81,6 +85,7 @@ Users can view and edit their profile information through a dedicated profile pa
   - Users can resend verification or cancel the email change
   - Upon verification, pending email becomes the active email
 - Email changes require re-verification even if original email was verified
+- The same case-insensitive handling and "Did you mean …?" typo suggestion apply when changing email (see Section 1.1)
 
 ### 1.4 Data Export
 Users can export their complete profile and activity history:

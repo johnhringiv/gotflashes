@@ -336,4 +336,37 @@ class PasswordResetTest extends TestCase
         $response->assertRedirect(route('logbook.index'));
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_reset_link_request_normalizes_mixed_case_email(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create(['email' => 'sailor@example.com']);
+
+        // Request with different casing than the stored (lowercased) email.
+        $response = $this->post(route('password.email'), [
+            'email' => 'Sailor@Example.COM',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        Notification::assertSentTo($user, ResetPasswordNotification::class);
+    }
+
+    public function test_password_can_be_reset_with_mixed_case_email(): void
+    {
+        $user = User::factory()->create(['email' => 'sailor@example.com']);
+        $token = Password::broker()->createToken($user);
+
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => 'Sailor@Example.COM',
+            'password' => 'new-password123',
+            'password_confirmation' => 'new-password123',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $this->assertTrue(Hash::check('new-password123', $user->fresh()->password));
+    }
 }
