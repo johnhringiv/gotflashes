@@ -92,7 +92,7 @@ RUN mkdir -p storage/framework/sessions storage/framework/views storage/framewor
 
 # Copy application files (owned by appuser since USER is set)
 COPY public ./public
-COPY resources ./resources
+COPY resources/views ./resources/views
 COPY artisan composer.json composer.lock ./
 COPY docker/.env.docker ./.env
 

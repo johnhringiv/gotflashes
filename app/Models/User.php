@@ -7,11 +7,13 @@ use App\Notifications\ResetPasswordNotification;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -66,6 +68,42 @@ class User extends Authenticatable
             'date_of_birth' => 'date',
             'email_verification_expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Normalize an email address for storage and lookup.
+     *
+     * Lowercases and trims so that casing/whitespace differences never create
+     * duplicate accounts or silent login failures. Used by the email mutators
+     * below and by every read path (login, password reset) before lookup.
+     */
+    public static function normalizeEmail(?string $email): ?string
+    {
+        return $email === null ? null : Str::lower(trim($email));
+    }
+
+    /**
+     * Always store the primary email lowercased/trimmed.
+     *
+     * Safety net for write paths that bypass the form layer (factories,
+     * seeders, tinker). Form components normalize before validation so the
+     * uniqueness check also runs against the normalized value.
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => self::normalizeEmail($value),
+        );
+    }
+
+    /**
+     * Always store the pending email (email-change flow) lowercased/trimmed.
+     */
+    protected function pendingEmail(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => self::normalizeEmail($value),
+        );
     }
 
     /**

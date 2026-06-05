@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Fleet;
 use App\Models\Member;
+use App\Models\User;
 use App\Rules\UserProfileRules;
 use App\Services\EmailVerificationService;
 use App\Services\UserDataService;
@@ -89,6 +90,12 @@ class ProfileForm extends Component
 
     public function updated($propertyName)
     {
+        // Normalize email (lowercase/trim) before live validation so the
+        // uniqueness check runs against the same value we'll store.
+        if ($propertyName === 'email') {
+            $this->email = User::normalizeEmail($this->email);
+        }
+
         // District/fleet are cleared programmatically (picking a district clears
         // the fleet), so don't flag them while empty — that would error an
         // untouched field. They still validate on save.
@@ -104,6 +111,11 @@ class ProfileForm extends Component
     public function save()
     {
         $user = auth()->user();
+
+        // Normalize email before validation/comparison so the uniqueness check,
+        // the email-changed comparison, and the stored value all use the
+        // lowercased/trimmed form.
+        $this->email = User::normalizeEmail($this->email);
 
         // Capture raw values to distinguish "explicit None" ('none') from auto-clear (null)
         // before normalization. JS sends 'none' for an explicit pick; null for auto-clear.
