@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +22,13 @@ class ResetPassword extends Controller
     {
         $request->validate([
             'token' => 'required',
-            'email' => 'required|email',
+            'email' => 'required|email:strict',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // Normalize so the lookup matches the lowercased stored email (the reset
+        // link carries whatever casing was submitted to the forgot-password form).
+        $request->merge(['email' => User::normalizeEmail($request->email)]);
 
         // Attempt to reset the user's password
         $status = Password::reset(

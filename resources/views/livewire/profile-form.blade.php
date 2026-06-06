@@ -3,7 +3,7 @@
         <h1 class="text-3xl font-bold text-center mb-6">Edit Profile</h1>
 
         <form wire:submit="save" novalidate>
-            <x-user-profile-fields>
+            <x-user-profile-fields :email-suggestion="$emailSuggestion">
                 <x-slot:passwordFields>
                     @if($hasPendingEmail)
                         <!-- Pending Email Change Notice -->

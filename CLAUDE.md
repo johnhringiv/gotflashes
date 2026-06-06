@@ -113,6 +113,8 @@ Simple custom auth implementation (not using full Laravel Breeze package):
 - Password hashing via bcrypt (Laravel default)
 - Session-based authentication
 
+**Email handling:** Emails are normalized (lowercase + trim) on every write and read path — `User::normalizeEmail()` plus `email`/`pending_email` model mutators, and explicit normalization in `RegistrationForm`/`ProfileForm` (before the uniqueness check) and in the `Login`/`ForgotPassword`/`ResetPassword` lookups. A backfill migration lowercased existing rows. Validation uses `email:strict` (egulias) — the bare `email`/`email:rfc` rule is lenient and accepts `a@b`/`test@localhost`; `strict` rejects those while staying Unicode-aware. `EmailSuggestionService` provides advisory "did you mean …?" domain-typo suggestions via `levenshtein()` against curated **constant** lists (static reference data, not DB — a future DB-derived version is issue #41); wired into the forms through the `SuggestsEmailCorrections` trait. Tests: `tests/Feature/EmailNormalizationTest.php`, `tests/Unit/EmailSuggestionServiceTest.php`, `tests/Feature/EmailSuggestionLivewireTest.php`.
+
 **Session & CSRF lifetime:** Session driver is `database`, `SESSION_LIFETIME` is 120 minutes, and CSRF tokens are tied to the session. A form left open past the session lifetime carries a stale token. Rather than dead-ending on Laravel's generic 419 "Page Expired" screen, `bootstrap/app.php` registers a render callback that converts the resulting `HttpException(419)` (Laravel maps `TokenMismatchException` to this before render callbacks run, so match on status 419) into a recoverable response:
 - Standard form posts (login) → redirect back with old input (minus passwords) and a `session('warning')` flash, shown automatically by the layout's toast system; the reloaded page has a fresh token
 - AJAX forms (forgot/reset password, which submit via `fetch` + `response.json()`) → JSON 419 with a `message`, surfaced as an error toast by their existing fetch handlers
@@ -327,6 +329,8 @@ This allows tracking of:
 
 **Completed:**
 - ✅ User registration and authentication with district/fleet selection
+- ✅ Email normalization (case-insensitive lowercase storage) + `email:strict` validation
+- ✅ Inline email typo suggestions ("did you mean …?") via `EmailSuggestionService`
 - ✅ Flash CRUD (create, read, update, delete)
 - ✅ Flash authorization policies
 - ✅ Date validation and duplicate prevention
@@ -544,7 +548,8 @@ The only thing not tested: flatpickr actually using the data (which is flatpickr
 - Arrange-Act-Assert pattern in all tests
 
 **Current Coverage (by area, not by count):**
-- **Auth & account** (`tests/Feature/Auth`, `tests/Feature`): login/logout/remember-me, registration + validation, password reset (throttle, token expiry, end-to-end), email verification + email-change pending pattern, resend rate limiting
+- **Auth & account** (`tests/Feature/Auth`, `tests/Feature`): login/logout/remember-me, registration + validation, password reset (throttle, token expiry, end-to-end, case-insensitive lookup), email verification + email-change pending pattern, resend rate limiting
+- **Email normalization & suggestions** (`tests/Feature/EmailNormalizationTest`, `tests/Unit/EmailSuggestionServiceTest`, `tests/Feature/EmailSuggestionLivewireTest`): lowercase storage + uniqueness, mixed-case login/reset, `email:strict`, domain-typo suggestions (incl. ccTLD false-positive guards)
 - **Logbook / flashes** (`tests/Feature`, `tests/Feature/Livewire`): create (single + multi-date), edit, delete, duplicate prevention, event-type validation, ordering, grace-period boundaries, concurrent/empty-array validation
 - **Progress & awards** (`tests/Feature`): tier calculations, non-sailing 5/yr cap, badge thresholds
 - **Leaderboards** (`tests/Feature`): sailor/fleet/district, year scoping, tie-breaking, pagination
