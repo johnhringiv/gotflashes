@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\SuggestsEmailCorrections;
 use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
@@ -16,6 +17,8 @@ use Livewire\Component;
 
 class RegistrationForm extends Component
 {
+    use SuggestsEmailCorrections;
+
     // Personal Information
     public string $first_name = '';
 
@@ -93,6 +96,15 @@ class RegistrationForm extends Component
 
     public function updated($propertyName)
     {
+        // Normalize email (lowercase/trim) before live validation so the
+        // uniqueness check runs against the same value we'll store. The User
+        // model mutator also normalizes on write, but the unique rule queries
+        // the raw property, so it must be normalized here too.
+        if ($propertyName === 'email') {
+            $this->email = User::normalizeEmail($this->email);
+            $this->refreshEmailSuggestion();
+        }
+
         // 'confirmed' rule on 'password' already checks password_confirmation,
         // so validate via the 'password' field name for both. Calling
         // validateOnly('password_confirmation') would match no rule, and
@@ -130,6 +142,11 @@ class RegistrationForm extends Component
 
             return;
         }
+
+        // Normalize email before validation so the uniqueness check and the
+        // stored value both use the lowercased/trimmed form (covers pasted input
+        // that never triggered the updated() hook).
+        $this->email = User::normalizeEmail($this->email);
 
         // Validation uses rules() which includes district/fleet "explicit selection required" closures.
         // 'none' is accepted as a valid explicit choice — normalized to null after validation passes.

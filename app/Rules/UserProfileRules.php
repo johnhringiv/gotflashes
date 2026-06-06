@@ -36,8 +36,18 @@ class UserProfileRules
             'yacht_club' => ['nullable', 'string', 'max:255'],
         ];
 
-        // Email rule (different for registration vs update)
-        $emailRule = ['required', 'string', 'email', 'max:255'];
+        // Email rule (different for registration vs update).
+        //
+        // 'email:strict' uses egulias/email-validator's NoRFCWarningsValidation
+        // (the engine Laravel already bundles). Unlike the bare 'email' rule —
+        // which maps to the lenient RFCValidation and accepts junk like "a@b" and
+        // "test@localhost" — strict rejects those plus RFC-warning addresses
+        // (trailing dots, comments, IP-literal hosts). It remains Unicode-aware,
+        // so internationalized addresses (accented local parts, IDN domains) still
+        // pass — important for the Class's international fleets. We deliberately
+        // avoid the 'dns' mode (200-500ms latency, flaky in CI); the verification
+        // email is the real liveness check.
+        $emailRule = ['required', 'string', 'email:strict', 'max:255'];
         if ($userId) {
             $emailRule[] = 'unique:users,email,'.$userId;
         } else {

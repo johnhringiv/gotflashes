@@ -17,8 +17,13 @@ class Login extends Controller
             'password' => 'required',
         ]);
 
+        // Normalize email so a mismatch in casing/whitespace doesn't cause a
+        // silent login failure against the lowercased stored value. Both the
+        // lookup and Auth::attempt() use the normalized credentials.
+        $credentials['email'] = User::normalizeEmail($credentials['email']);
+
         // Check if user exists
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $credentials['email'])->first();
 
         if (! $user) {
             // Email doesn't exist in database

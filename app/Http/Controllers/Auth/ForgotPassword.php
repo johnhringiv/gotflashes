@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -16,8 +17,11 @@ class ForgotPassword extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:strict',
         ]);
+
+        // Normalize so the lookup matches the lowercased stored email.
+        $request->merge(['email' => User::normalizeEmail($request->email)]);
 
         // Send the password reset link
         $status = Password::sendResetLink(

@@ -1,4 +1,4 @@
-@props(['districtSelectId' => 'district-select', 'fleetSelectId' => 'fleet-select'])
+@props(['districtSelectId' => 'district-select', 'fleetSelectId' => 'fleet-select', 'emailSuggestion' => null])
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- First Name -->
@@ -45,6 +45,16 @@
             <span class="label-text-alt text-error">{{ $message }}</span>
         </div>
     @enderror
+    @if ($emailSuggestion)
+        <div class="label" wire:key="email-suggestion">
+            <span class="label-text-alt">
+                Did you mean
+                <button type="button"
+                        wire:click="applyEmailSuggestion"
+                        class="link link-primary font-semibold">{{ $emailSuggestion }}</button>?
+            </span>
+        </div>
+    @endif
 </div>
 
 {{ $passwordFields ?? '' }}
