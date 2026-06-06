@@ -17,7 +17,7 @@ class ForgotPassword extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:strict',
         ]);
 
         // Normalize so the lookup matches the lowercased stored email.

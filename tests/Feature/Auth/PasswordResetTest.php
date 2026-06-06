@@ -353,6 +353,18 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPasswordNotification::class);
     }
 
+    public function test_reset_link_request_rejects_malformed_email(): void
+    {
+        // Consistency with registration: forgot-password uses email:strict, so a
+        // junk address that the lenient rule would accept is rejected up front.
+        $response = $this->postJson(route('password.email'), [
+            'email' => 'a@b',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['email']);
+    }
+
     public function test_password_can_be_reset_with_mixed_case_email(): void
     {
         $user = User::factory()->create(['email' => 'sailor@example.com']);

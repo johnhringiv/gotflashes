@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Str;
+
 /**
  * Suggests a corrected email address when the domain looks like a typo of a
  * popular provider (e.g. "user@gmial.com" -> "user@gmail.com").
@@ -87,7 +89,7 @@ class EmailSuggestionService
             return null;
         }
 
-        $email = strtolower(trim($email));
+        $email = Str::lower(trim($email));
 
         // Need exactly one usable @ with non-empty local and domain parts.
         $atPos = strrpos($email, '@');
@@ -109,8 +111,10 @@ class EmailSuggestionService
         }
 
         // 1) Try to correct the whole domain against popular domains.
+        // closest() only ever returns a DOMAINS member, and the input domain was
+        // already excluded above, so a non-null result is necessarily a correction.
         $closestDomain = self::closest($domain, self::DOMAINS, self::DOMAIN_THRESHOLD);
-        if ($closestDomain !== null && $closestDomain !== $domain) {
+        if ($closestDomain !== null) {
             return $address.'@'.$closestDomain;
         }
 
