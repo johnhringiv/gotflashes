@@ -4,6 +4,7 @@ namespace App\Livewire\Concerns;
 
 use App\Models\User;
 use App\Services\EmailSuggestionService;
+use Livewire\Attributes\Locked;
 
 /**
  * Adds a "did you mean ...?" email typo suggestion to a Livewire form.
@@ -15,7 +16,8 @@ use App\Services\EmailSuggestionService;
  */
 trait SuggestsEmailCorrections
 {
-    /** The suggested correction for the current email, or null. */
+    /** The suggested correction for the current email, or null. Server-computed; #[Locked] blocks client writes. */
+    #[Locked]
     public ?string $emailSuggestion = null;
 
     /** Recompute the suggestion for the current email value. */

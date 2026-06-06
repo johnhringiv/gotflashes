@@ -24,6 +24,8 @@ class EmailSuggestionServiceTest extends TestCase
             'preserves local part with dots' => ['john.s.doe@gmial.com', 'john.s.doe@gmail.com'],
             // International / regional providers added in the targeted merge.
             'yandex typo' => ['ivan@yandx.com', 'ivan@yandex.com'],
+            // Caught by the whole-domain pass (1 edit from "web.de"), NOT the
+            // second-level split — "web" is below MIN_SECOND_LEVEL_LENGTH (5).
             'web.de tld typo' => ['hans@web.ed', 'hans@web.de'],
             'qq compound typo' => ['li@qq.con', 'li@qq.com'],
             'rogers (CA) typo' => ['amy@rogers.con', 'amy@rogers.com'],
