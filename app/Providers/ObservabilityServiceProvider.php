@@ -10,12 +10,24 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
 class ObservabilityServiceProvider extends ServiceProvider
 {
+    /**
+     * Warn-only transactional-email volume monitor. The provider (Resend free) caps
+     * at 100 emails/day; we alert as we approach it so a quota drain is visible
+     * in-app. This deliberately does NOT block — the per-IP/per-email throttles do the
+     * source-level enforcement, and a blocking cap would drop legitimate mail.
+     */
+    private const MAIL_VOLUME_WARN_THRESHOLD = 80;
+
+    private const MAIL_PROVIDER_DAILY_CAP = 100;
+
     /**
      * Register services.
      */
@@ -93,6 +105,27 @@ class ObservabilityServiceProvider extends ServiceProvider
                 'email' => $event->user->email,
                 'timestamp' => now()->toIso8601String(),
             ]);
+        });
+
+        // Warn-only daily email-volume monitor (alert, do not block). Surfaces a
+        // distributed quota drain that per-IP/per-email throttles can't catch.
+        Event::listen(MessageSent::class, function () {
+            $key = 'mail-sent-count:'.now()->toDateString();
+
+            if (! Cache::has($key)) {
+                Cache::put($key, 0, now()->endOfDay());
+            }
+            $count = Cache::increment($key);
+
+            if ($count === self::MAIL_VOLUME_WARN_THRESHOLD) {
+                Log::channel('security')->warning('Transactional email volume approaching daily cap', [
+                    'event' => 'mail_volume_warning',
+                    'sent_today' => $count,
+                    'warn_threshold' => self::MAIL_VOLUME_WARN_THRESHOLD,
+                    'provider_daily_cap' => self::MAIL_PROVIDER_DAILY_CAP,
+                    'timestamp' => now()->toIso8601String(),
+                ]);
+            }
         });
     }
 
