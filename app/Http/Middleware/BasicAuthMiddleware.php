@@ -20,8 +20,10 @@ class BasicAuthMiddleware
             return $next($request);
         }
 
-        // Only apply Basic Auth in production environment
-        if (app()->environment('production')) {
+        // Apply Basic Auth in every deployed environment (production + staging/dev), never in
+        // local or testing. On staging (dev.gotflashes.com) this keeps the clone private; if no
+        // credentials are configured it falls through (the noindex header still applies there).
+        if (! app()->environment(['local', 'testing'])) {
             $username = config('auth.basic.username');
             $password = config('auth.basic.password');
 

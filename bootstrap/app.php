@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\BasicAuthMiddleware;
 use App\Http\Middleware\ContentSecurityPolicy;
+use App\Http\Middleware\PreventIndexingNonProduction;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(ContentSecurityPolicy::class);
         $middleware->append(BasicAuthMiddleware::class);
+        // Keep non-production environments (dev.gotflashes.com) out of search indexes.
+        $middleware->append(PreventIndexingNonProduction::class);
         $middleware->alias([
             'admin' => AdminMiddleware::class,
         ]);
