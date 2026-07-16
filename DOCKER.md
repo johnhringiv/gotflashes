@@ -8,7 +8,7 @@ Most environment variables are pre-configured in `docker/.env.docker`. You only 
 
 **Required:**
 - `APP_KEY` - Generate with: `docker run --rm php:8.2-cli php -r "echo 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL;"`
-- `TRUSTED_PROXY_IP` - IP of reverse proxy (e.g., HAProxy) to trust X-Forwarded-* headers for correct client IP and HTTPS detection
+- `TRUSTED_PROXY_IP` - Reverse-proxy (HAProxy) IP. Currently **inert defense-in-depth**: nginx resolves the real client IP from Cloudflare's `CF-Connecting-IP` header (`docker/nginx.conf`) and rewrites `REMOTE_ADDR` before PHP sees it, so `$request->ip()` does not depend on this and HTTPS is owned by `forceScheme`/`APP_URL`. Set it for config consistency; do not point IP logging or rate-limiting logic at it. See CLAUDE.md → "Proxy & Real Client IP".
 - `RESEND_KEY` - API key for [Resend](https://resend.com) email service. Required for email verification and notifications. Get your key from the Resend dashboard.
 
 **Optional:**
@@ -17,6 +17,38 @@ Most environment variables are pre-configured in `docker/.env.docker`. You only 
 - `START_YEAR` - Controls grace period logic for logging previous year entries (default: `2026`). The January grace period (allowing previous year entries) only applies when current year > START_YEAR. Example: With `START_YEAR=2026`, January 2026 allows only 2026 entries, but January 2027+ allows December 2026 entries.
 
 The container runs on port 8080 (HTTP only). Put a reverse proxy in front for SSL termination.
+
+## Staging / dev environment (e.g. dev.gotflashes.com)
+
+Run non-production clones as **`APP_ENV=staging`** (not `production`). That single value engages the
+privacy protections and the non-production mail allowlist, and keeps `APP_DEBUG` distinct from prod.
+Same `Cloudflare → HAProxy → container` request path as production.
+
+**Privacy — two independent layers, both keyed off `APP_ENV != production`:**
+- `PreventIndexingNonProduction` adds `X-Robots-Tag: noindex, nofollow, noarchive` to every response —
+  the actual no-index *guarantee* (prevents indexing, not just crawling; works for non-HTML responses;
+  holds even if basic-auth credentials are blank).
+- `BasicAuthMiddleware` gates all envs except `local`/`testing` when `BASIC_AUTH_*` are set (401 to
+  crawlers and casual visitors). `/up` stays exempt for HAProxy health checks.
+
+**Environment variable deltas from prod:**
+
+| Var | Dev value | Why |
+| --- | --- | --- |
+| `APP_ENV` | `staging` | Engages noindex + basic-auth gate + mail allowlist; distinct from prod. |
+| `APP_KEY` | new (`php artisan key:generate`) | Separate session/encryption integrity — don't reuse prod's. |
+| `APP_URL` | `https://dev.gotflashes.com` | Drives forceScheme, generated URLs, reset/verify links, sitemap base. |
+| `APP_DEBUG` | `false` | Public/CF-reachable; `true` leaks stack traces even behind basic auth. |
+| `DB_DATABASE` | separate file/volume | **Never point dev at prod's DB.** |
+| `MAIL_MAILER` | `log` (safest) or `resend` with a **separate** `RESEND_KEY` | Don't burn prod's quota or send real mail from dev. |
+| `BASIC_AUTH_USERNAME` / `BASIC_AUTH_PASSWORD` | non-empty | The access gate. Blank = no gate (noindex still applies). |
+| `APP_NAME` | `"G.O.T. Flashes (Staging)"` (optional) | Distinguishes UI/email subjects from prod. |
+
+**Keep the same as prod:** `SESSION_SECURE_COOKIE=true` (dev is HTTPS via HAProxy),
+`CACHE_STORE=database`, `TRUSTED_PROXY_IP` (inert but consistent), locale, `START_YEAR`, `BCRYPT_ROUNDS`.
+
+The two critical isolation points are a **separate `DB_DATABASE`** and **separate mail** (`log` or a
+distinct Resend key) — everything else is keyed off `APP_ENV`.
 
 ## Container Startup
 

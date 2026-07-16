@@ -41,3 +41,7 @@ tests/Browser/Screenshots/
 
 # Local investigation notes (not tracked)
 /notes/
+
+# Windows "Mark of the Web" alternate-data-stream artifacts (appear on WSL when
+# files are copied/downloaded via Windows, e.g. nginx-access.log:Zone.Identifier)
+*:Zone.Identifier
