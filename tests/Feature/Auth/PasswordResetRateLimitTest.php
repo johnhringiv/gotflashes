@@ -30,6 +30,25 @@ class PasswordResetRateLimitTest extends TestCase
             ->assertJson(['message' => 'Too many reset requests. Please wait a while and try again.']);
     }
 
+    public function test_requests_that_send_no_mail_do_not_consume_the_per_ip_budget(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        // Ten requests for non-existent accounts send no mail, so they must NOT count
+        // toward the per-IP cap — only actual sends do. Otherwise a legit user (or a
+        // neighbour behind the same NAT) gets locked out of account recovery.
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson(route('password.email'), ['email' => "ghost{$i}@example.com"])
+                ->assertStatus(422);
+        }
+
+        // The real account can still request a reset — the budget was never drained.
+        $this->postJson(route('password.email'), ['email' => $user->email])
+            ->assertStatus(200);
+    }
+
     public function test_token_submissions_are_capped_per_ip(): void
     {
         $user = User::factory()->create();

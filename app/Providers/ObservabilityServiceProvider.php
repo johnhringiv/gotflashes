@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\AuthenticationLoggingMiddleware;
 use App\Http\Middleware\RequestLoggingMiddleware;
 use App\Listeners\QueryLogListener;
+use App\Support\SecurityLog;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
@@ -77,12 +78,10 @@ class ObservabilityServiceProvider extends ServiceProvider
 
         // Log authentication events
         Event::listen(Login::class, function ($event) {
-            Log::channel('security')->info('User logged in', [
-                'event' => 'login_success',
+            SecurityLog::info('login_success', 'User logged in', [
                 'user_id' => $event->user->id,
                 'email' => $event->user->email,
                 'remember' => $event->remember,
-                'timestamp' => now()->toIso8601String(),
             ]);
 
             // Store login timestamp in session for duration tracking
@@ -90,20 +89,16 @@ class ObservabilityServiceProvider extends ServiceProvider
         });
 
         Event::listen(Failed::class, function ($event) {
-            Log::channel('security')->warning('Authentication failed', [
-                'event' => 'auth_failed',
+            SecurityLog::warning('auth_failed', 'Authentication failed', [
                 'email' => $event->credentials['email'] ?? null,
                 'guard' => $event->guard,
-                'timestamp' => now()->toIso8601String(),
             ]);
         });
 
         Event::listen(Registered::class, function ($event) {
-            Log::channel('security')->info('New user registered', [
-                'event' => 'user_registered',
+            SecurityLog::info('user_registered', 'New user registered', [
                 'user_id' => $event->user->id,
                 'email' => $event->user->email,
-                'timestamp' => now()->toIso8601String(),
             ]);
         });
 
@@ -112,18 +107,23 @@ class ObservabilityServiceProvider extends ServiceProvider
         Event::listen(MessageSent::class, function () {
             $key = 'mail-sent-count:'.now()->toDateString();
 
-            if (! Cache::has($key)) {
-                Cache::put($key, 0, now()->endOfDay());
-            }
+            // add() is atomic put-if-absent, so concurrent first-of-day sends can't
+            // clobber each other's count (a plain has()/put() pair could reset it to 0).
+            // The key TTL is endOfDay, which is the intended midnight daily reset.
+            Cache::add($key, 0, now()->endOfDay());
             $count = Cache::increment($key);
 
-            if ($count === self::MAIL_VOLUME_WARN_THRESHOLD) {
+            // Warn once per day when crossing the threshold. The separate warned-flag
+            // (also atomic add()) means a cache flush that resets the counter mid-day
+            // and re-crosses the threshold won't emit a second alert, while a strict
+            // "=== threshold" would miss the warning entirely on any skipped/reset count.
+            if (is_int($count) && $count >= self::MAIL_VOLUME_WARN_THRESHOLD
+                && Cache::add('mail-volume-warned:'.now()->toDateString(), true, now()->endOfDay())) {
                 Log::channel('security')->warning('Transactional email volume approaching daily cap', [
                     'event' => 'mail_volume_warning',
                     'sent_today' => $count,
                     'warn_threshold' => self::MAIL_VOLUME_WARN_THRESHOLD,
                     'provider_daily_cap' => self::MAIL_PROVIDER_DAILY_CAP,
-                    'timestamp' => now()->toIso8601String(),
                 ]);
             }
         });

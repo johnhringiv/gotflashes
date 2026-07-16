@@ -9,8 +9,8 @@ use App\Models\User;
 use App\Rules\UserProfileRules;
 use App\Services\EmailVerificationService;
 use App\Services\UserDataService;
+use App\Support\SecurityLog;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class ProfileForm extends Component
@@ -192,14 +192,10 @@ class ProfileForm extends Component
         if ($emailChanged) {
             // Account-takeover-relevant transition: a new login email is being requested.
             // ($user->email is still the old address here — only pending_email was updated.)
-            Log::channel('security')->info('Email change requested', [
-                'event' => 'email_change_initiated',
+            SecurityLog::info('email_change_initiated', 'Email change requested', [
                 'user_id' => $user->id,
                 'old_email' => $user->email,
                 'new_email' => $validated['email'],
-                'ip' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'timestamp' => now()->toIso8601String(),
             ]);
 
             // Send verification to new email

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class VerifyEmailChangeController extends Controller
 {
@@ -57,14 +57,10 @@ class VerifyEmailChangeController extends Controller
         // Check if this is a new user verification or email change
         if ($user->pending_email) {
             // Account-takeover-relevant transition: the login email is changing. Log it.
-            Log::channel('security')->info('Email change confirmed', [
-                'event' => 'email_change_completed',
+            SecurityLog::info('email_change_completed', 'Email change confirmed', [
                 'user_id' => $user->id,
                 'old_email' => $user->email,
                 'new_email' => $user->pending_email,
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'timestamp' => now()->toIso8601String(),
             ]);
 
             // Email change: Move pending_email to email

@@ -2,25 +2,30 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\ThrottlesByIp;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\IpRateLimiter;
+use App\Support\SecurityLog;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
 class ResetPassword extends Controller
 {
+    use ThrottlesByIp;
+
     /**
      * Per-IP cap on token submissions — defense-in-depth against token guessing.
      * Low risk already (tokens are long, random, 60-min expiry), but free; 10/hour
-     * is far above a legitimate user (who submits once or twice).
+     * is far above a legitimate user (who submits once or twice). Every submission
+     * is a guess attempt, so all of them count (unlike the send-only cap on the
+     * forgot-password flow).
      */
     private const MAX_PER_IP = 10;
 
@@ -42,23 +47,17 @@ class ResetPassword extends Controller
         $request->merge(['email' => User::normalizeEmail($request->email)]);
 
         // Per-IP throttle on token submissions (caps brute-force token guessing).
-        $ipKey = 'password-reset:'.$request->ip();
-        if (RateLimiter::tooManyAttempts($ipKey, self::MAX_PER_IP)) {
-            Log::channel('security')->warning('Password reset submission throttled', [
-                'event' => 'password_reset_submit_throttled',
-                'email' => $request->email,
-                'ip' => $request->ip(),
-                'retry_after' => RateLimiter::availableIn($ipKey),
-                'user_agent' => $request->userAgent(),
-                'timestamp' => now()->toIso8601String(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Too many attempts. Please wait a while and try again.',
-            ], 429);
+        $ipKey = IpRateLimiter::ipKey('password-reset', $request->ip());
+        if ($throttled = $this->throttledJsonResponse(
+            $ipKey,
+            self::MAX_PER_IP,
+            'password_reset_submit_throttled',
+            'Password reset submission throttled',
+            'Too many attempts. Please wait a while and try again.'
+        )) {
+            return $throttled;
         }
-        RateLimiter::hit($ipKey, self::DECAY_PER_IP);
+        IpRateLimiter::hit($ipKey, self::DECAY_PER_IP);
 
         // Attempt to reset the user's password
         $status = Password::reset(
@@ -76,12 +75,8 @@ class ResetPassword extends Controller
 
         // Check if password was reset successfully
         if ($status === Password::PASSWORD_RESET) {
-            Log::channel('security')->info('Password reset completed', [
-                'event' => 'password_reset_completed',
+            SecurityLog::info('password_reset_completed', 'Password reset completed', [
                 'email' => $request->email,
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'timestamp' => now()->toIso8601String(),
             ]);
 
             return response()->json([
@@ -92,13 +87,9 @@ class ResetPassword extends Controller
         }
 
         // Failed (bad/expired token or unknown email) — logged for visibility.
-        Log::channel('security')->warning('Password reset submission failed', [
-            'event' => 'password_reset_failed',
+        SecurityLog::warning('password_reset_failed', 'Password reset submission failed', [
             'email' => $request->email,
-            'ip' => $request->ip(),
             'status' => $status,
-            'user_agent' => $request->userAgent(),
-            'timestamp' => now()->toIso8601String(),
         ]);
 
         // Handle errors

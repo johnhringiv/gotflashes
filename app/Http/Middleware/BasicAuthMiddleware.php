@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SecurityLog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,6 +39,13 @@ class BasicAuthMiddleware
 
             // Verify credentials
             if ($inputUser !== $username || $inputPass !== $password) {
+                // Log failed access to the gated (staging/dev) environment so probing is visible.
+                // Never log the submitted password — only the attempted username.
+                SecurityLog::warning('basic_auth_failed', 'Basic auth failed', [
+                    'attempted_username' => $inputUser,
+                    'path' => $request->path(),
+                ]);
+
                 return response('Unauthorized', 401)
                     ->header('WWW-Authenticate', 'Basic realm="G.O.T. Flashes Staging"');
             }

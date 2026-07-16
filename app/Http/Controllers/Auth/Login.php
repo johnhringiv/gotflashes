@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\IpRateLimiter;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 
 class Login extends Controller
 {
@@ -42,14 +42,21 @@ class Login extends Controller
         // lookup and Auth::attempt() use the normalized credentials.
         $credentials['email'] = User::normalizeEmail($credentials['email']);
 
-        $emailIpKey = $this->emailIpKey($credentials['email'], $request->ip());
-        $ipKey = $this->ipKey($request->ip());
+        $emailIpKey = IpRateLimiter::identityKey('login', $credentials['email'], $request->ip());
+        $ipKey = IpRateLimiter::ipKey('login-ip', $request->ip());
 
         // Throttle BEFORE touching the database, so a locked-out source can't even
         // probe for account existence. Counts failures only (a success clears them).
-        if (RateLimiter::tooManyAttempts($emailIpKey, self::MAX_PER_EMAIL_IP)
-            || RateLimiter::tooManyAttempts($ipKey, self::MAX_PER_IP)) {
-            return $this->lockedOut($request, $credentials['email'], $emailIpKey, $ipKey);
+        // Track which limiter(s) tripped so the retry time reflects the actual lock,
+        // not an unrelated (untripped) limiter's still-running decay timer.
+        $emailTripped = IpRateLimiter::tooManyAttempts($emailIpKey, self::MAX_PER_EMAIL_IP);
+        $ipTripped = IpRateLimiter::tooManyAttempts($ipKey, self::MAX_PER_IP);
+
+        if ($emailTripped || $ipTripped) {
+            return $this->lockedOut($request, $credentials['email'], array_filter([
+                $emailTripped ? $emailIpKey : null,
+                $ipTripped ? $ipKey : null,
+            ]));
         }
 
         // Check if user exists
@@ -69,7 +76,7 @@ class Login extends Controller
             // Successful login clears this account's per-email+IP counter. The coarse
             // per-IP backstop is left to decay naturally so a single lucky guess on a
             // shared IP doesn't reset spraying protection.
-            RateLimiter::clear($emailIpKey);
+            IpRateLimiter::clear($emailIpKey);
 
             // Regenerate session for security
             $request->session()->regenerate();
@@ -91,27 +98,29 @@ class Login extends Controller
      */
     private function recordFailure(string $emailIpKey, string $ipKey): void
     {
-        RateLimiter::hit($emailIpKey, self::DECAY_PER_EMAIL_IP);
-        RateLimiter::hit($ipKey, self::DECAY_PER_IP);
+        IpRateLimiter::hit($emailIpKey, self::DECAY_PER_EMAIL_IP);
+        IpRateLimiter::hit($ipKey, self::DECAY_PER_IP);
     }
 
     /**
      * Build the locked-out response and log it to the security channel.
+     *
+     * @param  array<int, string>  $trippedKeys  keys of the limiter(s) actually over their cap
      */
-    private function lockedOut(Request $request, string $email, string $emailIpKey, string $ipKey)
+    private function lockedOut(Request $request, string $email, array $trippedKeys)
     {
-        $seconds = max(
-            RateLimiter::availableIn($emailIpKey),
-            RateLimiter::availableIn($ipKey)
-        );
+        // Only consider the limiter(s) that actually tripped — availableIn() returns a
+        // key's decay timer even when it is under its cap, so mixing in an untripped
+        // key would overstate the wait (e.g. report the 15-min per-IP window for a
+        // 1-min per-email lockout).
+        $seconds = 0;
+        foreach ($trippedKeys as $key) {
+            $seconds = max($seconds, IpRateLimiter::availableIn($key));
+        }
 
-        Log::channel('security')->warning('Login throttled', [
-            'event' => 'login_throttled',
+        SecurityLog::warning('login_throttled', 'Login throttled', [
             'email' => $email,
-            'ip' => $request->ip(),
             'retry_after' => $seconds,
-            'user_agent' => $request->userAgent(),
-            'timestamp' => now()->toIso8601String(),
         ]);
 
         $minutes = (int) ceil($seconds / 60);
@@ -119,15 +128,5 @@ class Login extends Controller
         return back()
             ->withErrors(['email' => "Too many login attempts. Please try again in {$minutes} minute(s)."])
             ->onlyInput('email');
-    }
-
-    private function emailIpKey(string $email, ?string $ip): string
-    {
-        return 'login:'.$email.'|'.$ip;
-    }
-
-    private function ipKey(?string $ip): string
-    {
-        return 'login-ip:'.$ip;
     }
 }

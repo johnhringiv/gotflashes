@@ -274,6 +274,9 @@ Routes in `routes/web.php`:
 
 The application includes comprehensive observability features via `ObservabilityServiceProvider` and middleware:
 
+### Proxy & Real Client IP (load-bearing for logging)
+Real client IPs in the request/`security` logs below — and Laravel rate-limiting — come from **nginx's realip module keyed on `CF-Connecting-IP`** (`docker/nginx.conf`), which rewrites `REMOTE_ADDR` to the true client before PHP sees it; `$request->ip()` reads that. Request chain in production: **Cloudflare → HAProxy (on pfSense) → nginx → app**. `set_real_ip_from 0.0.0.0/0` is safe *only* because a pfSense firewall rule restricts ingress to Cloudflare IPs, so every request has already passed through Cloudflare (which sets `CF-Connecting-IP` to the true client and is not client-spoofable, unlike the leftmost `X-Forwarded-For`). The firewall rule is the enforcement — if it were removed, `CF-Connecting-IP` would become forgeable. `trustProxies(at: env('TRUSTED_PROXY_IP'))` in `bootstrap/app.php` is **inert** (defense-in-depth only): nginx has already resolved the client IP, so it never matches a proxy peer and does not affect `$request->ip()`. Do not point IP logging or rate-limiting logic at `trustProxies`/`TRUSTED_PROXY_IP`.
+
 ### Request Logging (`RequestLoggingMiddleware`)
 - **All HTTP requests** are logged with structured context:
   - Unique request ID (UUID) for tracing
