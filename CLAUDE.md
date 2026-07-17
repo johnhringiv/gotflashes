@@ -274,6 +274,17 @@ Routes in `routes/web.php`:
 
 The application includes comprehensive observability features via `ObservabilityServiceProvider` and middleware:
 
+### Proxy & Real Client IP (load-bearing for logging)
+Real client IPs in the request/`security` logs below — and Laravel rate-limiting — come from **nginx's realip module keyed on `CF-Connecting-IP`** (`docker/nginx.conf`), which rewrites `REMOTE_ADDR` to the true client before PHP sees it; `$request->ip()` reads that. Request chain in production: **Cloudflare → HAProxy (on pfSense) → nginx → app**. `set_real_ip_from 0.0.0.0/0` is safe *only* because a pfSense firewall rule restricts ingress to Cloudflare IPs, so every request has already passed through Cloudflare (which sets `CF-Connecting-IP` to the true client and is not client-spoofable, unlike the leftmost `X-Forwarded-For`). The firewall rule is the enforcement — if it were removed, `CF-Connecting-IP` would become forgeable. `trustProxies(at: env('TRUSTED_PROXY_IP'))` in `bootstrap/app.php` is **inert** (defense-in-depth only): nginx has already resolved the client IP, so it never matches a proxy peer and does not affect `$request->ip()`. Do not point IP logging or rate-limiting logic at `trustProxies`/`TRUSTED_PROXY_IP`.
+
+### Auth Rate Limiting
+Auth endpoints throttle on the real client IP above, via `App\Support\IpRateLimiter` (which hashes any user-supplied key component so entity/accent variants like `josé@x.com`/`jose@x.com` can't collide buckets). Throttle hits are logged to the `security` channel through `App\Support\SecurityLog`:
+- **Login** (`Login.php`) — 5 failures/min per email+IP **plus** a coarse 25/15-min per-IP backstop. Counts failures only, cleared on success. Keyed on email+IP (never IP alone) so a shared club/family NAT can't lock out unrelated members; the lockout retry time is computed from only the limiter(s) that actually tripped.
+- **Password reset request** (`/password/email`, `ForgotPassword.php`) — 5/hour/IP, counted **only when mail is actually sent** (so broker-throttled/invalid requests don't drain a shared IP's budget), on top of Laravel's per-email 60s broker throttle.
+- **Password reset submit** (`/password/reset`, `ResetPassword.php`) — 10/hour/IP (token-guessing defense-in-depth; every submission counts).
+- **Registration / verification resend** — pre-existing per-IP/per-user caps (`RegistrationForm`, `EmailVerificationService`).
+- **Warn-only mail-volume monitor** (`ObservabilityServiceProvider`) — logs to `security` at ~80/day (Resend free cap = 100/day). Alerts on a distributed drain the per-IP/per-email caps can't catch; deliberately never blocks (a blocking cap would drop legitimate mail).
+
 ### Request Logging (`RequestLoggingMiddleware`)
 - **All HTTP requests** are logged with structured context:
   - Unique request ID (UUID) for tracing

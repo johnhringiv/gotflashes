@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Notifications\VerifyEmailChange;
+use App\Support\SecurityLog;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -39,6 +40,14 @@ class EmailVerificationService
     public static function sendVerification(User $user, bool $isNewUser = true): void
     {
         $user->notify(new VerifyEmailChange($user->email_verification_token, $isNewUser));
+
+        // Verification/change emails draw on the finite transactional-mail quota; log sends so
+        // resend abuse is visible (mirrors the reset-flow logging in ForgotPassword).
+        SecurityLog::info('verification_email_sent', 'Verification email sent', [
+            'user_id' => $user->id,
+            'email' => $isNewUser ? $user->email : ($user->pending_email ?? $user->email),
+            'is_new_user' => $isNewUser,
+        ]);
     }
 
     /**
@@ -64,6 +73,8 @@ class EmailVerificationService
             $seconds = RateLimiter::availableIn($rateLimitKey);
             $minutes = ceil($seconds / 60);
 
+            self::logThrottled($user, 'cooldown', $seconds);
+
             return [
                 'allowed' => false,
                 'type' => 'warning',
@@ -74,7 +85,10 @@ class EmailVerificationService
         // Check hourly limit
         $hourlyLimitKey = 'resend-verification-hourly:'.$user->id;
         if (RateLimiter::tooManyAttempts($hourlyLimitKey, self::RATE_LIMIT_PER_HOUR)) {
-            $minutes = ceil(RateLimiter::availableIn($hourlyLimitKey) / 60);
+            $seconds = RateLimiter::availableIn($hourlyLimitKey);
+            $minutes = ceil($seconds / 60);
+
+            self::logThrottled($user, 'hourly', $seconds);
 
             return [
                 'allowed' => false,
@@ -88,6 +102,19 @@ class EmailVerificationService
             'type' => null,
             'message' => null,
         ];
+    }
+
+    /**
+     * Log a verification-resend throttle hit so quota-drain attempts are visible.
+     */
+    private static function logThrottled(User $user, string $limit, int $retryAfter): void
+    {
+        SecurityLog::warning('verification_resend_throttled', 'Verification resend throttled', [
+            'limit' => $limit,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'retry_after' => $retryAfter,
+        ]);
     }
 
     /**

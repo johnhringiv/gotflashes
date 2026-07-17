@@ -27,8 +27,12 @@ class EmailVerificationBanner extends Component
             return;
         }
 
-        // Use service to generate token and send verification email
-        EmailVerificationService::requestVerification($user, true);
+        // Use service to generate token and send verification email.
+        // isNewUser must reflect whether a pending email change is in flight: when
+        // pending_email is set, this is a change-verification and must route to (and
+        // embed the link for) the NEW address — passing true would misroute it to the
+        // current address and invalidate the correctly-routed token. Mirrors ProfileForm.
+        EmailVerificationService::requestVerification($user, ! $user->pending_email);
 
         // Record rate limit attempt
         EmailVerificationService::recordRateLimitAttempt($user);

@@ -23,8 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS in production
-        if (app()->environment('production')) {
+        // Force HTTPS in every deployed environment (production + staging/dev), never in
+        // local or testing. Upstream TLS terminates at Cloudflare/HAProxy so the app sees
+        // plain HTTP; without this, route()/redirects on staging emit http:// URLs and the
+        // AJAX forms (forgot/reset password) get mixed-content-blocked. Matches the
+        // deployed-env gate used by BasicAuthMiddleware.
+        if (! app()->environment(['local', 'testing'])) {
             URL::forceScheme('https');
         }
 
