@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Flash;
 use App\Models\User;
+use App\Support\SecurityLog;
 
 class FlashPolicy
 {
@@ -36,7 +37,7 @@ class FlashPolicy
      */
     public function update(User $user, Flash $flash): bool
     {
-        return $flash->user_id === $user->id;
+        return $this->ownsOrLogDenied('update', $user, $flash);
     }
 
     /**
@@ -44,7 +45,28 @@ class FlashPolicy
      */
     public function delete(User $user, Flash $flash): bool
     {
-        return $flash->user_id === $user->id;
+        return $this->ownsOrLogDenied('delete', $user, $flash);
+    }
+
+    /**
+     * Ownership check shared by the update/delete abilities: logs a security event
+     * on denial (surfaces IDOR/ownership-probing that otherwise only shows as an
+     * opaque 403) and returns whether the user owns the flash.
+     */
+    private function ownsOrLogDenied(string $ability, User $user, Flash $flash): bool
+    {
+        $owns = $flash->user_id === $user->id;
+
+        if (! $owns) {
+            SecurityLog::warning('flash_authorization_denied', 'Flash authorization denied', [
+                'ability' => $ability,
+                'user_id' => $user->id,
+                'flash_id' => $flash->id,
+                'flash_owner_id' => $flash->user_id,
+            ]);
+        }
+
+        return $owns;
     }
 
     /**

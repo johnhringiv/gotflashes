@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailChange;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -122,6 +124,25 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     *
+     * An email-change verification must be delivered to the NEW (pending) address being
+     * verified — never the current one — so clicking the link proves control of the new inbox.
+     * All other mail (password reset, award notices, new-user verification) routes to the
+     * current address. Scoped to VerifyEmailChange-during-change so nothing else is misrouted,
+     * e.g. a password reset while an unverified email change is pending still goes to the
+     * current address.
+     */
+    public function routeNotificationForMail(Notification $notification): string
+    {
+        if ($notification instanceof VerifyEmailChange && ! $notification->isNewUser && $this->pending_email) {
+            return $this->pending_email;
+        }
+
+        return $this->email;
     }
 
     public function flashes(): HasMany

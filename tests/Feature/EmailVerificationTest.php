@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\EmailVerificationBanner;
+use App\Livewire\ProfileForm;
 use App\Livewire\RegistrationForm;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailChange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -158,6 +162,109 @@ class EmailVerificationTest extends TestCase
         // New email should be pending
         $this->assertEquals('new@example.com', $user->pending_email);
         $this->assertNotNull($user->email_verification_token);
+    }
+
+    // ============================================
+    // Email-change verification is delivered to the NEW address (recipient routing)
+    // ============================================
+
+    public function test_email_change_verification_routes_to_new_pending_address(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+            'pending_email' => 'new@example.com',
+        ]);
+
+        // A change-verification (isNewUser: false) must be delivered to the NEW address being
+        // verified, so clicking the link proves control of the new inbox — not the old one.
+        $recipient = $user->routeNotificationForMail(new VerifyEmailChange('token', false));
+
+        $this->assertSame('new@example.com', $recipient);
+    }
+
+    public function test_new_user_verification_routes_to_current_address(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'current@example.com',
+            'pending_email' => null,
+        ]);
+
+        // New-user registration verification (isNewUser: true, no pending change) → current email.
+        $recipient = $user->routeNotificationForMail(new VerifyEmailChange('token', true));
+
+        $this->assertSame('current@example.com', $recipient);
+    }
+
+    public function test_other_mail_is_not_misrouted_while_an_email_change_is_pending(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'current@example.com',
+            'pending_email' => 'pending@example.com',
+        ]);
+
+        // Regression guard for the routing fix: a password reset must still go to the CURRENT
+        // (verified) address even while an unverified email change is pending — never the
+        // pending address (which the user has not yet proven they control).
+        $recipient = $user->routeNotificationForMail(new ResetPasswordNotification('token'));
+
+        $this->assertSame('current@example.com', $recipient);
+    }
+
+    public function test_email_change_flow_delivers_verification_to_the_new_address(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('email', 'jane@example.com')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        // End-to-end guard: changing the email must send the change-verification, resolved to
+        // the new pending address rather than the old login email.
+        Notification::assertSentTo(
+            $user,
+            VerifyEmailChange::class,
+            function (VerifyEmailChange $notification, array $channels, $notifiable) {
+                return $notification->isNewUser === false
+                    && $notifiable->routeNotificationForMail($notification) === 'jane@example.com';
+            }
+        );
+    }
+
+    public function test_banner_resend_during_pending_change_routes_to_new_address(): void
+    {
+        Notification::fake();
+
+        // Unverified user (e.g. registered with a typo) who has since requested an email
+        // change — pending_email is set but email is still unverified, so the global
+        // verification banner shows.
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+            'pending_email' => 'new@example.com',
+            'email_verified_at' => null,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(EmailVerificationBanner::class)
+            ->call('resendVerification');
+
+        // The banner's resend must behave like a change-verification (isNewUser: false)
+        // and route to the NEW address — not hardcode isNewUser: true and misdeliver the
+        // link to the old/unreachable address.
+        Notification::assertSentTo(
+            $user,
+            VerifyEmailChange::class,
+            function (VerifyEmailChange $notification, array $channels, $notifiable) {
+                return $notification->isNewUser === false
+                    && $notifiable->routeNotificationForMail($notification) === 'new@example.com';
+            }
+        );
     }
 
     public function test_clicking_email_change_verification_link_updates_email(): void

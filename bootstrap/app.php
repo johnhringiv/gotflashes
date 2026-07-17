@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\BasicAuthMiddleware;
 use App\Http\Middleware\ContentSecurityPolicy;
+use App\Http\Middleware\PreventIndexingNonProduction;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Trust HAProxy (on pfSense) and recognize forwarded headers
+        // Defense-in-depth only. nginx (docker/nginx.conf) owns real-client-IP resolution
+        // via the realip module + CF-Connecting-IP, rewriting REMOTE_ADDR to the true client
+        // before PHP sees it, so this does not drive $request->ip() and HTTPS is owned by
+        // AppServiceProvider's forceScheme. Do not point logic (IP logging, rate limiting) at
+        // it — see the "Proxy & Real Client IP" note in CLAUDE.md.
         $middleware->trustProxies(
             at: env('TRUSTED_PROXY_IP'),
             headers: Request::HEADER_X_FORWARDED_FOR |
@@ -25,6 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->append(ContentSecurityPolicy::class);
+        // Keep non-production environments (dev.gotflashes.com) out of search indexes.
+        // Appended before BasicAuthMiddleware so it wraps the gate: a 401 challenge from
+        // basic auth still carries the noindex header on its way out.
+        $middleware->append(PreventIndexingNonProduction::class);
         $middleware->append(BasicAuthMiddleware::class);
         $middleware->alias([
             'admin' => AdminMiddleware::class,

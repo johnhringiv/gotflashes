@@ -395,7 +395,7 @@ Logs are written to `storage/logs/`. During development, view real-time logs wit
 - **HAProxy**: SSL termination and reverse proxy
 - **Docker Container**: Application (nginx + PHP-FPM + Supervisor)
 
-**Security Note:** Firewall-level restrictions ensure only Cloudflare IPs can reach the server, allowing nginx to safely trust `X-Forwarded-For` headers for real client IP logging.
+**Security Note:** Firewall-level restrictions ensure only Cloudflare IPs can reach the server, so nginx's realip module can safely resolve the real client IP from the `CF-Connecting-IP` header (set by Cloudflare, not client-spoofable) for logging and rate-limiting. Laravel's `trustProxies` (`TRUSTED_PROXY_IP`) is inert defense-in-depth — nginx already rewrites `REMOTE_ADDR`, so `$request->ip()` does not depend on it.
 
 See this [guide](https://johnhringiv.com/secure-scalable-home-web-hosting) for the full deployment setup.
 
