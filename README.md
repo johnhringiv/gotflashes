@@ -192,9 +192,10 @@ docker run -d --name gotflashes --restart unless-stopped \
   gotflashes:latest
 ```
 
-See **[DOCKER.md](DOCKER.md)** for complete Docker deployment guide including:
+See **[docs/deployment.md](docs/deployment.md)** for the complete deployment & operations guide including:
 - Quick start guide
 - Production deployment behind HAProxy
+- Cloudflare edge maintenance Worker
 - Management commands
 - Troubleshooting
 
@@ -294,9 +295,11 @@ gotflashes/
 ├── docker/                  # Docker-specific files
 ├── docs/
 │   ├── prd.md              # Product Requirements Document
+│   ├── deployment.md       # Deployment & operations (Docker, staging, Cloudflare edge)
 │   ├── membership-year-end-logic.md  # Year-specific membership system
 │   ├── CONTRIBUTING.md     # Contribution guidelines
 │   └── admin-awards-*.md   # Admin dashboard plans
+├── workers/                # Cloudflare edge maintenance-page Worker
 ├── public/                  # Web server document root
 │   ├── images/             # Award badges, logo, burgee
 │   └── build/              # Compiled assets (via Vite)
@@ -329,6 +332,7 @@ gotflashes/
 ## Documentation
 
 - **[Product Requirements](docs/prd.md)**: Detailed feature specifications and business rules
+- **[Deployment & Operations](docs/deployment.md)**: Docker, staging environments, and the Cloudflare edge maintenance Worker
 - **[Year-Specific Membership Logic](docs/membership-year-end-logic.md)**: Per-year district/fleet membership system with carry-forward
 - **[Contributing](docs/CONTRIBUTING.md)**: Guidelines for contributing to the project
 
@@ -390,6 +394,7 @@ Logs are written to `storage/logs/`. During development, view real-time logs wit
 ### Deployment Stack
 
 - **Cloudflare**: DNS, CDN, and Email Routing (firewall restricts traffic to Cloudflare IPs only)
+- **Cloudflare Worker**: Serves a branded maintenance page from the edge during origin outages (`workers/`; see [docs/deployment.md](docs/deployment.md))
 - **Resend**: Transactional email delivery (password resets, award notifications)
 - **ACME/Let's Encrypt**: SSL certificate management
 - **HAProxy**: SSL termination and reverse proxy
