@@ -1,0 +1,8 @@
+name = "gotflashes-maintenance"
+main = "worker.js"
+compatibility_date = "2026-07-16"
+
+routes = [
+  { pattern = "gotflashes.com/*", zone_name = "gotflashes.com" },
+  { pattern = "www.gotflashes.com/*", zone_name = "gotflashes.com" }
+]
