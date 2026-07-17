@@ -119,6 +119,10 @@ class ObservabilityServiceProvider extends ServiceProvider
             // "=== threshold" would miss the warning entirely on any skipped/reset count.
             if (is_int($count) && $count >= self::MAIL_VOLUME_WARN_THRESHOLD
                 && Cache::add('mail-volume-warned:'.now()->toDateString(), true, now()->endOfDay())) {
+                // Logged directly (not via SecurityLog) on purpose: this is a cumulative daily
+                // aggregate, not a per-request event. It can fire from a queue worker with no
+                // request, and stamping it with the ip/user_agent of whichever send happened to
+                // cross the threshold would falsely implicate that one client for the whole day.
                 Log::channel('security')->warning('Transactional email volume approaching daily cap', [
                     'event' => 'mail_volume_warning',
                     'sent_today' => $count,

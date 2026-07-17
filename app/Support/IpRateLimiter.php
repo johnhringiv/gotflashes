@@ -17,6 +17,10 @@ class IpRateLimiter
 {
     /**
      * Build a key scoped to a single IP: e.g. "password-email:1.2.3.4".
+     *
+     * The IP is not hashed (unlike identityKey's identity): $request->ip() is never
+     * attacker-supplied free text on this stack (CF-only firewall + nginx realip resolve
+     * it), and IPv4/IPv6 literals contain no characters that cleanRateLimiterKey() mangles.
      */
     public static function ipKey(string $prefix, ?string $ip): string
     {
