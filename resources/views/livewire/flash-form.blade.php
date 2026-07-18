@@ -73,22 +73,22 @@
 
             <!-- Sailing Type - order-3 on mobile, spans both cols on desktop -->
             <div class="mb-6 md:col-span-2 order-3 md:order-5">
-                {{-- Wrapper is a <div>, not a <label>: the label text contains a tooltip
-                     (block content) that can't live inside <label>. The select is associated
-                     via aria-labelledby instead. --}}
+                {{-- Wrapper is a <div>, not a <label>: DaisyUI's .label markup uses <div>
+                     children, which are invalid inside <label>. The visible field label is a
+                     proper <label for> (the tooltip <span> is phrasing content, so it may
+                     live inside it), which also restores click-to-focus. --}}
                 <div class="form-control w-full">
                     <div class="label">
-                        <span class="label-text flex items-center gap-1" id="{{ $mode === 'edit' ? 'sailing-type-label-edit' : 'sailing-type-label' }}">
+                        <label class="label-text flex items-center gap-1" for="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}">
                             Sailing Type
                             <span class="tooltip tooltip-right tooltip-clamp" data-tip="Helps the Class understand our constituents">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
-                        </span>
+                        </label>
                     </div>
                     <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
-                            aria-labelledby="{{ $mode === 'edit' ? 'sailing-type-label-edit' : 'sailing-type-label' }}"
                             class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
                             {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
                         <option value="" disabled {{ $event_type ? '' : 'selected' }}>
