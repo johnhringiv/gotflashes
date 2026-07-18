@@ -9,11 +9,19 @@ return new class extends Migration
      * ILCA office request: move Fleet #296 (Kansas City area, "Odd Winds") from
      * the Mississippi Valley District to the US@Large District.
      *
-     * The app enforces that a member's district matches their fleet's district
-     * (RegistrationForm/ProfileForm only allow a fleet within the chosen
-     * district), and the district leaderboard ranks by members.district_id — so
-     * moving the fleet also re-syncs its existing members' district to keep the
-     * data consistent and the leaderboard correct.
+     * This is a forward reclassification (the fleet's current district), not a
+     * historical correction. The app enforces that a member's district matches
+     * their fleet's district (RegistrationForm/ProfileForm only allow a fleet
+     * within the chosen district), and the district leaderboard ranks by
+     * members.district_id — so moving the fleet also re-syncs its members'
+     * current-year membership.
+     *
+     * `members` is a per-year snapshot table (see docs/membership-year-end-logic.md):
+     * prior years are immutable so historical leaderboards stay accurate, and
+     * profile-driven affiliation changes only touch the current year. We follow
+     * that rule here and scope the member re-sync to the current year. (Fleet #296
+     * was resurrected in June 2026 and has only a current-year member anyway, so
+     * this is the same result — but the year scope keeps the pattern safe.)
      */
     private const FLEET_NUMBER = 296;
 
@@ -49,9 +57,11 @@ return new class extends Migration
             ->where('id', $fleetId)
             ->update(['district_id' => $districtId, 'updated_at' => now()]);
 
-        // Keep members of this fleet in sync with the fleet's district.
+        // Re-sync only the CURRENT-year membership rows for this fleet — prior
+        // years are immutable snapshots (historical leaderboard accuracy).
         DB::table('members')
             ->where('fleet_id', $fleetId)
+            ->where('year', (int) now()->year)
             ->update(['district_id' => $districtId, 'updated_at' => now()]);
     }
 };
