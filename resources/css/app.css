@@ -255,6 +255,22 @@
     background: var(--color-base-100) !important;
 }
 
+/* Brand-blue focus ring on native DaisyUI form controls, matching the
+   TomSelect treatment above (DaisyUI 5's default focus outline is
+   base-content, which reads as black). --input-color also drives DaisyUI's
+   focus box-shadow; outline-color is set directly as well in case a later
+   DaisyUI rule re-declares the variable. */
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within,
+.textarea:focus,
+.textarea:focus-within {
+    --input-color: var(--color-primary);
+
+    outline-color: var(--color-primary);
+}
+
 .ts-wrapper.disabled .ts-control,
 .ts-wrapper.disabled .ts-control * {
     cursor: not-allowed !important;
