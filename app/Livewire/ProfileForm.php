@@ -103,9 +103,11 @@ class ProfileForm extends Component
 
         // District/fleet are cleared programmatically (picking a district clears
         // the fleet), so don't flag them while empty — that would error an
-        // untouched field. They still validate on save.
+        // untouched field. 'none' is the explicit Unaffiliated/None pick, which
+        // only save() normalizes to null — the base exists:… rule here would
+        // reject the sentinel on the spot. They still validate on save.
         if (in_array($propertyName, ['district_id', 'fleet_id'], true)
-            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            && in_array($this->{$propertyName}, ['none', '', null, 0, '0'], true)) {
             return;
         }
 

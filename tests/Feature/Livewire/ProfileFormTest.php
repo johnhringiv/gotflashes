@@ -210,6 +210,23 @@ class ProfileFormTest extends TestCase
         $this->assertNull($membership->fleet_id);
     }
 
+    public function test_selecting_none_for_district_or_fleet_shows_no_live_validation_error(): void
+    {
+        // Regression: the TomSelect UI sends the literal string 'none' for an
+        // explicit "Unaffiliated/None" pick, which only save() normalizes to
+        // null. The updated() live-validation hook ran validateOnly() with the
+        // base exists:... rules, so picking None instantly flagged the field
+        // with "The selected fleet id is invalid."
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('fleet_id', 'none')
+            ->assertHasNoErrors()
+            ->set('district_id', 'none')
+            ->assertHasNoErrors();
+    }
+
     public function test_creates_membership_if_none_exists(): void
     {
         $district = District::first();
