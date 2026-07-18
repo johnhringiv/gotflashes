@@ -211,19 +211,31 @@
     /* Inset rounded rows so the highlight matches the native select picker */
     margin: 0.125rem 0.25rem;
     border-radius: var(--radius-selector);
+
+    /* Anchors the .selected checkmark */
+    position: relative;
 }
 
 /* Gray hover / keyboard highlight (matches the native select options);
-   the chosen row is brand blue — .selected must come after so hovering
-   the chosen row keeps it blue. */
+   the chosen row is marked with a checkmark, not a fill — same convention
+   as the native picker. */
 .ts-dropdown .option:hover,
 .ts-dropdown .option.active {
     background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
 }
 
 .ts-dropdown .option.selected {
-    background-color: var(--color-primary);
-    color: var(--color-primary-content);
+    padding-right: 2rem;
+}
+
+.ts-dropdown .option.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    font-weight: 700;
+    color: var(--color-primary);
 }
 
 .ts-dropdown .optgroup-header {
@@ -294,15 +306,16 @@
 }
 
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
-   the OS picker regardless): DaisyUI's gray hover stays; the checked row shows
-   brand blue instead of DaisyUI's base-content, matching the TomSelect rows. */
+   the OS picker regardless): selection is marked by the picker's own checkmark
+   only — no fill (DaisyUI paints the checked row base-content, which also lit
+   up the disabled "Select activity/sailing type" placeholders). Gray is the
+   only filled state: DaisyUI's hover, extended here to mousedown-hold, which
+   DaisyUI paints neutral (near-black) with a pressed shadow. */
 :is(.select, .select select) option:checked {
-    background-color: var(--color-primary);
-    color: var(--color-primary-content);
+    background-color: transparent;
+    color: var(--color-base-content);
 }
 
-/* Mousedown-hold on an option keeps the gray hover highlight — DaisyUI
-   paints it neutral (near-black) with a pressed shadow. */
 :is(.select, .select select) option:not(:disabled):active {
     background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
     color: var(--color-base-content);
