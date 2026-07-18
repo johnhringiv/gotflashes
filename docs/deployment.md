@@ -3,9 +3,17 @@
 Operational guide for deploying and managing G.O.T. Flashes: the Docker container, staging
 environments, and the Cloudflare edge in front of it.
 
+> **How code reaches production:** CI publishes the image to GHCR on every push to `main` and the
+> host polls and redeploys it automatically (continuous deploy from `main`). The pipeline, host
+> setup, and rollback procedure live in **[deploy/README.md](../deploy/README.md)** — this document
+> covers configuration, staging, day-to-day operations, and the Cloudflare edge.
+
 ## Configuration
 
-Most environment variables are pre-configured in `docker/.env.docker`. You only need to set:
+Most environment variables are pre-configured in `docker/.env.docker`, which is baked into the
+image as its `.env`. Host-specific settings and secrets live in an env file on the host
+(`deploy/gotflashes.env.example` is the template) that is passed to the container via
+`--env-file`; real environment variables take precedence over the baked `.env`. You only need to set:
 
 **Required:**
 - `APP_KEY` - Generate with: `docker run --rm php:8.2-cli php -r "echo 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL;"`
@@ -61,21 +69,12 @@ The entrypoint automatically:
 
 ## Management Commands
 
-To Clear rebuild and run
-```bash
-docker stop gotflashes && docker rm gotflashes
-docker build -t gotflashes:latest .
-docker run -d --name gotflashes -p 8081:8080 \
-  -e DB_DATABASE=/var/www/html/database/data/database.sqlite \
-  -v $(pwd)/database/data:/var/www/html/database/data \
-  -v $(pwd)/storage/logs:/var/www/html/storage/logs \
-  -v $(pwd)/backups:/var/www/html/storage/app/backups \
-  --env-file .env gotflashes:latest
-```
+Deploying, rolling back, and the offline image-tarball fallback are all covered by the scripts in
+[`deploy/`](../deploy/README.md) — the manual stop/build/run and `docker save` ritual is retired.
+To force a redeploy of the current image on the host:
 
-To Save
 ```bash
-docker save -o gotflashes.img gotflashes:latest
+sudo sh deploy.sh gotflashes.env
 ```
 
 Misc
@@ -102,7 +101,7 @@ docker exec -it gotflashes sh
 
 ## Architecture
 
-- **Alpine Linux + PHP 8.4**: ~175MB image
+- **Alpine Linux + PHP 8.5**: ~175MB image
 - **Multi-stage build**: Node build → production image
 - **Supervisor**: Manages nginx, PHP-FPM, queue worker, scheduler
 - **SQLite**: Persisted via volume mounts
