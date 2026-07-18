@@ -301,6 +301,14 @@
     color: var(--color-primary-content);
 }
 
+/* Mousedown-hold on an option keeps the gray hover highlight — DaisyUI
+   paints it neutral (near-black) with a pressed shadow. */
+:is(.select, .select select) option:not(:disabled):active {
+    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    color: var(--color-base-content);
+    box-shadow: none;
+}
+
 .ts-wrapper.disabled .ts-control,
 .ts-wrapper.disabled .ts-control * {
     cursor: not-allowed !important;
