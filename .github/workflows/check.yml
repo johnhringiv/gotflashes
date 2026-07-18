@@ -67,6 +67,9 @@ jobs:
           context: .
           load: true # export to the local daemon for the smoke test below
           tags: gotflashes:ci
+          # The monthly scheduled run exists to pick up base-image/apk CVE
+          # fixes; served from cache it would no-op, so bypass cache then.
+          no-cache: ${{ github.event_name == 'schedule' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -129,5 +132,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          no-cache: ${{ github.event_name == 'schedule' }} # monthly CVE rebuild must not be served from cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
