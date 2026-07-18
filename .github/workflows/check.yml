@@ -57,8 +57,18 @@ jobs:
         with:
           lfs: true # public/ images + favicon are Git LFS; the image needs real content, not pointers
 
+      - uses: docker/setup-buildx-action@v4 # container driver; required for the gha build cache below
+
+      # Shares the GHA build cache with the publish job, so a push to main
+      # doesn't pay for two cold multi-stage builds back-to-back.
       - name: Build image
-        run: docker build -t gotflashes:ci .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true # export to the local daemon for the smoke test below
+          tags: gotflashes:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Boot the container (entrypoint runs migrations + optimize) and check the
       # /up health endpoint plus a real page render.
