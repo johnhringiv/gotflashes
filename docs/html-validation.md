@@ -71,14 +71,20 @@ changes (identical viewport, same routes) and diffed with ImageMagick
   the nav username — never the structural elements that changed.
 - `/password/reset`: only a transient email-field placeholder render-timing
   difference; the removed toast container had no rendered footprint.
+- **Mobile (390px): 0 differing pixels** on `/register` and `/logbook` (the two
+  structurally-changed surfaces, tooltips forced open) — confirms the
+  `label`→`div` and tooltip `div`→`span` changes are neutral at mobile width too,
+  not just desktop.
 
 ### Scope of the guarantee
 Validation is enforced on the harness's routes in their **default rendered
-state**, plus the logbook **edit-modal** state. Not exhaustively validated:
-other interaction states (form-error renders, the delete-confirm and admin
-modals, TomSelect/flatpickr open panels), the token reset page
-(`/password/reset/{token}`), framework error pages, and non-desktop viewports
-(mobile is covered only by the tooltip-overflow guard, not a full W3C pass).
+state**, plus the logbook **edit-modal** state and both password-reset views
+(`/password/reset` request form and `/password/reset/{token}` set-new-password).
+Not exhaustively validated: other interaction states (form-error renders, the
+delete-confirm and admin modals, TomSelect/flatpickr open panels), the
+email-verification and framework error pages, and full-page W3C at mobile width
+(mobile has a pixel-diff check on the changed pages plus the tooltip-overflow
+guard, but not a per-route W3C pass).
 
 ## Accessibility note (side benefit, not a visual change)
 

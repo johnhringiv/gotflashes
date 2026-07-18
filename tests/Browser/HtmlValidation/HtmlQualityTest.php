@@ -83,6 +83,17 @@ foreach ($publicPaths as $path) {
     });
 }
 
+// The set-new-password view lives at /password/reset/{token}; it needs a token
+// segment so it can't go in $publicPaths above. (Distinct from /password/reset,
+// which renders the request-a-link form.)
+it('has valid HTML structure on /password/reset/{token}', function () {
+    e2eCheckStructure(visit('/password/reset/tok123?email=test@test.com'));
+});
+
+it('passes W3C validation on /password/reset/{token}', function () use ($validatorUrl) {
+    e2eCheckW3C(visit('/password/reset/tok123?email=test@test.com'), $validatorUrl);
+});
+
 foreach ($authPaths as $path) {
     it("has valid HTML structure on {$path} (auth)", function () use ($path) {
         $user = User::factory()->create();
