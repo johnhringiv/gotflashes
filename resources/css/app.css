@@ -213,8 +213,15 @@
     border-radius: var(--radius-selector);
 }
 
+/* Gray hover / keyboard highlight (matches the native select options);
+   the chosen row is brand blue — .selected must come after so hovering
+   the chosen row keeps it blue. */
 .ts-dropdown .option:hover,
 .ts-dropdown .option.active {
+    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+}
+
+.ts-dropdown .option.selected {
     background-color: var(--color-primary);
     color: var(--color-primary-content);
 }
@@ -259,11 +266,9 @@
     background: var(--color-base-100) !important;
 }
 
-/* Brand-blue focus on native DaisyUI form controls, matching the TomSelect
-   treatment above: primary border + soft primary glow instead of DaisyUI 5's
-   hard offset outline (base-content, which reads as black — and a thin dark
-   ring loses perceived hue anyway). --input-color keeps any DaisyUI usage of
-   the variable in step. */
+/* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
+   focus outline is base-content, which reads as black). --input-color also
+   drives DaisyUI's focus box-shadow underline. */
 .input:focus,
 .input:focus-within,
 .select:focus,
@@ -272,9 +277,7 @@
 .textarea:focus-within {
     --input-color: var(--color-primary);
 
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
+    outline-color: var(--color-primary);
 }
 
 /* Error-state fields keep an error-colored focus, mirroring
@@ -287,16 +290,13 @@
 .textarea-error:focus-within {
     --input-color: var(--color-error);
 
-    border-color: var(--color-error);
-    box-shadow: 0 0 0 3px oklch(from var(--color-error) l c h / 20%);
+    outline-color: var(--color-error);
 }
 
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
-   the OS picker regardless): highlight in brand blue like the TomSelect rows,
-   overriding DaisyUI 5's gray hover / base-content checked row. */
-:is(.select, .select select) option:checked,
-:is(.select, .select select) option:not(:disabled):hover,
-:is(.select, .select select) option:not(:disabled):focus-visible {
+   the OS picker regardless): DaisyUI's gray hover stays; the checked row shows
+   brand blue instead of DaisyUI's base-content, matching the TomSelect rows. */
+:is(.select, .select select) option:checked {
     background-color: var(--color-primary);
     color: var(--color-primary-content);
 }
