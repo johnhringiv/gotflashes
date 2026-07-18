@@ -5,6 +5,8 @@
 .env.production
 *.sqlite
 *.sqlite-journal
+# Host deploy config holds secrets; only the .example template is tracked
+deploy/*.env
 .phpactor.json
 .phpunit.result.cache
 /.fleet

@@ -174,26 +174,34 @@ Press `Ctrl+C` to exit Tinker.
 
 ### Docker Deployment
 
-For production deployment using Docker (no PHP/Node required on host):
+Production runs the image CI publishes to GHCR on every push to `main`
+(`ghcr.io/johnhringiv/gotflashes:latest`); the host polls and redeploys
+automatically — **continuous deploy from `main`**. See
+**[deploy/README.md](deploy/README.md)** for the full runbook (host setup,
+rollback, staging instance).
+
+To build and run the image locally (no PHP/Node required on host):
 
 ```bash
-# 1. Configure environment
-cp docker/.env.docker .env
-# Edit .env and set APP_KEY and RESEND_KEY
+# 1. Configure environment (secrets only; defaults are baked into the image)
+cp deploy/gotflashes.env.example gotflashes.env
+# Edit gotflashes.env: set APP_KEY and RESEND_KEY (this manual run mounts
+# repo-relative paths directly, so DATA_DIR can stay empty)
 
 # 2. Build and run
-mkdir -p database/data storage/app storage/logs
-docker build -t gotflashes:latest .
+docker build -t gotflashes:local .
+mkdir -p database/data storage/logs backups
 docker run -d --name gotflashes --restart unless-stopped \
-  -p 8080:80 \
+  -p 8080:8080 \
   -v $(pwd)/database/data:/var/www/html/database/data \
   -v $(pwd)/storage/logs:/var/www/html/storage/logs \
-  --env-file .env \
-  gotflashes:latest
+  -v $(pwd)/backups:/var/www/html/storage/app/backups \
+  --env-file gotflashes.env \
+  gotflashes:local
 ```
 
-See **[docs/deployment.md](docs/deployment.md)** for the complete deployment & operations guide including:
-- Quick start guide
+See **[docs/deployment.md](docs/deployment.md)** for the complete operations guide including:
+- Configuration and staging environments
 - Production deployment behind HAProxy
 - Cloudflare edge maintenance Worker
 - Management commands
