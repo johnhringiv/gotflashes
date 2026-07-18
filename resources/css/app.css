@@ -207,6 +207,10 @@
     cursor: pointer;
     color: var(--color-base-content);
     transition: background-color 0.15s ease;
+
+    /* Inset rounded rows so the highlight matches the native select picker */
+    margin: 0.125rem 0.25rem;
+    border-radius: var(--radius-selector);
 }
 
 .ts-dropdown .option:hover,
@@ -255,11 +259,11 @@
     background: var(--color-base-100) !important;
 }
 
-/* Brand-blue focus ring on native DaisyUI form controls, matching the
-   TomSelect treatment above (DaisyUI 5's default focus outline is
-   base-content, which reads as black). --input-color also drives DaisyUI's
-   focus box-shadow; outline-color is set directly as well in case a later
-   DaisyUI rule re-declares the variable. */
+/* Brand-blue focus on native DaisyUI form controls, matching the TomSelect
+   treatment above: primary border + soft primary glow instead of DaisyUI 5's
+   hard offset outline (base-content, which reads as black — and a thin dark
+   ring loses perceived hue anyway). --input-color keeps any DaisyUI usage of
+   the variable in step. */
 .input:focus,
 .input:focus-within,
 .select:focus,
@@ -268,7 +272,33 @@
 .textarea:focus-within {
     --input-color: var(--color-primary);
 
-    outline-color: var(--color-primary);
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
+}
+
+/* Error-state fields keep an error-colored focus, mirroring
+   .ts-has-error .ts-wrapper.select.focus above. */
+.input-error:focus,
+.input-error:focus-within,
+.select-error:focus,
+.select-error:focus-within,
+.textarea-error:focus,
+.textarea-error:focus-within {
+    --input-color: var(--color-error);
+
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px oklch(from var(--color-error) l c h / 20%);
+}
+
+/* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
+   the OS picker regardless): highlight in brand blue like the TomSelect rows,
+   overriding DaisyUI 5's gray hover / base-content checked row. */
+:is(.select, .select select) option:checked,
+:is(.select, .select select) option:not(:disabled):hover,
+:is(.select, .select select) option:not(:disabled):focus-visible {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
 }
 
 .ts-wrapper.disabled .ts-control,
