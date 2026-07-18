@@ -267,8 +267,18 @@ Routes in `routes/web.php`:
 
 ### GitHub Actions
 - Workflow: `.github/workflows/check.yml`
-- Runs on: push and PR to main/master/develop branches
-- Single job runs `composer check` (linting + tests)
+- Runs on: push and PR to main/develop, `v*` tags, and a monthly schedule
+- Jobs: `check` (composer check — linting + tests), `docker` (image build + `/up` smoke test), `publish` (GHCR push)
+- Docker jobs check out with `lfs: true` — `public/` images are Git LFS and must be real content in the image
+
+## Deployment
+
+Continuous deploy from `main` — full runbook in `deploy/README.md`, operations guide in `docs/deployment.md`:
+- CI publishes `ghcr.io/johnhringiv/gotflashes:latest` (+ `:sha-<commit>` per commit) on every push to `main`; a monthly rebuild picks up base-image CVE fixes
+- The production host (Synology, behind pfSense/Cloudflare, no inbound access) polls the tag every 5 minutes via `deploy/poll-deploy.sh` and redeploys on digest change; it also self-heals a stopped container and alerts (non-zero exit) when the edge is unreachable
+- `deploy/deploy.sh` replaces the single app container and health-gates on `/up` (the entrypoint runs migrations first); deploys are a brief outage covered by the Cloudflare maintenance Worker
+- Secrets + host settings live in a host-side env file (`deploy/gotflashes.env.example`); everything else is baked into the image from `docker/.env.docker`
+- SQLite DB, logs, and backups persist in `DATA_DIR` bind mounts; rollback = pin a `sha-…` tag on the host, then `git revert` on `main` to make it durable
 
 ## Observability
 
