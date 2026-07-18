@@ -3,8 +3,11 @@ name: Code Quality
 on:
   push:
     branches: [ main, develop ]
+    tags: [ 'v*' ] # a release tag publishes a matching image tag (v1 → :v1)
   pull_request:
     branches: [ main, develop ]
+  schedule:
+    - cron: '26 4 4 * *' # monthly rebuild so the image picks up base-image CVE fixes
 
 jobs:
   check:
@@ -12,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -22,7 +25,7 @@ jobs:
           coverage: none
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -44,3 +47,91 @@ jobs:
 
       - name: Run all code quality checks
         run: composer check
+
+  docker:
+    name: Docker Build & Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true # public/ images + favicon are Git LFS; the image needs real content, not pointers
+
+      - uses: docker/setup-buildx-action@v4 # container driver; required for the gha build cache below
+
+      # Shares the GHA build cache with the publish job, so a push to main
+      # doesn't pay for two cold multi-stage builds back-to-back.
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true # export to the local daemon for the smoke test below
+          tags: gotflashes:ci
+          # The monthly scheduled run exists to pick up base-image/apk CVE
+          # fixes; served from cache it would no-op, so bypass cache then.
+          no-cache: ${{ github.event_name == 'schedule' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Boot the container (entrypoint runs migrations + optimize) and check the
+      # /up health endpoint plus a real page render.
+      - name: Smoke test
+        run: |
+          docker run -d --name gotflashes-ci -p 8080:8080 \
+            -e APP_KEY="base64:$(openssl rand -base64 32)" \
+            gotflashes:ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/up >/dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:8080/up >/dev/null || { docker logs gotflashes-ci; exit 1; }
+          curl -sf http://localhost:8080/ >/dev/null || { docker logs gotflashes-ci; exit 1; }
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f gotflashes-ci || true
+
+  # Publishes to GHCR on push to main (and v* tags); the production host polls
+  # :latest and redeploys when the digest changes — see deploy/README.md.
+  publish:
+    name: Publish Image to GHCR
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event_name == 'push' || github.event_name == 'schedule')
+    needs: [ check, docker ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true # LFS images must be real content in the published image — same as the docker job
+
+      - uses: docker/setup-buildx-action@v4 # container driver; required for the gha build cache below
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # :latest = newest main (what the host deploys); :sha-<commit> to pin a
+          # rollback; a git tag v1 publishes :v1 verbatim
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=ref,event=tag
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          no-cache: ${{ github.event_name == 'schedule' }} # monthly CVE rebuild must not be served from cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
