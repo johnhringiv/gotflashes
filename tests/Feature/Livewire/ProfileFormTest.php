@@ -227,6 +227,34 @@ class ProfileFormTest extends TestCase
             ->assertHasNoErrors();
     }
 
+    public function test_picking_none_clears_a_stale_fleet_error(): void
+    {
+        // Regression: change district (JS auto-clears the fleet) -> save fails
+        // with "Please select a fleet or choose None" -> picking None then left
+        // the error on screen, because the live-validation guard skipped
+        // validateOnly() without resetting the field's existing error.
+        $district1 = District::first();
+        $district2 = District::skip(1)->first();
+        $fleet1 = Fleet::where('district_id', $district1->id)->first();
+        $user = User::factory()->create();
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $district1->id,
+            'fleet_id' => $fleet1->id,
+            'year' => now()->year,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('district_id', (string) $district2->id)
+            ->set('fleet_id', null)
+            ->call('save')
+            ->assertHasErrors(['fleet_id'])
+            ->set('fleet_id', 'none')
+            ->assertHasNoErrors(['fleet_id']);
+    }
+
     public function test_creates_membership_if_none_exists(): void
     {
         $district = District::first();

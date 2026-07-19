@@ -105,9 +105,13 @@ class ProfileForm extends Component
         // the fleet), so don't flag them while empty — that would error an
         // untouched field. 'none' is the explicit Unaffiliated/None pick, which
         // only save() normalizes to null — the base exists:… rule here would
-        // reject the sentinel on the spot. They still validate on save.
+        // reject the sentinel on the spot. They still validate on save. An
+        // explicit None pick must still CLEAR a stale "pick a fleet" error
+        // left by a failed save, hence the resetValidation.
         if (in_array($propertyName, ['district_id', 'fleet_id'], true)
             && in_array($this->{$propertyName}, ['none', '', null, 0, '0'], true)) {
+            $this->resetValidation($propertyName);
+
             return;
         }
 

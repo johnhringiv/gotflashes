@@ -58,7 +58,9 @@
                          validation error in real time. Worth the per-change render() since the
                          existingDates query it triggers is cached per request. --}}
                     <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
-                        <option value="" disabled {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
+                        {{-- hidden: placeholder text shows in the closed control but never
+                             as a (checkmarked) row in the open picker --}}
+                        <option value="" disabled hidden {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
                         <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
                         <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
                         <option value="race_committee" {{ $activity_type == 'race_committee' ? 'selected' : '' }}>Race Committee Work</option>
@@ -91,7 +93,8 @@
                     <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
                             class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
                             {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
-                        <option value="" disabled {{ $event_type ? '' : 'selected' }}>
+                        {{-- hidden: same placeholder pattern as activity type above --}}
+                        <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
                             {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
                         </option>
                         <option value="regatta" {{ $event_type == 'regatta' ? 'selected' : '' }}>Regatta</option>
