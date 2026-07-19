@@ -25,8 +25,8 @@ class MemberTest extends TestCase
     public function test_member_belongs_to_user(): void
     {
         $user = User::factory()->create();
-        $district = District::first();
-        $fleet = Fleet::first();
+        $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
+        $fleet = Fleet::where('fleet_number', '!=', Fleet::NONE_NUMBER)->firstOrFail();
 
         $member = Member::create([
             'user_id' => $user->id,
@@ -218,8 +218,8 @@ class MemberTest extends TestCase
     public function test_deleting_district_with_member_records_is_blocked(): void
     {
         $user = User::factory()->create();
-        $district = District::first();
-        $fleet = Fleet::where('district_id', $district->id)->first();
+        $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
+        $fleet = Fleet::where('district_id', $district->id)->firstOrFail();
 
         Member::create([
             'user_id' => $user->id,

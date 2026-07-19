@@ -57,7 +57,7 @@
                                     @php
                                         $district = $user->district_id ? \App\Models\District::find($user->district_id) : null;
                                     @endphp
-                                    {{ $district?->name === \App\Models\District::NONE_NAME ? '—' : ($district?->name ?? '—') }}
+                                    {{ $district?->id === \App\Models\District::noneId() ? '—' : ($district?->name ?? '—') }}
                                 </td>
                                 <td class="text-center">
                                     @php

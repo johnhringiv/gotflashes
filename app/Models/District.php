@@ -24,9 +24,10 @@ class District extends Model
 
     public static function noneId(): int
     {
-        // once(): the id is fixed after the migration runs, and rules()/API
-        // endpoints call this repeatedly per request. Laravel flushes the
-        // memo between tests, so RefreshDatabase stays safe.
+        // once(): rules()/API endpoints call this repeatedly per request.
+        // The sentinel row is immutable after the migration runs, so even a
+        // long-lived worker can't cache a stale id; Laravel flushes the memo
+        // between tests, so RefreshDatabase stays safe.
         return once(fn (): int => (int) static::query()->where('name', self::NONE_NAME)->value('id'));
     }
 

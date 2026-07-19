@@ -195,7 +195,7 @@ class ProfileFormTest extends TestCase
         $this->assertEquals($fleet2->id, $membership->fleet_id);
     }
 
-    public function test_no_change_save_with_district_and_no_fleet_does_not_demand_fleet(): void
+    public function test_no_change_save_with_district_and_none_fleet_saves_cleanly(): void
     {
         // Regression: on profile-page load the TomSelect init re-syncs the
         // district to Livewire as a STRING (HTML select values are strings)

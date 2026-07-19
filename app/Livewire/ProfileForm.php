@@ -43,10 +43,10 @@ class ProfileForm extends Component
     public string $country = '';
 
     // Lightning Class Info (from current membership)
-    // mixed, not ?int: pre-filled as an int from the membership row, then a
-    // numeric string once the JS re-syncs it (HTML select values). null only
-    // while the JS has auto-cleared the fleet after a district change.
-    // "Unaffiliated/None" is a real district/fleet row.
+    // mixed, not ?int: pre-filled as ints from the membership row, then
+    // numeric strings once the JS re-syncs them (HTML select values).
+    // fleet_id alone can also be null: the JS auto-clears it when the
+    // district changes. "Unaffiliated/None" is a real district/fleet row.
     public mixed $district_id = null;
 
     public mixed $fleet_id = null;

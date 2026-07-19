@@ -316,7 +316,6 @@
     color: color-mix(in oklab, currentcolor 50%, transparent);
 }
 
-
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
    the OS picker regardless): selection is marked by the picker's own checkmark
    only — no fill (DaisyUI paints the checked row base-content, which also lit
