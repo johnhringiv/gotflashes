@@ -598,6 +598,40 @@ class LeaderboardTest extends TestCase
         $response->assertDontSee('Bob Jones'); // User without fleet not shown
     }
 
+    public function test_grouped_tabs_exclude_users_whose_carried_forward_membership_is_none(): void
+    {
+        // Membership row exists only for a PRIOR year and points at the None
+        // rows; the target year resolves affiliation via carry-forward. The
+        // sentinel exclusion must hold on that path too: the sailor still
+        // ranks individually but neither grouped tab gains a None row.
+        $user = User::factory()->create(['first_name' => 'Carrie', 'last_name' => 'Forward']);
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => 2024,
+        ]);
+
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2025-06-01',
+            'activity_type' => 'sailing',
+        ]);
+
+        $this->get('/leaderboard?tab=sailor')
+            ->assertStatus(200)
+            ->assertSee('Carrie Forward');
+
+        $this->get('/leaderboard?tab=fleet')
+            ->assertStatus(200)
+            ->assertDontSee('Fleet 0');
+
+        $this->get('/leaderboard?tab=district')
+            ->assertStatus(200)
+            ->assertDontSee('Unaffiliated/None');
+    }
+
     public function test_district_tab_shows_district_rankings(): void
     {
         // Get districts from seeded data

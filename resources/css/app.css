@@ -312,6 +312,7 @@
     color: color-mix(in oklab, currentcolor 50%, transparent);
 }
 
+
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
    the OS picker regardless): selection is marked by the picker's own checkmark
    only — no fill (DaisyUI paints the checked row base-content, which also lit
@@ -327,6 +328,13 @@
     background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
     color: var(--color-base-content);
     box-shadow: none;
+}
+
+/* Placeholder dimming targets the closed control's displayed text; option rows
+   in the open picker inherit the select's color in Chromium, so restore full
+   contrast for the actual choices. */
+.select:has(option[value='']:checked) option {
+    color: var(--color-base-content);
 }
 
 .ts-wrapper.disabled .ts-control,

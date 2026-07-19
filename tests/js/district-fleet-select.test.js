@@ -334,18 +334,21 @@ describe('District and Fleet TomSelect Integration', () => {
             expect(onDistrictChangeSpy).toHaveBeenCalledWith('1');
         });
 
-        it('should call onDistrictChange with "none" when "none" is selected', async () => {
+        it('should sync the None district id and offer all fleets when Unaffiliated/None is selected', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select',
                 onDistrictChange: onDistrictChangeSpy
             });
 
-            result.districtTomSelect.options.onChange.call(result.districtTomSelect, 'none');
+            result.fleetTomSelect.addOption.mockClear();
+            result.districtTomSelect.options.onChange.call(result.districtTomSelect, '99');
 
-            // 'none' is sent literally for explicit "Unaffiliated" so the server
-            // can distinguish it from a cleared/empty district.
-            expect(onDistrictChangeSpy).toHaveBeenCalledWith('none');
+            // The None district is a real row; its id syncs like any other pick,
+            // and every fleet stays selectable (picking one auto-sets its district)
+            expect(onDistrictChangeSpy).toHaveBeenCalledWith('99');
+            const added = result.fleetTomSelect.addOption.mock.calls.map(c => c[0]);
+            expect(added.length).toBe(mockFleets.length);
         });
     });
 

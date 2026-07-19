@@ -232,7 +232,6 @@ class MemberTest extends TestCase
         // behavior now blocks deleting a district that still has members
         $this->expectException(QueryException::class);
         $district->delete();
-        $this->assertNull($member->fleet_id); // Fleet was deleted, so also set to null
     }
 
     public function test_deleting_fleet_with_member_records_is_blocked(): void

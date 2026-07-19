@@ -606,7 +606,7 @@ class AdminAwardsDashboard extends AdminComponent
 
                             fputcsv($handle, [
                                 $user->name,
-                                ($membership?->fleet->fleet_number ?? null) ?: '—',  // 0 = the None fleet
+                                $membership?->fleet?->fleet_number ?: '—',  // 0 = the None fleet
                                 $membership?->district->name ?? '—',
                                 $user->email,
                                 $user->email_verified_at ? 'Yes' : 'No',

@@ -27,6 +27,8 @@ class Member extends Model
 
     /**
      * Get the district for this membership.
+     *
+     * @return BelongsTo<District, $this>
      */
     public function district(): BelongsTo
     {
@@ -35,6 +37,8 @@ class Member extends Model
 
     /**
      * Get the fleet for this membership.
+     *
+     * @return BelongsTo<Fleet, $this>
      */
     public function fleet(): BelongsTo
     {

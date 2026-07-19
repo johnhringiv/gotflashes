@@ -27,7 +27,10 @@ class Fleet extends Model
 
     public static function noneId(): int
     {
-        return (int) static::query()->where('fleet_number', self::NONE_NUMBER)->value('id');
+        // once(): the id is fixed after the migration runs, and rules()/API
+        // endpoints call this repeatedly per request. Laravel flushes the
+        // memo between tests, so RefreshDatabase stays safe.
+        return once(fn (): int => (int) static::query()->where('fleet_number', self::NONE_NUMBER)->value('id'));
     }
 
     /**
