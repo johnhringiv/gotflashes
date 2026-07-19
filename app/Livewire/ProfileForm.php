@@ -103,9 +103,15 @@ class ProfileForm extends Component
 
         // District/fleet are cleared programmatically (picking a district clears
         // the fleet), so don't flag them while empty — that would error an
-        // untouched field. They still validate on save.
+        // untouched field. 'none' is the explicit Unaffiliated/None pick, which
+        // only save() normalizes to null — the base exists:… rule here would
+        // reject the sentinel on the spot. They still validate on save. An
+        // explicit None pick must still CLEAR a stale "pick a fleet" error
+        // left by a failed save, hence the resetValidation.
         if (in_array($propertyName, ['district_id', 'fleet_id'], true)
-            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
+            && in_array($this->{$propertyName}, ['none', '', null, 0, '0'], true)) {
+            $this->resetValidation($propertyName);
+
             return;
         }
 
@@ -124,12 +130,20 @@ class ProfileForm extends Component
 
         // Capture raw values to distinguish "explicit None" ('none') from auto-clear (null)
         // before normalization. JS sends 'none' for an explicit pick; null for auto-clear.
+        // Real ids arrive as STRINGS (HTML select values; the TomSelect init re-syncs them
+        // even untouched), so cast to int — the district-changed check below compares
+        // against the DB's int with !==, and "5" !== 5 would misread a no-op save as a
+        // district change and demand a fleet re-pick.
         $fleetRaw = $this->fleet_id;
         if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
             $this->district_id = null;
+        } else {
+            $this->district_id = (int) $this->district_id;
         }
         if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
             $this->fleet_id = null;
+        } else {
+            $this->fleet_id = (int) $this->fleet_id;
         }
 
         // Detect "district changed, fleet was auto-cleared, user didn't re-select".

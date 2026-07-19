@@ -207,12 +207,35 @@
     cursor: pointer;
     color: var(--color-base-content);
     transition: background-color 0.15s ease;
+
+    /* Inset rounded rows so the highlight matches the native select picker */
+    margin: 0.125rem 0.25rem;
+    border-radius: var(--radius-selector);
+
+    /* Anchors the .selected checkmark */
+    position: relative;
 }
 
+/* Gray hover / keyboard highlight (matches the native select options);
+   the chosen row is marked with a checkmark, not a fill — same convention
+   as the native picker. */
 .ts-dropdown .option:hover,
 .ts-dropdown .option.active {
-    background-color: var(--color-primary);
-    color: var(--color-primary-content);
+    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+}
+
+.ts-dropdown .option.selected {
+    padding-right: 2rem;
+}
+
+.ts-dropdown .option.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    font-weight: 700;
+    color: var(--color-primary);
 }
 
 .ts-dropdown .optgroup-header {
@@ -253,6 +276,50 @@
     box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
     outline: none;
     background: var(--color-base-100) !important;
+}
+
+/* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
+   focus outline is base-content, which reads as black). --input-color also
+   drives DaisyUI's focus box-shadow underline. */
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within,
+.textarea:focus,
+.textarea:focus-within {
+    --input-color: var(--color-primary);
+
+    outline-color: var(--color-primary);
+}
+
+/* Error-state fields keep an error-colored focus, mirroring
+   .ts-has-error .ts-wrapper.select.focus above. */
+.input-error:focus,
+.input-error:focus-within,
+.select-error:focus,
+.select-error:focus-within,
+.textarea-error:focus,
+.textarea-error:focus-within {
+    --input-color: var(--color-error);
+
+    outline-color: var(--color-error);
+}
+
+/* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
+   the OS picker regardless): selection is marked by the picker's own checkmark
+   only — no fill (DaisyUI paints the checked row base-content, which also lit
+   up the disabled "Select activity/sailing type" placeholders). Gray is the
+   only filled state: DaisyUI's hover, extended here to mousedown-hold, which
+   DaisyUI paints neutral (near-black) with a pressed shadow. */
+:is(.select, .select select) option:checked {
+    background-color: transparent;
+    color: var(--color-base-content);
+}
+
+:is(.select, .select select) option:not(:disabled):active {
+    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    color: var(--color-base-content);
+    box-shadow: none;
 }
 
 .ts-wrapper.disabled .ts-control,
