@@ -42,9 +42,14 @@ if (! function_exists('e2eCheckStructure')) {
                     // deliberate framework default (it stops browsers restoring a stale token
                     // from bfcache on back-navigation, which would cause a 419). We don't
                     // control this markup and don't want to lose that protection, so it is
-                    // filtered here — same rationale as the wire: exclusion above.
+                    // filtered here — same rationale as the wire: exclusion above. The
+                    // filter is pinned to the _token field via the message's source
+                    // extract, so an autocomplete error on any OTHER hidden input still
+                    // fails the build (and a missing extract fails open — surfaced, not
+                    // swallowed).
                     ->reject(fn ($m) => str_contains($m['message'] ?? '', 'autocomplete')
-                        && str_contains($m['message'] ?? '', 'hidden'))
+                        && str_contains($m['message'] ?? '', 'hidden')
+                        && str_contains($m['extract'] ?? '', '_token'))
                     ->values();
 
                 expect($errors)->toBeEmpty('W3C errors: '.$errors->pluck('message')->join('; '));
