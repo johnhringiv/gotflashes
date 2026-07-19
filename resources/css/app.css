@@ -272,24 +272,28 @@
 }
 
 .ts-wrapper.focus .ts-control {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
+    /* Secondary to match the native focus rings (see the .input:focus block) */
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px oklch(from var(--color-secondary) l c h / 20%);
     outline: none;
     background: var(--color-base-100) !important;
 }
 
 /* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
-   focus outline is base-content, which reads as black). --input-color also
-   drives DaisyUI's focus box-shadow underline. */
+   focus outline is base-content, which reads as black). Secondary, not
+   primary: thin strokes lose perceived hue, so the dark primary navy also
+   read near-black at 2px — and secondary is already the interaction color
+   (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
+   underline. */
 .input:focus,
 .input:focus-within,
 .select:focus,
 .select:focus-within,
 .textarea:focus,
 .textarea:focus-within {
-    --input-color: var(--color-primary);
+    --input-color: var(--color-secondary);
 
-    outline-color: var(--color-primary);
+    outline-color: var(--color-secondary);
 }
 
 /* Error-state fields keep an error-colored focus, mirroring
