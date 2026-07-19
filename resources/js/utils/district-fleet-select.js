@@ -1,7 +1,12 @@
 import TomSelect from 'tom-select';
 
 /**
- * Initialize district and fleet TomSelect dropdowns with smart filtering
+ * Initialize district and fleet TomSelect dropdowns with smart filtering.
+ *
+ * "Unaffiliated/None" is a real district and fleet row (fleet_number 0); the
+ * API reports their ids as none_district_id / none_fleet_id. The None fleet
+ * is selectable alongside ANY district.
+ *
  * @param {Object} config - Configuration object
  * @param {string} config.districtSelectId - ID of the district select element
  * @param {string} config.fleetSelectId - ID of the fleet select element
@@ -28,6 +33,8 @@ export async function initializeDistrictFleetSelects(config) {
     // these are never read while still undefined.
     let districts;
     let fleets;
+    let noneDistrictId;
+    let noneFleetId;
 
     // Fetch data from API (combined endpoint for better performance and to avoid SQLite locking)
     try {
@@ -40,6 +47,8 @@ export async function initializeDistrictFleetSelects(config) {
         const data = await response.json();
         districts = data.districts;
         fleets = data.fleets;
+        noneDistrictId = String(data.none_district_id);
+        noneFleetId = String(data.none_fleet_id);
     } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching districts and fleets:', error);
@@ -64,12 +73,11 @@ export async function initializeDistrictFleetSelects(config) {
         return null;
     }
 
-    // Initialize District Select
+    const isNoneFleet = (value) => String(value) === noneFleetId;
+
+    // Initialize District Select (the None district is a real row in the list)
     const districtTomSelect = new TomSelect(`#${districtSelectId}`, {
-        options: [
-            { value: 'none', text: 'Unaffiliated/None', id: null },
-            ...districts.map(d => ({ value: d.id, text: d.name, id: d.id, name: d.name }))
-        ],
+        options: districts.map(d => ({ value: d.id, text: d.name, id: d.id, name: d.name })),
         placeholder: 'Select district...',
         allowEmptyOption: true,
         maxOptions: null,
@@ -81,29 +89,30 @@ export async function initializeDistrictFleetSelects(config) {
         onChange: function(value) {
             if (value) this.blur();
 
-            // Callback for Livewire sync — send 'none' literally for explicit unaffiliated
+            // Callback for Livewire sync
             if (onDistrictChange) {
                 onDistrictChange(value);
             }
 
             // Clear fleet selection when district changes — user must re-select.
-            // Server detects this via comparison to DB state (profile) or null check (registration).
+            // Server detects this via the empty fleet value on submit.
             fleetTomSelect.clear();
             if (onFleetChange) {
                 onFleetChange(null);
             }
 
-            if (value === 'none') {
-                updateFleetOptions(fleets, false);
+            if (String(value) === noneDistrictId) {
+                // Unaffiliated district: any fleet is still selectable
+                // (picking a real fleet auto-sets its district below)
+                updateFleetOptions(fleets);
             } else if (value) {
-                const filteredFleets = fleets.filter(f => f.district_id == value);
-                updateFleetOptions(filteredFleets, false);
+                updateFleetOptions(fleets.filter(f => f.district_id == value || isNoneFleet(f.id)));
             } else {
                 // District was cleared - sync null to Livewire and show all fleets
                 if (onDistrictChange) {
                     onDistrictChange(null);
                 }
-                updateFleetOptions(fleets, false);
+                updateFleetOptions(fleets);
             }
         },
         onType: function(str) {
@@ -124,12 +133,12 @@ export async function initializeDistrictFleetSelects(config) {
         },
         render: {
             option: function(data, escape) {
-                if (data.value === 'none') return '<div>None</div>';
+                if (isNoneFleet(data.value)) return '<div>None</div>';
                 if (!data.fleet_number || !data.fleet_name) return '<div></div>';
                 return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
             },
             item: function(data, escape) {
-                if (data.value === 'none') return '<div>None</div>';
+                if (isNoneFleet(data.value)) return '<div>None</div>';
                 if (!data.fleet_number || !data.fleet_name) return '<div></div>';
                 return '<div>Fleet ' + escape(data.fleet_number) + ' - ' + escape(data.fleet_name) + '</div>';
             }
@@ -138,19 +147,20 @@ export async function initializeDistrictFleetSelects(config) {
             if (value) {
                 this.blur();
 
-                // Callback for Livewire sync — send 'none' literally so server can distinguish from untouched/auto-cleared
+                // Callback for Livewire sync
                 if (onFleetChange) {
                     onFleetChange(value);
                 }
 
-                if (value === 'none') {
-                    // Special case: When fleet is set to 'none' and district is blank, set district to 'none'
+                if (isNoneFleet(value)) {
+                    // Special case: fleet set to None with a blank district —
+                    // fill the district as Unaffiliated/None too
                     const currentDistrict = districtTomSelect.getValue();
                     if (!currentDistrict || currentDistrict === '') {
-                        districtTomSelect.setValue('none', true);
+                        districtTomSelect.setValue(noneDistrictId, true);
                         // Explicitly sync to Livewire since silent=true skips onChange
                         if (onDistrictChange) {
-                            onDistrictChange(null);
+                            onDistrictChange(noneDistrictId);
                         }
                     }
                 } else {
@@ -177,35 +187,26 @@ export async function initializeDistrictFleetSelects(config) {
         }
     });
 
-    function updateFleetOptions(fleetList, showNoneOnly = false) {
+    function updateFleetOptions(fleetList) {
         fleetTomSelect.clearOptions();
 
-        if (!showNoneOnly) {
-            fleetList.forEach(fleet => {
-                fleetTomSelect.addOption({
-                    value: fleet.id,
-                    text: `Fleet ${fleet.fleet_number} - ${fleet.fleet_name}`,
-                    fleet_number: fleet.fleet_number,
-                    fleet_name: fleet.fleet_name,
-                    fleet_id: fleet.id,
-                    district_id: fleet.district_id,
-                    district_name: fleet.district_name
-                });
+        fleetList.forEach(fleet => {
+            fleetTomSelect.addOption({
+                value: fleet.id,
+                text: isNoneFleet(fleet.id) ? 'None' : `Fleet ${fleet.fleet_number} - ${fleet.fleet_name}`,
+                fleet_number: fleet.fleet_number,
+                fleet_name: fleet.fleet_name,
+                fleet_id: fleet.id,
+                district_id: fleet.district_id,
+                district_name: fleet.district_name
             });
-        }
-
-        fleetTomSelect.addOption({
-            value: 'none',
-            text: 'None',
-            fleet_number: 'None',
-            fleet_name: 'None'
         });
 
         fleetTomSelect.refreshOptions(false);
     }
 
-    // Initialize fleet options
-    updateFleetOptions(fleets, false);
+    // Initialize fleet options (the None fleet sorts first: fleet_number 0)
+    updateFleetOptions(fleets);
 
     // Set initial values from data attributes
     const initialDistrictId = districtSelect.dataset.value || districtSelect.dataset.oldValue;
@@ -216,8 +217,10 @@ export async function initializeDistrictFleetSelects(config) {
     if (initialDistrictId && initialDistrictId !== '' && initialDistrictId !== 'null') {
         districtTomSelect.setValue(initialDistrictId);
     } else if (isProfilePage) {
-        // On profile page, set to 'none' if district is null/empty (user has explicitly no district)
-        districtTomSelect.setValue('none', true);
+        // Safety net: profile memberships always carry real ids, but if one is
+        // ever missing, fall back to Unaffiliated/None — non-silent so the
+        // Livewire property stays in sync with what the UI shows
+        districtTomSelect.setValue(noneDistrictId);
     }
     // On signup, leave empty to show placeholder
 
@@ -225,8 +228,8 @@ export async function initializeDistrictFleetSelects(config) {
     if (initialFleetId && initialFleetId !== '' && initialFleetId !== 'null') {
         fleetTomSelect.setValue(initialFleetId);
     } else if (isProfilePage) {
-        // On profile page, set to 'none' if fleet is null/empty (user has explicitly no fleet)
-        fleetTomSelect.setValue('none', true);
+        // Same safety net as the district above
+        fleetTomSelect.setValue(noneFleetId);
     }
     // On signup, leave empty to show placeholder
 

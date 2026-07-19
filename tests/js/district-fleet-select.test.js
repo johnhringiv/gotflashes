@@ -56,15 +56,19 @@ describe('District and Fleet TomSelect Integration', () => {
 
     beforeEach(() => {
         // Setup mock data
+        // Unaffiliated/None is a real district (id 99) and fleet (id 90,
+        // fleet_number 0); the API reports their ids alongside the lists
         mockDistricts = [
             { id: 1, name: 'District 1' },
-            { id: 2, name: 'District 2' }
+            { id: 2, name: 'District 2' },
+            { id: 99, name: 'Unaffiliated/None' }
         ];
 
         mockFleets = [
             { id: 1, fleet_number: '1', fleet_name: 'Fleet One', district_id: 1, district_name: 'District 1' },
             { id: 2, fleet_number: '2', fleet_name: 'Fleet Two', district_id: 1, district_name: 'District 1' },
-            { id: 3, fleet_number: '3', fleet_name: 'Fleet Three', district_id: 2, district_name: 'District 2' }
+            { id: 3, fleet_number: '3', fleet_name: 'Fleet Three', district_id: 2, district_name: 'District 2' },
+            { id: 90, fleet_number: 0, fleet_name: 'None', district_id: 99, district_name: 'Unaffiliated/None' }
         ];
 
         // Mock fetch response
@@ -72,7 +76,9 @@ describe('District and Fleet TomSelect Integration', () => {
             ok: true,
             json: async () => ({
                 districts: mockDistricts,
-                fleets: mockFleets
+                fleets: mockFleets,
+                none_district_id: 99,
+                none_fleet_id: 90
             })
         });
 
@@ -116,27 +122,27 @@ describe('District and Fleet TomSelect Integration', () => {
             expect(result.fleetTomSelect).toBeDefined();
         });
 
-        it('should add "none" option to district select', async () => {
+        it('should include the Unaffiliated/None district from the API data', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select'
             });
 
             const districtOptions = result.districtTomSelect.optionsList;
-            const noneOption = districtOptions.find(opt => opt.value === 'none');
+            const noneOption = districtOptions.find(opt => opt.value === 99);
 
             expect(noneOption).toBeDefined();
             expect(noneOption.text).toBe('Unaffiliated/None');
         });
 
-        it('should add "none" option to fleet select', async () => {
+        it('should label the None fleet row "None"', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select'
             });
 
             const fleetOptions = result.fleetTomSelect.optionsList;
-            const noneOption = fleetOptions.find(opt => opt.value === 'none');
+            const noneOption = fleetOptions.find(opt => opt.value === 90);
 
             expect(noneOption).toBeDefined();
             expect(noneOption.text).toBe('None');
@@ -149,7 +155,7 @@ describe('District and Fleet TomSelect Integration', () => {
             fleetSelect.dataset.isProfile = 'true';
         });
 
-        it('should set district to "none" when value is null on profile page', async () => {
+        it('should fall back to the None district when value is empty on profile page', async () => {
             districtSelect.dataset.value = '';
 
             const result = await initializeDistrictFleetSelects({
@@ -157,10 +163,11 @@ describe('District and Fleet TomSelect Integration', () => {
                 fleetSelectId: 'fleet-select'
             });
 
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('none', true);
+            // Non-silent so the Livewire property stays in sync with the UI
+            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('99');
         });
 
-        it('should set fleet to "none" when value is null on profile page', async () => {
+        it('should fall back to the None fleet when value is empty on profile page', async () => {
             fleetSelect.dataset.value = '';
 
             const result = await initializeDistrictFleetSelects({
@@ -168,7 +175,7 @@ describe('District and Fleet TomSelect Integration', () => {
                 fleetSelectId: 'fleet-select'
             });
 
-            expect(result.fleetTomSelect.setValue).toHaveBeenCalledWith('none', true);
+            expect(result.fleetTomSelect.setValue).toHaveBeenCalledWith('90');
         });
 
         it('should preserve existing district value on profile page', async () => {
@@ -204,9 +211,9 @@ describe('District and Fleet TomSelect Integration', () => {
                 fleetSelectId: 'fleet-select'
             });
 
-            // Should not call setValue with 'none' for empty values on signup
+            // Should not fall back to the None district for empty values on signup
             const setValueCalls = result.districtTomSelect.setValue.mock.calls;
-            const noneCall = setValueCalls.find(call => call[0] === 'none');
+            const noneCall = setValueCalls.find(call => call[0] === '99');
             expect(noneCall).toBeUndefined();
         });
 
@@ -219,15 +226,15 @@ describe('District and Fleet TomSelect Integration', () => {
                 fleetSelectId: 'fleet-select'
             });
 
-            // Should not call setValue with 'none' for empty values on signup
+            // Should not fall back to the None fleet for empty values on signup
             const setValueCalls = result.fleetTomSelect.setValue.mock.calls;
-            const noneCall = setValueCalls.find(call => call[0] === 'none');
+            const noneCall = setValueCalls.find(call => call[0] === '90');
             expect(noneCall).toBeUndefined();
         });
     });
 
     describe('Special Case: Auto-populate District when Fleet is None', () => {
-        it('should set district to "none" when fleet is set to "none" and district is empty', async () => {
+        it('should set district to None when fleet is set to None and district is empty', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select',
@@ -235,14 +242,15 @@ describe('District and Fleet TomSelect Integration', () => {
                 onFleetChange: onFleetChangeSpy
             });
 
-            // Simulate user selecting 'none' for fleet when district is empty
+            // Simulate user selecting the None fleet when district is empty
             result.districtTomSelect.getValue.mockReturnValue('');
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, 'none');
+            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
 
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('none', true);
+            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('99', true);
+            expect(onDistrictChangeSpy).toHaveBeenCalledWith('99');
         });
 
-        it('should NOT change district when fleet is set to "none" and district already has a value', async () => {
+        it('should NOT change district when fleet is set to None and district already has a value', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select'
@@ -254,14 +262,14 @@ describe('District and Fleet TomSelect Integration', () => {
             // Clear previous setValue calls
             result.districtTomSelect.setValue.mockClear();
 
-            // Simulate user selecting 'none' for fleet
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, 'none');
+            // Simulate user selecting the None fleet
+            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
 
             // Should NOT call setValue on district since it already has a value
             expect(result.districtTomSelect.setValue).not.toHaveBeenCalled();
         });
 
-        it('should call onFleetChange with "none" when fleet is set to "none"', async () => {
+        it('should call onFleetChange with the None fleet id when fleet is set to None', async () => {
             const result = await initializeDistrictFleetSelects({
                 districtSelectId: 'district-select',
                 fleetSelectId: 'fleet-select',
@@ -269,11 +277,12 @@ describe('District and Fleet TomSelect Integration', () => {
             });
 
             result.districtTomSelect.getValue.mockReturnValue('');
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, 'none');
+            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
 
-            // 'none' is sent literally so the server can distinguish an explicit
-            // "Unaffiliated/None" choice from an untouched/auto-cleared field.
-            expect(onFleetChangeSpy).toHaveBeenCalledWith('none');
+            // The real None fleet id syncs like any other pick; the server
+            // distinguishes an explicit choice from an auto-cleared field by
+            // the value being non-empty.
+            expect(onFleetChangeSpy).toHaveBeenCalledWith('90');
         });
     });
 
@@ -293,12 +302,13 @@ describe('District and Fleet TomSelect Integration', () => {
 
             expect(result.fleetTomSelect.clearOptions).toHaveBeenCalled();
 
-            // Should add only fleets from District 1
+            // Should add District 1's fleets plus the always-available None fleet
             const addedOptions = result.fleetTomSelect.addOption.mock.calls.map(call => call[0]);
-            const fleetOptions = addedOptions.filter(opt => opt.value !== 'none');
+            const realFleets = addedOptions.filter(opt => opt.value !== 90);
 
-            expect(fleetOptions.length).toBe(2); // Fleet 1 and Fleet 2
-            expect(fleetOptions.every(opt => opt.district_id === 1)).toBe(true);
+            expect(realFleets.length).toBe(2); // Fleet 1 and Fleet 2
+            expect(realFleets.every(opt => opt.district_id === 1)).toBe(true);
+            expect(addedOptions.some(opt => opt.value === 90)).toBe(true);
         });
 
         it('should clear fleet selection when district changes', async () => {

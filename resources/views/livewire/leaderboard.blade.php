@@ -57,13 +57,13 @@
                                     @php
                                         $district = $user->district_id ? \App\Models\District::find($user->district_id) : null;
                                     @endphp
-                                    {{ $district?->name ?? '—' }}
+                                    {{ $district?->name === \App\Models\District::NONE_NAME ? '—' : ($district?->name ?? '—') }}
                                 </td>
                                 <td class="text-center">
                                     @php
                                         $fleet = $user->fleet_id ? \App\Models\Fleet::find($user->fleet_id) : null;
                                     @endphp
-                                    {{ $fleet?->fleet_number ?? '—' }}
+                                    {{ $fleet?->fleet_number ?: '—' }}
                                 </td>
                                 <td>{{ $user->yacht_club ?? '—' }}</td>
                                 <td class="text-center">

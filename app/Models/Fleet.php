@@ -19,6 +19,18 @@ class Fleet extends Model
     ];
 
     /**
+     * Fleet number of the sentinel "None" fleet (real fleets are numbered
+     * from 1). A real row so member affiliations are never null; selectable
+     * alongside ANY district, and excluded from the fleet leaderboard.
+     */
+    public const NONE_NUMBER = 0;
+
+    public static function noneId(): int
+    {
+        return (int) static::query()->where('fleet_number', self::NONE_NUMBER)->value('id');
+    }
+
+    /**
      * Get the district that owns the fleet.
      */
     public function district(): BelongsTo

@@ -177,8 +177,8 @@ class LeaderboardTest extends TestCase
         // Create unaffiliated membership (no district/fleet)
         Member::create([
             'user_id' => $user->id,
-            'district_id' => null,
-            'fleet_id' => null,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
             'year' => 2025,
         ]);
 
@@ -574,8 +574,8 @@ class LeaderboardTest extends TestCase
         // User 2 has no fleet
         Member::create([
             'user_id' => $user2->id,
-            'district_id' => null,
-            'fleet_id' => null,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
             'year' => 2025,
         ]);
 
@@ -719,8 +719,8 @@ class LeaderboardTest extends TestCase
         // User 2 has no district
         Member::create([
             'user_id' => $user2->id,
-            'district_id' => null,
-            'fleet_id' => null,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
             'year' => 2025,
         ]);
 

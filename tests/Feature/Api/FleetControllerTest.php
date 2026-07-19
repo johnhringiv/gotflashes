@@ -39,7 +39,12 @@ class FleetControllerTest extends TestCase
                 'fleets' => [
                     '*' => ['id', 'fleet_number', 'fleet_name', 'district_id', 'district_name'],
                 ],
+                'none_district_id',
+                'none_fleet_id',
             ]);
+
+        $this->assertSame(District::noneId(), $response->json('none_district_id'));
+        $this->assertSame(Fleet::noneId(), $response->json('none_fleet_id'));
     }
 
     public function test_fleets_include_district_name(): void

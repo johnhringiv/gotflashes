@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 */
 
 it('registers a new user with district + fleet and lands on /logbook', function () {
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $fleet = Fleet::where('district_id', $district->id)->first();
 
     $unique = Str::random(8);
@@ -45,7 +45,7 @@ it('registers a new user with district + fleet and lands on /logbook', function 
 });
 
 it('registers a new user with district and fleet set to None', function () {
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
 
     $unique = Str::random(8);
     $page = visit('/register');
@@ -62,7 +62,7 @@ it('registers a new user with district and fleet set to None', function () {
     // Set district, then explicitly pick None for fleet
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
@@ -81,9 +81,9 @@ it('registers a fully unaffiliated user', function () {
     ]);
 
     // Explicitly select None for both district and fleet (unaffiliated)
-    $page->script("document.getElementById('district-select').tomselect.setValue('none')");
+    $page->script("document.getElementById('district-select').tomselect.setValue('".District::noneId()."')");
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
@@ -140,7 +140,7 @@ it('requires district and fleet selection on registration', function () {
 });
 
 it('requires fleet when district is set on registration', function () {
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $unique = Str::random(8);
     $page = visit('/register');
 
@@ -181,7 +181,7 @@ it('clears district error when district is selected after error', function () {
     $page->assertSee('Please select a district');
 
     // Select a district
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     settleLivewire($page);
     $page->assertDontSee('Please select a district');
@@ -197,7 +197,7 @@ it('keeps fleet error visible after picking district (fleet auto-clears, must st
     $page->assertSee('Please select a fleet');
 
     // Pick a district — JS auto-clears fleet, but error must stay
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
     settleLivewire($page);
     $page->assertDontSee('Please select a district');
@@ -207,7 +207,7 @@ it('keeps fleet error visible after picking district (fleet auto-clears, must st
 it('clears fleet error when user picks a fleet after district', function () {
     $page = visit('/register');
     trackLivewireRequests($page);
-    $district = District::first();
+    $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $fleet = Fleet::where('district_id', $district->id)->first();
 
     // Trigger both errors
@@ -235,9 +235,9 @@ it('shows verification banner immediately after registration', function () {
     ]);
 
     // Explicitly select None for both
-    $page->script("document.getElementById('district-select').tomselect.setValue('none')");
+    $page->script("document.getElementById('district-select').tomselect.setValue('".District::noneId()."')");
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook')

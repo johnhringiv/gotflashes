@@ -9,8 +9,8 @@ use Carbon\Carbon;
 beforeEach(function () {
     $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
 
-    $this->district = District::first();
-    $this->fleet = Fleet::where('district_id', $this->district->id)->first();
+    $this->district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
+    $this->fleet = Fleet::where('district_id', $this->district->id)->firstOrFail();
 
     $this->user = User::factory()->create([
         'first_name' => 'Fleet',
@@ -51,18 +51,18 @@ it('lets user set fleet to None', function () {
     // Verify fleet is initially set
     $page->assertScript("document.querySelector('#fleet-select').tomselect.getValue() !== ''", true);
 
-    // Clear fleet and save — set + call on same reference batches into one request
+    // Pick the None fleet and save — None is a real row, not a cleared value
+    $noneFleetId = Fleet::noneId();
+    $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$noneFleetId}')");
+    $page->wait(1);
     $page->script("
-        document.querySelector('#fleet-select').tomselect.clear();
         const formEl = document.querySelector('#fleet-select').closest('[wire\\\\:id]');
-        const comp = Livewire.find(formEl.getAttribute('wire:id'));
-        comp.set('fleet_id', null);
-        comp.call('save');
+        Livewire.find(formEl.getAttribute('wire:id')).call('save');
     ");
     $page->assertSee('updated');
 
     $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
-    expect($member->fleet_id)->toBeNull();
+    expect($member->fleet_id)->toBe(Fleet::noneId());
 });
 
 it('persists unaffiliated choice on save and reload', function () {
@@ -76,10 +76,12 @@ it('persists unaffiliated choice on save and reload', function () {
     $this->actingAs($this->user);
     $page = visit('/profile');
 
-    // User explicitly picks "Unaffiliated/None" for district (which auto-sets fleet to None too)
-    $page->script("document.querySelector('#district-select').tomselect.setValue('none')");
+    // User explicitly picks "Unaffiliated/None" for district and fleet
+    $noneDistrictId = District::noneId();
+    $noneFleetId = Fleet::noneId();
+    $page->script("document.querySelector('#district-select').tomselect.setValue('{$noneDistrictId}')");
     $page->wait(1);
-    $page->script("document.querySelector('#fleet-select').tomselect.setValue('none')");
+    $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$noneFleetId}')");
     $page->wait(1);
 
     $page->script("
@@ -88,11 +90,10 @@ it('persists unaffiliated choice on save and reload', function () {
     ");
     $page->assertSee('updated');
 
-    // Reload and verify
+    // Reload and verify the saved None ids round-trip
     $page2 = visit('/profile');
-    // App auto-sets "none" for unaffiliated (via district-fleet-select.js)
-    $page2->assertScript("document.querySelector('#district-select').tomselect.getValue()", 'none');
-    $page2->assertScript("document.querySelector('#fleet-select').tomselect.getValue()", 'none');
+    $page2->assertScript("document.querySelector('#district-select').tomselect.getValue()", (string) District::noneId());
+    $page2->assertScript("document.querySelector('#fleet-select').tomselect.getValue()", (string) Fleet::noneId());
 });
 
 it('blocks save when district change clears fleet and user does not re-select', function () {
@@ -107,7 +108,8 @@ it('blocks save when district change clears fleet and user does not re-select', 
     $page = visit('/profile');
 
     // Change to a different district — JS auto-clears fleet to null; server detects this via DB comparison
-    $otherDistrict = District::where('id', '!=', $this->district->id)->first();
+    $otherDistrict = District::where('id', '!=', $this->district->id)
+        ->where('name', '!=', District::NONE_NAME)->firstOrFail();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$otherDistrict->id}')");
     $page->wait(1);
 
@@ -134,7 +136,8 @@ it('clears fleet error when fleet is selected after district change', function (
     $page = visit('/profile');
 
     // Change district to trigger fleet auto-clear
-    $otherDistrict = District::where('id', '!=', $this->district->id)->first();
+    $otherDistrict = District::where('id', '!=', $this->district->id)
+        ->where('name', '!=', District::NONE_NAME)->firstOrFail();
     $page->script("document.getElementById('district-select').tomselect.setValue('{$otherDistrict->id}')");
     $page->wait(1);
 
@@ -145,7 +148,8 @@ it('clears fleet error when fleet is selected after district change', function (
     ");
     $page->assertSee('Please select a fleet');
 
-    // Now pick None
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('none')");
+    // Now pick None (a real fleet row — live validation passes and clears the error)
+    $noneFleetId = Fleet::noneId();
+    $page->script("document.getElementById('fleet-select').tomselect.setValue('{$noneFleetId}')");
     $page->assertDontSee('Please select a fleet');
 });
