@@ -22,6 +22,10 @@ Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard');
 
+// Public community statistics page
+Route::view('/stats', 'stats.index')
+    ->name('stats');
+
 // API routes for fleets and districts
 // Cache for 1 hour, then revalidate with ETag (balances freshness and performance)
 // No rate limiting needed - these are lightweight read-only endpoints with browser caching
@@ -93,6 +97,7 @@ Route::get('/verify-email/{token}', VerifyEmailChangeController::class)
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
     Route::view('/sailor-logs', 'admin.sailor-logs')->name('admin.sailor-logs');
+    Route::view('/settings', 'admin.settings')->name('admin.settings');
 });
 
 // Fallback route for 404 errors - must be last

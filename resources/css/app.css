@@ -559,3 +559,108 @@ span.flatpickr-weekday {
     color: var(--color-accent-content);
     border-color: var(--color-accent);
 }
+
+/* ============================================================
+   Community Stats page (/stats)
+   ============================================================ */
+
+/* Lightning fill-up hero: the gradient rect rises inside the bolt clip.
+   The keyframe animates from empty to the inline --fill-pct target and
+   replays whenever Livewire re-keys the hero (year change). */
+.lightning-fill-rect {
+    clip-path: inset(calc(100% - var(--fill-pct, 0%)) 0 0 0);
+    animation: lightning-fill-rise 1.5s ease-out;
+}
+
+@keyframes lightning-fill-rise {
+    from {
+        clip-path: inset(100% 0 0 0);
+    }
+}
+
+/* Goal reached: gentle glow pulse after the fill animation lands */
+.lightning-fill-complete {
+    animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
+}
+
+@keyframes lightning-glow-pulse {
+    0%,
+    100% {
+        filter: drop-shadow(0 0 4px oklch(55% 0.12 240deg / 45%));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 18px oklch(55% 0.12 240deg / 90%));
+    }
+}
+
+/* D3 chart containers */
+.stats-chart {
+    position: relative;
+    width: 100%;
+}
+
+.stats-chart svg {
+    display: block;
+    max-width: 100%;
+}
+
+/* Wide charts (heatmap) scroll inside their own container */
+.stats-chart .chart-scroll {
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.stats-chart .chart-scroll svg {
+    max-width: none;
+}
+
+.stats-chart .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    background: var(--color-neutral);
+    color: var(--color-neutral-content);
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    max-width: 16rem;
+    white-space: nowrap;
+}
+
+.stats-chart .chart-tooltip.visible {
+    opacity: 1;
+}
+
+.stats-chart .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem 1rem;
+    font-size: 0.75rem;
+    color: var(--color-base-content);
+    margin-bottom: 0.375rem;
+}
+
+.stats-chart .chart-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.stats-chart .chart-legend .legend-swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 0.125rem;
+    flex-shrink: 0;
+}
+
+.stats-chart .chart-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-base-content);
+    opacity: 0.6;
+}

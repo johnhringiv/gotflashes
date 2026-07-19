@@ -31,6 +31,11 @@ class SitemapController extends Controller
                 'changefreq' => 'daily',
                 'priority' => '0.9',
             ],
+            [
+                'loc' => $baseUrl.'/stats',
+                'changefreq' => 'daily',
+                'priority' => '0.9',
+            ],
         ];
 
         $sitemap = view('sitemap', ['urls' => $urls])->render();

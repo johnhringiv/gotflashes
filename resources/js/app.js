@@ -6,3 +6,4 @@ import './toast';
 import './sailor-logs';
 import './password-toggle';
 import './verification-banner';
+import './stats-charts';
