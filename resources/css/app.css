@@ -305,6 +305,13 @@
     outline-color: var(--color-error);
 }
 
+/* A select still showing its empty-value placeholder option ("Select activity
+   type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
+   currentcolor at 50%) so it can't be mistaken for a real selection. */
+.select:has(option[value='']:checked) {
+    color: color-mix(in oklab, currentcolor 50%, transparent);
+}
+
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
    the OS picker regardless): selection is marked by the picker's own checkmark
    only — no fill (DaisyUI paints the checked row base-content, which also lit
