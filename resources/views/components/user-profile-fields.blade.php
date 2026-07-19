@@ -79,7 +79,9 @@
     <!-- Gender -->
     <div class="mb-6 floating-label-visible">
         <select wire:model.live.blur="gender" class="select select-bordered w-full @error('gender') select-error @enderror" required>
-            <option value="" disabled>Select gender</option>
+            {{-- hidden: placeholder text shows in the closed control but never
+                 as a (checkmarked) row in the open picker --}}
+            <option value="" disabled hidden>Select gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="non_binary">Non-binary</option>
