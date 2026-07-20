@@ -34,7 +34,7 @@
             @if ($goal)
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
-                    <span class="font-normal text-base-content/70">community sailing days in {{ $selectedYear }}</span>
+                    <span class="font-normal text-base-content/70">community qualifying days in {{ $selectedYear }}</span>
                 </p>
                 <p class="text-lg {{ $goalPercent >= 100 ? 'text-success font-bold' : 'text-base-content/70' }}">
                     @if ($goalPercent >= 100)
@@ -51,7 +51,7 @@
             @else
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
-                    <span class="font-normal text-base-content/70">community sailing days in {{ $selectedYear }}</span>
+                    <span class="font-normal text-base-content/70">community qualifying days in {{ $selectedYear }}</span>
                 </p>
                 @if (auth()->check() && auth()->user()->is_admin)
                     <p class="text-sm text-base-content/60">
