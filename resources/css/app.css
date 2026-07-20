@@ -631,13 +631,21 @@ span.flatpickr-weekday {
 }
 
 /* Prior-year benchmark: a thin blue dashed line marking last year's level.
-   Starts at the logo's left edge (does not extend past the bolt on the left)
-   and reaches right toward the year chip. */
+   Masked to the bolt (same box + mask as the fill) so it spans exactly the
+   bolt at that height and never overhangs the logo — at any goal value. */
 .lightning-fill-prior {
     position: absolute;
-    left: 35%;
-    right: 16%;
-    bottom: calc(15% + var(--lf-prior, 0) * 70%);
+    inset: 15%;
+    pointer-events: none;
+    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+}
+
+.lightning-fill-prior::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--lf-prior, 0) * 100%);
     border-top: 1px dashed var(--color-secondary);
 }
 
