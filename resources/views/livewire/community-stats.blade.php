@@ -25,21 +25,29 @@
     {{-- A. Lightning fill-up hero --}}
     <div class="card bg-base-100 shadow-md mb-6" wire:key="hero-{{ $selectedYear }}">
         <div class="card-body items-center text-center">
-            <x-lightning-fill :percentage="$goal ? $goalPercent : null" class="w-48 h-48 sm:w-60 sm:h-60" />
+            <x-lightning-fill
+                :percentage="$goal ? $goalPercent : null"
+                :prior-percentage="$priorPercent"
+                :goal-label="$goal ? number_format($goal) : null"
+                :prior-year="$priorPercent !== null ? $selectedYear - 1 : null"
+                class="w-48 sm:w-60" />
             @if ($goal)
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
-                    <span class="font-normal text-base-content/70">of</span>
-                    {{ number_format($goal) }}
-                    <span class="font-normal text-base-content/70">community sailing days</span>
+                    <span class="font-normal text-base-content/70">community sailing days in {{ $selectedYear }}</span>
                 </p>
                 <p class="text-lg {{ $goalPercent >= 100 ? 'text-success font-bold' : 'text-base-content/70' }}">
                     @if ($goalPercent >= 100)
                         Goal achieved! ⚡
                     @else
-                        {{ $goalPercent }}% of the {{ $selectedYear }} goal
+                        {{ $goalPercent }}% of the {{ number_format($goal) }}-day {{ $selectedYear }} goal
                     @endif
                 </p>
+                @if ($priorTotal > 0)
+                    <p class="text-sm text-base-content/60">
+                        {{ $selectedYear - 1 }} finished at {{ number_format($priorTotal) }} days
+                    </p>
+                @endif
             @else
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
@@ -184,13 +192,17 @@
                 {{-- G. Age distribution --}}
                 <x-chart-card chart-id="chart-ages"
                               title="Sailor ages"
-                              subtitle="Active sailors in {{ $selectedYear }}, by age group">
+                              subtitle="Active sailors in {{ $selectedYear }}, by Lightning Class age division">
                     <x-slot:table>
                         <table class="table table-xs">
-                            <thead><tr><th>Age group</th><th class="text-right">Sailors</th></tr></thead>
+                            <thead><tr><th>Division</th><th>Ages</th><th class="text-right">Sailors</th></tr></thead>
                             <tbody>
                                 @foreach ($stats['ages']['labels'] as $i => $label)
-                                    <tr><td>{{ $label }}</td><td class="text-right">{{ $stats['ages']['counts'][$i] }}</td></tr>
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td class="opacity-70">{{ $stats['ages']['ranges'][$i] }}</td>
+                                        <td class="text-right">{{ $stats['ages']['counts'][$i] }}</td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>

@@ -160,7 +160,7 @@ class CommunityStatsTest extends TestCase
 
     public function test_age_distribution_excludes_implausible_ages(): void
     {
-        $sailor = User::factory()->create(['date_of_birth' => '1990-06-01']); // 36 in 2026
+        $sailor = User::factory()->create(['date_of_birth' => '1990-06-01']); // 36 in 2026 → Open
         $typo = User::factory()->create(['date_of_birth' => '2026-01-01']); // age 0 — excluded
         Flash::factory()->forUser($sailor)->sailing()->onDate('2026-05-01')->create();
         Flash::factory()->forUser($typo)->sailing()->onDate('2026-05-02')->create();
@@ -168,7 +168,29 @@ class CommunityStatsTest extends TestCase
         $ages = Livewire::test('community-stats')->viewData('stats')['ages'];
 
         $this->assertSame(1, array_sum($ages['counts']));
-        $this->assertSame(1, $ages['counts'][array_search('30s', $ages['labels'])]);
+        $this->assertSame(1, $ages['counts'][array_search('Open', $ages['labels'])]);
+    }
+
+    public function test_age_distribution_buckets_by_class_division(): void
+    {
+        // One sailor per division: Youth (≤20), U32 (21–32), Open (33–54), Masters (55+)
+        $ages = [
+            'Youth' => 2011,   // 15
+            'U32' => 2000,     // 26
+            'Open' => 1985,    // 41
+            'Masters' => 1960, // 66
+        ];
+        foreach ($ages as $birthYear) {
+            $u = User::factory()->create(['date_of_birth' => "{$birthYear}-06-01"]);
+            Flash::factory()->forUser($u)->sailing()->onDate('2026-05-01')->create();
+        }
+
+        $dist = Livewire::test('community-stats')->viewData('stats')['ages'];
+
+        $this->assertSame(['Youth', 'U32', 'Open', 'Masters'], $dist['labels']);
+        foreach (['Youth', 'U32', 'Open', 'Masters'] as $division) {
+            $this->assertSame(1, $dist['counts'][array_search($division, $dist['labels'])], "{$division} bucket");
+        }
     }
 
     public function test_award_funnel_buckets_sailors_by_qualifying_days(): void
@@ -197,9 +219,21 @@ class CommunityStatsTest extends TestCase
         Setting::set('community_goal_2026', '100');
 
         Livewire::test('community-stats')
-            ->assertSee('of')
             ->assertSee('100')
-            ->assertSee('1% of the 2026 goal');
+            ->assertSee('1% of the 100-day 2026 goal');
+    }
+
+    public function test_prior_year_benchmark_shown_when_goal_and_prior_data_exist(): void
+    {
+        $user = User::factory()->create();
+        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
+        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-01')->create();
+        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-02')->create();
+        Setting::set('community_goal_2026', '100');
+
+        Livewire::test('community-stats')
+            ->assertSet('selectedYear', 2026)
+            ->assertSee('2025 finished at 2 days');
     }
 
     public function test_goal_achieved_state(): void
@@ -269,16 +303,33 @@ class CommunityStatsTest extends TestCase
             ->assertSee('May 16');
     }
 
-    public function test_fun_facts_normalize_location_variants(): void
+    public function test_fun_facts_omit_free_text_location(): void
     {
         $user = User::factory()->create();
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create(['location' => 'Pymatuning']);
-        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-02')->create(['location' => 'pymatuning ']);
+        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-02')->create(['location' => 'Pymatuning']);
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-03')->create(['location' => 'Pymatuning']);
 
         Livewire::test('community-stats')
-            ->assertSee('Most popular location')
-            ->assertSee('Pymatuning');
+            ->assertDontSee('Most popular location');
+    }
+
+    public function test_fun_facts_include_most_flashes_logged_at_once(): void
+    {
+        $user = User::factory()->create();
+        $bulk = now()->setDate(2026, 3, 21)->setTime(18, 26, 23);
+
+        // Four flashes created in a single entry (shared created_at)
+        foreach (['2026-05-01', '2026-05-02', '2026-05-03', '2026-05-04'] as $date) {
+            Flash::factory()->forUser($user)->sailing()->onDate($date)->create([
+                'created_at' => $bulk,
+                'updated_at' => $bulk,
+            ]);
+        }
+
+        Livewire::test('community-stats')
+            ->assertSee('Most flashes logged at once')
+            ->assertSee('4 flashes');
     }
 
     public function test_chart_json_payload_is_embedded(): void

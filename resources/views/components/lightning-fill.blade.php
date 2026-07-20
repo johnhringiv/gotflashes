@@ -1,39 +1,40 @@
-@props(['percentage' => null])
+@props([
+    'percentage' => null,       // current / goal, 0–100 (null = no goal set)
+    'priorPercentage' => null,  // prior-year total / goal, 0–100 (null/0 = hide line)
+    'goalLabel' => null,        // formatted goal, e.g. "3,000"
+    'priorYear' => null,        // e.g. 2025, for the benchmark chip
+])
 
 @php
-    // Bolt silhouette inside a 200x200 viewBox; also used as the fill clip.
-    $boltPath = 'M114 18 L60 106 L92 106 L76 182 L142 88 L106 88 Z';
     $fill = $percentage === null ? 0 : max(0, min(100, $percentage));
     $complete = $percentage !== null && $percentage >= 100;
+    $showPrior = $priorPercentage !== null && $priorPercentage > 0;
+    $priorFrac = $showPrior ? max(0, min(100, $priorPercentage)) / 100 : 0;
 @endphp
 
-<svg viewBox="0 0 200 200"
-     {{ $attributes->merge(['class' => 'lightning-fill'.($complete ? ' lightning-fill-complete' : '')]) }}
+<div {{ $attributes->merge(['class' => 'lightning-fill'.($complete ? ' lightning-fill-complete' : '')]) }}
+     style="--lf-fill: {{ $fill }}%; --lf-prior: {{ $priorFrac }};"
      role="img"
-     aria-label="Community goal progress: {{ $percentage === null ? 'no goal set' : $fill.'%' }}">
-    <defs>
-        <linearGradient id="lightning-fill-gradient" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stop-color="var(--color-primary)" />
-            <stop offset="100%" stop-color="var(--color-secondary)" />
-        </linearGradient>
-        <clipPath id="lightning-fill-bolt">
-            <path d="{{ $boltPath }}" />
-        </clipPath>
-    </defs>
-
-    {{-- Circle backdrop --}}
-    <circle cx="100" cy="100" r="94" fill="oklch(100% 0 0deg)" stroke="var(--color-primary)" stroke-width="5" />
-
-    {{-- Empty-state bolt --}}
-    <path d="{{ $boltPath }}" fill="var(--color-base-300)" />
-
-    {{-- Rising gradient fill, clipped to the bolt --}}
-    @if ($percentage !== null)
-        <g clip-path="url(#lightning-fill-bolt)">
-            <rect x="0" y="0" width="200" height="200"
-                  fill="url(#lightning-fill-gradient)"
-                  class="lightning-fill-rect"
-                  style="--fill-pct: {{ $fill }}%" />
-        </g>
+     aria-label="Community goal progress: {{ $percentage === null ? 'no goal set' : round($fill).'% of goal' }}{{ $showPrior && $priorYear ? ', '.$priorYear.' benchmark shown' : '' }}">
+    @if ($goalLabel !== null)
+        <div class="lightning-fill-goal">{{ $goalLabel }} <span>goal</span></div>
     @endif
-</svg>
+
+    <div class="lightning-fill-circle">
+        {{-- The bolt silhouette (Lightning Class insignia) masks these layers --}}
+        <div class="lightning-fill-bolt">
+            <div class="lightning-fill-track"></div>
+            @if ($percentage !== null)
+                <div class="lightning-fill-rise"></div>
+            @endif
+        </div>
+
+        {{-- Prior-year benchmark line + chip, clipped to the circle --}}
+        @if ($showPrior)
+            <div class="lightning-fill-prior" aria-hidden="true"></div>
+            @if ($priorYear)
+                <div class="lightning-fill-prior-chip" aria-hidden="true">{{ $priorYear }}</div>
+            @endif
+        @endif
+    </div>
+</div>

@@ -564,11 +564,61 @@ span.flatpickr-weekday {
    Community Stats page (/stats)
    ============================================================ */
 
-/* Lightning fill-up hero: the gradient rect rises inside the bolt clip.
-   The keyframe animates from empty to the inline --fill-pct target and
-   replays whenever Livewire re-keys the hero (year change). */
-.lightning-fill-rect {
-    clip-path: inset(calc(100% - var(--fill-pct, 0%)) 0 0 0);
+/* Lightning fill-up hero — a "thermometer" in the Lightning Class bolt insignia.
+   The bolt shape comes from the class logo PNG used as an alpha mask; a gradient
+   layer rises inside it toward the community goal, with a benchmark line marking
+   the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
+   so fill/benchmark heights map to that central 70% band. */
+.lightning-fill {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lightning-fill-goal {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-base-content);
+    opacity: 0.6;
+}
+
+.lightning-fill-goal span {
+    font-weight: 400;
+}
+
+.lightning-fill-circle {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: oklch(100% 0 0deg);
+    border: 5px solid var(--color-primary);
+    overflow: hidden;
+}
+
+.lightning-fill-bolt {
+    position: absolute;
+    inset: 15%;
+
+    /* The Lightning Class bolt insignia, as an alpha mask over the fill layers */
+    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+}
+
+.lightning-fill-track {
+    position: absolute;
+    inset: 0;
+    background: var(--color-base-300);
+}
+
+.lightning-fill-rise {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--color-primary), var(--color-secondary));
+    clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
     animation: lightning-fill-rise 1.5s ease-out;
 }
 
@@ -578,19 +628,46 @@ span.flatpickr-weekday {
     }
 }
 
+/* Prior-year benchmark line: a hairline across the bolt band; white with a
+   dark edge so it reads over both the filled (blue) and unfilled (gray) bolt. */
+.lightning-fill-prior {
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: calc(15% + var(--lf-prior, 0) * 70%);
+    height: 2px;
+    border-radius: 1px;
+    background: oklch(100% 0 0deg);
+    box-shadow: 0 0 0 1px oklch(25% 0.02 245deg / 50%);
+}
+
+.lightning-fill-prior-chip {
+    position: absolute;
+    right: 12%;
+    bottom: calc(15% + var(--lf-prior, 0) * 70%);
+    transform: translateY(50%);
+    font-size: 0.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0 0.25rem;
+    border-radius: 3px;
+    color: var(--color-base-content);
+    background: oklch(100% 0 0deg / 88%);
+}
+
 /* Goal reached: gentle glow pulse after the fill animation lands */
-.lightning-fill-complete {
+.lightning-fill-complete .lightning-fill-circle {
     animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
 }
 
 @keyframes lightning-glow-pulse {
     0%,
     100% {
-        filter: drop-shadow(0 0 4px oklch(55% 0.12 240deg / 45%));
+        box-shadow: 0 0 4px oklch(55% 0.12 240deg / 45%);
     }
 
     50% {
-        filter: drop-shadow(0 0 18px oklch(55% 0.12 240deg / 90%));
+        box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
     }
 }
 

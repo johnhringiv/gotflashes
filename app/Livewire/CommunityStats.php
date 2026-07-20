@@ -50,11 +50,15 @@ class CommunityStats extends Component
     {
         $stats = $this->statsForYear($this->selectedYear);
         $goal = $this->getCommunityGoal($this->selectedYear);
+        $priorTotal = $stats['priorTotal'];
 
         return view('livewire.community-stats', [
             'stats' => $stats,
             'goal' => $goal,
             'goalPercent' => $goal ? (int) round(min(100, $stats['counters']['totalQualifying'] / $goal * 100)) : null,
+            'priorTotal' => $priorTotal,
+            // Prior-year total as a fraction of the goal, for the benchmark line
+            'priorPercent' => ($goal && $priorTotal > 0) ? min(100, $priorTotal / $goal * 100) : null,
             'availableYears' => $this->getAvailableYears(),
             'chartJson' => json_encode($this->chartPayload($stats), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),
         ]);
@@ -126,6 +130,7 @@ class CommunityStats extends Component
             'year' => $year,
             'monthsToShow' => $year === now()->year ? now()->month : 12,
             'counters' => $this->getKeyCounters($year),
+            'priorTotal' => $this->getQualifyingTotal($year - 1),
             'monthly' => [
                 'current' => $this->getFlashesByMonth($year),
                 'previous' => $this->getFlashesByMonth($year - 1),
@@ -207,6 +212,20 @@ class CommunityStats extends Component
     }
 
     /**
+     * Community-wide qualifying total for a year (sailing days plus up to 5
+     * non-sailing days per sailor). Used for the prior-year benchmark line.
+     */
+    private function getQualifyingTotal(int $year): int
+    {
+        $row = DB::query()
+            ->fromSub($this->userFlashesSubquery($year), 'user_flashes')
+            ->selectRaw('COALESCE(SUM('.self::QUALIFYING_SQL.'), 0) as total')
+            ->first();
+
+        return (int) ($row->total ?? 0);
+    }
+
+    /**
      * Flash counts per month (all activity types).
      *
      * @return array<int> 12 entries, index 0 = January
@@ -284,8 +303,10 @@ class CommunityStats extends Component
     }
 
     /**
-     * Age distribution of sailors active in the year, bucketed by decade.
-     * Implausible ages (outside 8-100, i.e. typo'd birth dates) are excluded.
+     * Age distribution of sailors active in the year, bucketed by Lightning
+     * Class age division. Youth and U32 are the class's growth segments;
+     * Masters is 55+. Implausible ages (outside 8-100, i.e. typo'd birth
+     * dates) are excluded.
      */
     private function getAgeDistribution(int $year): array
     {
@@ -297,20 +318,19 @@ class CommunityStats extends Component
             ->pluck('age')
             ->filter(fn ($age) => $age >= 8 && $age <= 100);
 
-        $buckets = [
-            'Under 20' => fn ($a) => $a < 20,
-            '20s' => fn ($a) => $a >= 20 && $a < 30,
-            '30s' => fn ($a) => $a >= 30 && $a < 40,
-            '40s' => fn ($a) => $a >= 40 && $a < 50,
-            '50s' => fn ($a) => $a >= 50 && $a < 60,
-            '60s' => fn ($a) => $a >= 60 && $a < 70,
-            '70+' => fn ($a) => $a >= 70,
+        // Ordered young → old; ranges are inclusive.
+        $divisions = [
+            ['label' => 'Youth', 'range' => 'Under 21', 'test' => fn ($a) => $a <= 20],
+            ['label' => 'U32', 'range' => '21–32', 'test' => fn ($a) => $a >= 21 && $a <= 32],
+            ['label' => 'Open', 'range' => '33–54', 'test' => fn ($a) => $a >= 33 && $a <= 54],
+            ['label' => 'Masters', 'range' => '55+', 'test' => fn ($a) => $a >= 55],
         ];
 
-        $labels = array_keys($buckets);
-        $counts = array_map(fn ($test) => $ages->filter($test)->count(), array_values($buckets));
-
-        return ['labels' => $labels, 'counts' => $counts];
+        return [
+            'labels' => array_column($divisions, 'label'),
+            'ranges' => array_column($divisions, 'range'),
+            'counts' => array_map(fn ($d) => $ages->filter($d['test'])->count(), $divisions),
+        ];
     }
 
     /**
@@ -384,25 +404,23 @@ class CommunityStats extends Component
             ];
         }
 
-        // Most popular location (normalized: locations are free text)
-        $locations = DB::table('flashes')
-            ->selectRaw('TRIM(location) as raw, COUNT(*) as count')
-            ->whereRaw("TRIM(COALESCE(location, '')) != ''")
-            ->whereRaw("strftime('%Y', date) = ?", [(string) $year])
-            ->groupBy('raw')
-            ->get();
+        // Most flashes logged at once — the largest single bulk entry, i.e. the
+        // most flashes one sailor created in a single save (multi-date logging
+        // shares one created_at timestamp).
+        $batch = DB::table('flashes as f')
+            ->join('users as u', 'u.id', '=', 'f.user_id')
+            ->selectRaw('u.first_name, u.last_name, COUNT(*) as n')
+            ->whereRaw("strftime('%Y', f.date) = ?", [(string) $year])
+            ->groupBy('f.user_id', 'f.created_at')
+            ->orderByDesc('n')
+            ->orderBy('f.created_at')
+            ->first();
 
-        $grouped = $locations->groupBy(fn ($row) => mb_strtolower($row->raw));
-        $top = $grouped->map(fn ($variants) => (object) [
-            'display' => $variants->sortByDesc('count')->first()->raw,
-            'total' => $variants->sum('count'),
-        ])->sortByDesc('total')->first();
-
-        if ($top && $top->total >= 3) {
+        if ($batch && $batch->n >= 2) {
             $facts[] = [
-                'title' => 'Most popular location',
-                'value' => $top->display,
-                'detail' => "{$top->total} days logged there",
+                'title' => 'Most flashes logged at once',
+                'value' => "{$batch->n} flashes",
+                'detail' => "Logged in a single entry by {$batch->first_name} {$batch->last_name}",
             ];
         }
 
