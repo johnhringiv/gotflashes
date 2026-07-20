@@ -118,4 +118,15 @@ class AdminSettingsTest extends TestCase
             ->test('admin-settings')
             ->assertSee('1%');
     }
+
+    public function test_shows_prior_year_historical_reference(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $expected = (int) config('community.historical_totals')[2025];
+
+        Livewire::actingAs($admin)
+            ->test('admin-settings')
+            ->assertSee("2025 finished at {$expected} days")
+            ->assertSee('pre-launch process');
+    }
 }

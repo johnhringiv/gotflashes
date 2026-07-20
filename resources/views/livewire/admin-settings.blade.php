@@ -46,6 +46,12 @@
                     @endif
                 </div>
 
+                @if ($priorTotal > 0)
+                    <div class="text-sm opacity-70">
+                        For reference, {{ $priorYear }} finished at {{ number_format($priorTotal) }} days @if ($priorIsHistorical)(from the pre-launch process)@endif
+                    </div>
+                @endif
+
                 <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
                     <span wire:loading.remove wire:target="save">Save goal</span>
                     <span wire:loading wire:target="save">Saving…</span>

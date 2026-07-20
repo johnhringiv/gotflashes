@@ -617,7 +617,9 @@ span.flatpickr-weekday {
 .lightning-fill-rise {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, var(--color-primary), var(--color-secondary));
+
+    /* The Lightning Class bolt is red; it fills in its own colour */
+    background: linear-gradient(to top, var(--color-accent), oklch(58% 0.19 29deg));
     clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
     animation: lightning-fill-rise 1.5s ease-out;
 }
@@ -628,22 +630,20 @@ span.flatpickr-weekday {
     }
 }
 
-/* Prior-year benchmark line: a hairline across the bolt band; white with a
-   dark edge so it reads over both the filled (blue) and unfilled (gray) bolt. */
+/* Prior-year benchmark: a thin blue dashed line marking last year's level.
+   Starts at the logo's left edge (does not extend past the bolt on the left)
+   and reaches right toward the year chip. */
 .lightning-fill-prior {
     position: absolute;
-    left: 20%;
-    right: 20%;
+    left: 35%;
+    right: 16%;
     bottom: calc(15% + var(--lf-prior, 0) * 70%);
-    height: 2px;
-    border-radius: 1px;
-    background: oklch(100% 0 0deg);
-    box-shadow: 0 0 0 1px oklch(25% 0.02 245deg / 50%);
+    border-top: 1px dashed var(--color-secondary);
 }
 
 .lightning-fill-prior-chip {
     position: absolute;
-    right: 12%;
+    right: 11%;
     bottom: calc(15% + var(--lf-prior, 0) * 70%);
     transform: translateY(50%);
     font-size: 0.6rem;
@@ -651,7 +651,7 @@ span.flatpickr-weekday {
     line-height: 1.2;
     padding: 0 0.25rem;
     border-radius: 3px;
-    color: var(--color-base-content);
+    color: var(--color-secondary);
     background: oklch(100% 0 0deg / 88%);
 }
 
@@ -668,6 +668,15 @@ span.flatpickr-weekday {
 
     50% {
         box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
+    }
+}
+
+/* Respect reduced-motion: the fill and glow settle straight to their resting
+   state (the clip-path level is applied regardless — only the animation drops). */
+@media (prefers-reduced-motion: reduce) {
+    .lightning-fill-rise,
+    .lightning-fill-complete .lightning-fill-circle {
+        animation: none;
     }
 }
 

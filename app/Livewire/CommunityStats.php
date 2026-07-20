@@ -77,17 +77,20 @@ class CommunityStats extends Component
      */
     private function getAvailableYears(): array
     {
-        $years = DB::table('flashes')
+        // The app launched in start_year (2026); pre-launch years have no
+        // in-app per-day data and are never selectable.
+        $launchYear = (int) config('app.start_year', 2026);
+
+        return DB::table('flashes')
             ->selectRaw('DISTINCT strftime("%Y", date) as year')
             ->pluck('year')
             ->map(fn ($year) => (int) $year)
             ->push(now()->year)
+            ->filter(fn ($year) => $year >= $launchYear)
             ->unique()
             ->sortDesc()
             ->values()
             ->toArray();
-
-        return $years;
     }
 
     private function getCommunityGoal(int $year): ?int
@@ -130,7 +133,7 @@ class CommunityStats extends Component
             'year' => $year,
             'monthsToShow' => $year === now()->year ? now()->month : 12,
             'counters' => $this->getKeyCounters($year),
-            'priorTotal' => $this->getQualifyingTotal($year - 1),
+            'priorTotal' => $this->getPriorYearTotal($year),
             'monthly' => [
                 'current' => $this->getFlashesByMonth($year),
                 'previous' => $this->getFlashesByMonth($year - 1),
@@ -209,6 +212,19 @@ class CommunityStats extends Component
             'activeDistricts' => (int) ($groups->districts ?? 0),
             'awardAchievers' => (int) $totals->achievers,
         ];
+    }
+
+    /**
+     * The prior year's community total, for the benchmark line. Pre-launch
+     * years (no in-app data) fall back to the hardcoded historical aggregate
+     * from the old manual process (config/community.php).
+     */
+    private function getPriorYearTotal(int $year): int
+    {
+        $prior = $year - 1;
+        $historical = config('community.historical_totals', []);
+
+        return (int) ($historical[$prior] ?? $this->getQualifyingTotal($prior));
     }
 
     /**

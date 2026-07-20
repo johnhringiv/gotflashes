@@ -223,17 +223,32 @@ class CommunityStatsTest extends TestCase
             ->assertSee('1% of the 100-day 2026 goal');
     }
 
-    public function test_prior_year_benchmark_shown_when_goal_and_prior_data_exist(): void
+    public function test_prior_year_benchmark_uses_hardcoded_historical_total(): void
     {
+        // The app launched in 2026, so the 2025 benchmark comes from the
+        // hardcoded pre-launch aggregate (config/community.php), NOT the DB.
         $user = User::factory()->create();
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-01')->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-02')->create();
-        Setting::set('community_goal_2026', '100');
+        Setting::set('community_goal_2026', '2000');
+
+        $expected = (int) config('community.historical_totals')[2025];
 
         Livewire::test('community-stats')
             ->assertSet('selectedYear', 2026)
-            ->assertSee('2025 finished at 2 days');
+            ->assertSee("2025 finished at {$expected} days");
+    }
+
+    public function test_prelaunch_years_are_not_selectable(): void
+    {
+        $user = User::factory()->create();
+        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
+        // Even if pre-launch rows somehow exist, they must not be offered.
+        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-01')->create();
+
+        $years = Livewire::test('community-stats')->viewData('availableYears');
+
+        $this->assertContains(2026, $years);
+        $this->assertNotContains(2025, $years);
     }
 
     public function test_goal_achieved_state(): void
@@ -268,13 +283,14 @@ class CommunityStatsTest extends TestCase
 
     public function test_year_change_dispatches_chart_update_event(): void
     {
+        // Switch between two post-launch years (2025 is pre-launch, unselectable)
         $user = User::factory()->create();
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2025-05-01')->create();
+        Flash::factory()->forUser($user)->sailing()->onDate('2027-05-01')->create();
 
         Livewire::test('community-stats')
-            ->set('selectedYear', 2025)
-            ->assertSet('selectedYear', 2025)
+            ->set('selectedYear', 2027)
+            ->assertSet('selectedYear', 2027)
             ->assertDispatched('community-stats-updated');
     }
 

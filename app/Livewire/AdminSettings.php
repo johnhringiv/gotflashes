@@ -43,9 +43,15 @@ class AdminSettings extends AdminComponent
 
     public function render()
     {
+        $prior = $this->selectedYear - 1;
+        $historical = config('community.historical_totals', []);
+
         return view('livewire.admin-settings', [
             'availableYears' => $this->getAvailableYearsWithCurrent(),
             'currentTotal' => $this->getQualifyingTotal($this->selectedYear),
+            'priorYear' => $prior,
+            'priorTotal' => (int) ($historical[$prior] ?? $this->getQualifyingTotal($prior)),
+            'priorIsHistorical' => isset($historical[$prior]),
         ]);
     }
 
