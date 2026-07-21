@@ -83,6 +83,20 @@ i=0
 while [ $i -lt 24 ]; do
     if curl -sf -m 5 "http://localhost:$PORT/up" >/dev/null 2>&1; then
         echo "$(date -u +%FT%TZ) $CONTAINER healthy on :$PORT"
+        # Version gate: confirm the container is actually serving the build we
+        # just pulled (catches a stale image left answering on the port, or a
+        # botched recreate). The baked /version file and the image's OCI
+        # 'revision' label are stamped from the same commit SHA, so a mismatch
+        # means the wrong build is live. Skipped when the image carries no label
+        # (e.g. a locally built image), which just logs the served version.
+        expected=$(docker image inspect "$IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' 2>/dev/null || echo "")
+        served=$(curl -sf -m 5 "http://localhost:$PORT/version" 2>/dev/null | tr -d '[:space:]')
+        if [ -n "$expected" ] && [ -n "$served" ] && [ "$expected" != "$served" ]; then
+            echo "$(date -u +%FT%TZ) FAILED: $CONTAINER is serving version $served but $IMAGE expects $expected"
+            docker logs "$CONTAINER" 2>&1 | tail -20
+            exit 1
+        fi
+        echo "$(date -u +%FT%TZ) $CONTAINER version ${served:-unknown}"
         docker image prune -f >/dev/null 2>&1 || true
         docker ps --filter "name=$CONTAINER" --format '{{.Names}}: {{.Status}}'
         echo "$(date -u +%FT%TZ) deployed $IMAGE"
