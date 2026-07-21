@@ -25,7 +25,7 @@ class CommunityStats extends Component
 
     // Bump when the cached stats shape changes, so old payloads are ignored
     // rather than 500-ing the view after a deploy.
-    private const CACHE_VERSION = 12;
+    private const CACHE_VERSION = 13;
 
     #[Url]
     public int $selectedYear;
@@ -146,6 +146,7 @@ class CommunityStats extends Component
             'flashFilter' => $this->getFlashFilterData($year),
             'ages' => $this->getAgeDistribution($year),
             'funnel' => $this->getAwardFunnel($year),
+            'busiestDay' => $this->getBusiestDay($year),
             'funFacts' => $this->getFunFacts($year),
         ];
     }
@@ -498,11 +499,14 @@ class CommunityStats extends Component
      *
      * @return array<array{title: string, value: string, detail: string}>
      */
-    private function getFunFacts(int $year): array
+    /**
+     * Busiest day on the water: the date with the most distinct sailing sailors.
+     * Shown as a caption on the activity-heatmap card. Null below 2 sailors.
+     *
+     * @return array{date: string, sailors: int}|null
+     */
+    private function getBusiestDay(int $year): ?array
     {
-        $facts = [];
-
-        // Busiest day on the water (distinct sailors with a sailing flash)
         $busiest = DB::table('flashes')
             ->selectRaw('DATE(date) as day, COUNT(DISTINCT user_id) as sailors')
             ->where('activity_type', 'sailing')
@@ -512,31 +516,56 @@ class CommunityStats extends Component
             ->orderBy('day')
             ->first();
 
-        if ($busiest && $busiest->sailors >= 2) {
+        if (! $busiest || $busiest->sailors < 2) {
+            return null;
+        }
+
+        return [
+            'date' => Carbon::parse($busiest->day)->format('F j'),
+            'sailors' => (int) $busiest->sailors,
+        ];
+    }
+
+    private function getFunFacts(int $year): array
+    {
+        $facts = [];
+
+        // Season opener — the first sailing day of the year, and who logged it.
+        $opener = DB::table('flashes as f')
+            ->join('users as u', 'u.id', '=', 'f.user_id')
+            ->selectRaw('u.first_name, u.last_name, DATE(f.date) as day')
+            ->where('f.activity_type', 'sailing')
+            ->whereRaw("strftime('%Y', f.date) = ?", [(string) $year])
+            ->orderBy('f.date')
+            ->orderBy('f.created_at')
+            ->first();
+
+        if ($opener) {
             $facts[] = [
-                'title' => 'Busiest day on the water',
-                'value' => Carbon::parse($busiest->day)->format('F j'),
-                'detail' => "{$busiest->sailors} sailors logged a sailing day",
+                'title' => 'Season opener',
+                'value' => Carbon::parse($opener->day)->format('F j'),
+                'detail' => "{$opener->first_name} {$opener->last_name} logged the season's first sailing day",
             ];
         }
 
-        // Most active fleet by qualifying days
-        $topFleet = DB::query()
-            ->fromSub($this->userFlashesSubquery($year), 'user_flashes')
-            ->joinSub($this->recentMembershipSubquery($year), 'recent_members', 'user_flashes.user_id', '=', 'recent_members.user_id')
-            ->join('fleets', 'fleets.id', '=', 'recent_members.fleet_id')
-            ->where('fleets.id', '!=', Fleet::noneId())
-            ->select('fleets.fleet_number', 'fleets.fleet_name')
-            ->selectRaw('SUM('.self::QUALIFYING_SQL.') as total')
-            ->groupBy('fleets.id', 'fleets.fleet_number', 'fleets.fleet_name')
-            ->orderByDesc('total')
-            ->first();
-
-        if ($topFleet && $topFleet->total > 0) {
+        // Longest sailing streak — the most consecutive calendar days a sailor
+        // logged a sailing flash; a tie credits everyone. Streak logic is clearer
+        // in PHP than SQL.
+        $streak = $this->getLongestSailingStreak($year);
+        if ($streak && $streak['days'] >= 3) {
+            $names = $streak['names'];
+            $days = $streak['days'];
+            if (count($names) === 1) {
+                $detail = "{$names[0]} sailed {$days} days in a row";
+            } elseif (count($names) === 2) {
+                $detail = "{$names[0]} and {$names[1]} each sailed {$days} days in a row";
+            } else {
+                $detail = "{$names[0]} and ".(count($names) - 1)." others each sailed {$days} days in a row";
+            }
             $facts[] = [
-                'title' => 'Most active fleet',
-                'value' => "Fleet {$topFleet->fleet_number}",
-                'detail' => "{$topFleet->fleet_name} — {$topFleet->total} qualifying days",
+                'title' => 'Longest sailing streak',
+                'value' => "{$days} days",
+                'detail' => $detail,
             ];
         }
 
@@ -575,5 +604,63 @@ class CommunityStats extends Component
         }
 
         return $facts;
+    }
+
+    /**
+     * The longest run of consecutive calendar days a sailor logged a sailing
+     * flash, and the names of everyone tied at that length (so a tie credits all
+     * of them, not an arbitrary pick). Consecutive-day detection is a simple
+     * linear scan in PHP (awkward in portable SQL).
+     *
+     * @return array{days: int, names: list<string>}|null
+     */
+    private function getLongestSailingStreak(int $year): ?array
+    {
+        $rows = DB::table('flashes as f')
+            ->join('users as u', 'u.id', '=', 'f.user_id')
+            ->selectRaw('f.user_id, u.first_name, u.last_name, DATE(f.date) as day')
+            ->where('f.activity_type', 'sailing')
+            ->whereRaw("strftime('%Y', f.date) = ?", [(string) $year])
+            ->groupBy('f.user_id', 'day')
+            ->orderBy('f.user_id')
+            ->orderBy('day')
+            ->get();
+
+        // Longest consecutive-day run per sailor.
+        $perUser = [];
+        $currentUser = null;
+        $currentLen = 0;
+        $prevTs = null;
+
+        foreach ($rows as $row) {
+            $ts = strtotime($row->day);
+            if ($row->user_id !== $currentUser) {
+                $currentUser = $row->user_id;
+                $currentLen = 1;
+            } elseif ($ts - $prevTs === 86400) {
+                $currentLen++;
+            } else {
+                $currentLen = 1;
+            }
+            $prevTs = $ts;
+
+            $name = trim("{$row->first_name} {$row->last_name}");
+            if (! isset($perUser[$row->user_id]) || $currentLen > $perUser[$row->user_id]['len']) {
+                $perUser[$row->user_id] = ['len' => $currentLen, 'name' => $name];
+            }
+        }
+
+        if ($perUser === []) {
+            return null;
+        }
+
+        $max = max(array_column($perUser, 'len'));
+        $names = array_values(array_map(
+            fn ($u) => $u['name'],
+            array_filter($perUser, fn ($u) => $u['len'] === $max)
+        ));
+        usort($names, 'strcasecmp');
+
+        return ['days' => $max, 'names' => $names];
     }
 }

@@ -578,7 +578,7 @@ function renderSailorGrowth() {
     const controls = document.createElement('div');
     controls.className = 'flash-filter-controls';
 
-    controls.appendChild(segmentedRadio('Stack by', [{ key: 'gender', label: 'Gender' }, { key: 'age', label: 'Age' }], state.stackBy, (k) => {
+    controls.appendChild(segmentedRadio('Stack by', [{ key: 'age', label: 'Age' }, { key: 'gender', label: 'Gender' }], state.stackBy, (k) => {
         state.stackBy = k;
         buildValueChips();
         draw();

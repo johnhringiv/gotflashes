@@ -12,6 +12,11 @@
             <div id="{{ $chartId }}" class="stats-chart" data-stats-chart></div>
         </div>
 
+        {{-- Optional highlight caption below the chart (e.g. busiest day) --}}
+        @isset($caption)
+            <p class="text-sm text-base-content/70 mt-2">{{ $caption }}</p>
+        @endisset
+
         {{-- Accessible, hover-free twin of the chart (updates with the year) --}}
         @isset($table)
             <details class="mt-2 text-sm">

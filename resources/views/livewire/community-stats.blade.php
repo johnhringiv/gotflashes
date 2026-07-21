@@ -83,6 +83,13 @@
             <x-chart-card chart-id="chart-heatmap"
                           title="When the community sails"
                           subtitle="Every day of {{ $selectedYear }} — darker means more flashes">
+                @if ($stats['busiestDay'])
+                    <x-slot:caption>
+                        Busiest day:
+                        <span class="font-semibold text-base-content">{{ $stats['busiestDay']['date'] }}</span>
+                        — {{ $stats['busiestDay']['sailors'] }} sailors on the water
+                    </x-slot:caption>
+                @endif
                 <x-slot:table>
                     <table class="table table-xs">
                         <thead><tr><th>Date</th><th class="text-right">Flashes</th></tr></thead>

@@ -60,14 +60,14 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
         // Matches CommunityStats::cacheKey() (versioned)
-        Cache::put('community-stats-v12-2026', ['stale' => true], 900);
+        Cache::put('community-stats-v13-2026', ['stale' => true], 900);
 
         Livewire::actingAs($admin)
             ->test('admin-settings')
             ->set('goal', 500)
             ->call('save');
 
-        $this->assertNull(Cache::get('community-stats-v12-2026'));
+        $this->assertNull(Cache::get('community-stats-v13-2026'));
     }
 
     public function test_goal_validation_rejects_non_positive_values(): void

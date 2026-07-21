@@ -364,7 +364,7 @@ class CommunityStatsTest extends TestCase
             ->assertSee('No activity logged for 2026 yet');
     }
 
-    public function test_fun_facts_include_busiest_day_with_two_or_more_sailors(): void
+    public function test_busiest_day_shown_in_heatmap_caption(): void
     {
         $userOne = User::factory()->create();
         $userTwo = User::factory()->create();
@@ -372,8 +372,47 @@ class CommunityStatsTest extends TestCase
         Flash::factory()->forUser($userTwo)->sailing()->onDate('2026-05-16')->create();
 
         Livewire::test('community-stats')
-            ->assertSee('Busiest day on the water')
-            ->assertSee('May 16');
+            ->assertSee('Busiest day')
+            ->assertSee('May 16')
+            ->assertSee('2 sailors on the water');
+    }
+
+    public function test_fun_facts_include_season_opener(): void
+    {
+        $early = User::factory()->create(['first_name' => 'Ada', 'last_name' => 'Early']);
+        $late = User::factory()->create();
+        Flash::factory()->forUser($early)->sailing()->onDate('2026-03-05')->create();
+        Flash::factory()->forUser($late)->sailing()->onDate('2026-06-10')->create();
+
+        Livewire::test('community-stats')
+            ->assertSee('Season opener')
+            ->assertSee('March 5')
+            ->assertSee('Ada Early');
+    }
+
+    public function test_fun_facts_include_longest_sailing_streak(): void
+    {
+        $user = User::factory()->create(['first_name' => 'Streaky', 'last_name' => 'Sam']);
+        foreach (['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04'] as $date) {
+            Flash::factory()->forUser($user)->sailing()->onDate($date)->create();
+        }
+
+        Livewire::test('community-stats')
+            ->assertSee('Longest sailing streak')
+            ->assertSee('Streaky Sam sailed 4 days in a row');
+    }
+
+    public function test_longest_streak_credits_all_tied_sailors(): void
+    {
+        $ann = User::factory()->create(['first_name' => 'Ann', 'last_name' => 'Aye']);
+        $ben = User::factory()->create(['first_name' => 'Ben', 'last_name' => 'Bee']);
+        foreach (['2026-06-01', '2026-06-02', '2026-06-03'] as $date) {
+            Flash::factory()->forUser($ann)->sailing()->onDate($date)->create();
+            Flash::factory()->forUser($ben)->sailing()->onDate($date)->create();
+        }
+
+        Livewire::test('community-stats')
+            ->assertSee('Ann Aye and Ben Bee each sailed 3 days in a row');
     }
 
     public function test_fun_facts_omit_free_text_location(): void
