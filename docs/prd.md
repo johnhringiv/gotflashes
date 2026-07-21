@@ -94,7 +94,8 @@ Users can export their complete profile and activity history:
 
 ### 1.5 User Roles
 - **Regular Users**: Can track their own activities and view their progress
-- **Award Administrators**: Responsible for viewing award eligibility and mailing physical awards to participants
+- **Award Administrators** (`is_admin`): View award eligibility and mail physical awards; access the award-fulfillment and sailor-logs dashboards
+- **Site Administrators** (`is_super_admin`): Elevated site-operator tier above award admin; access site configuration (the community goal at `/admin/settings`, and future operational views). Independent of the award-admin flag — a user may hold either or both
 
 ---
 
@@ -265,7 +266,7 @@ A public page (`/stats`) that celebrates class-wide participation and motivates 
 
 **Community Goal Progress:**
 - A "lightning fill-up" hero animates a Lightning silhouette filling toward the year's community sailing-days goal
-- The goal is set by an administrator per year at `/admin/settings` (stored in the `settings` table)
+- The goal defaults to a configured value (so a fresh deploy shows a target out of the box) and can be overridden per year by a site administrator at `/admin/settings` (stored in the `settings` table)
 - A benchmark line marks the prior year's final total, so progress is framed against last season
 
 **Key Counters:**
@@ -281,8 +282,9 @@ A public page (`/stats`) that celebrates class-wide participation and motivates 
 **Fun Facts:**
 - Rotating human-interest highlights derived from the year's data (e.g. season opener, longest sailing streak, most flashes logged at once, the 50+ club); all tied sailors are credited
 
-**Age Divisions:**
-- Youth (≤20), U32 (≤32), Mid (≤54), Masters (55+). Babies and young children are legitimate crew and count as Youth (no lower age floor). A missing or implausible birth date reads as "Unknown" rather than being forced into a division
+**Age Divisions & Privacy:**
+- Age uses **calendar-year age** (the age a sailor reaches by Dec 31 of the stats year), matching how one-design age divisions are defined: Youth (≤20), U32 (≤32), Mid (≤54), Masters (55+). Babies and young children are legitimate crew and count as Youth (no lower age floor)
+- Undisclosed gender and unknown age (missing or implausible birth dates) are **redistributed** proportionally into the displayed groups, so the charts carry no Unknown/Undisclosed series and members who opted out of stating gender cannot be singled out from a small per-day cell — every sailor is still counted in the totals
 
 **Performance & Freshness:**
 - The full aggregate bundle is cached per year for 15 minutes (database cache store); saving a new community goal clears that year's cache immediately

@@ -140,7 +140,8 @@ Routes in `routes/web.php`:
 - `/leaderboard` - Public leaderboard with three tabs: sailor, fleet, district
 - `/stats` - Public community statistics page (lightning goal fill-up + D3 charts)
 - `/password/*`, `/verify-email/{token}` - Password reset and email verification
-- `/admin/fulfillment`, `/admin/sailor-logs`, `/admin/settings` - Admin dashboards - auth + admin required
+- `/admin/fulfillment`, `/admin/sailor-logs` - Award-admin dashboards - auth + `admin` (`is_admin`) required
+- `/admin/settings` - Site settings (community goal) - auth + `super_admin` (`is_super_admin`, elevated tier) required
 
 ### Frontend Architecture
 
@@ -404,7 +405,7 @@ This allows tracking of:
   - Filtering and search capabilities
   - Admin action logging
 - ✅ Automated daily SQLite database backups (validated, WAL-aware, 90-day retention, logged to `backup` channel)
-- ✅ Public community stats page (`/stats`, issue #33): lightning goal fill-up hero, key counters, six D3 charts (monthly YoY, activity heatmap, event mix, signups, ages, award funnel), fun facts, year selector; admin-set annual goal at `/admin/settings`
+- ✅ Public community stats page (`/stats`, issue #33): lightning goal fill-up hero (configurable default goal, site-admin override at `/admin/settings`), key counters, five D3 charts (activity heatmap, flashes over the season, community growth, sailor ages, award funnel), fun facts; undisclosed gender / unknown age redistributed into displayed groups
 
 **Planned:**
 - 📋 Historical year views (read-only previous years)

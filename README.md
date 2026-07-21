@@ -83,8 +83,9 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - **Fleet**: Fleet-level rankings with member counts
   - **District**: District-level rankings with member counts
 - **Community Statistics** (Public `/stats`): Class-wide participation dashboard
-  - Animated "lightning fill-up" progress toward the year's community goal (admin-set) with a prior-year benchmark line
+  - Animated "lightning fill-up" progress toward the year's community goal (a configurable default, overridable per year by a site admin) with a prior-year benchmark line
   - Headline counters plus five self-hosted D3 charts: activity heatmap, flashes over the season (filter by activity type / gender / age, count or share), community growth by age or gender, sailor ages, and a sign-up→award funnel
+  - Privacy-preserving: only community-level aggregates are shown, and undisclosed gender / unknown age are redistributed into the displayed groups so no individual can be singled out
   - Fun facts (season opener, longest sailing streak, and more) with all tied sailors credited
   - Every chart has an accessible, hover-free data-table twin; aggregates cached per year for fast public loads
 - **User Authentication**: Secure registration, login, password reset, and email verification system
@@ -169,11 +170,12 @@ php artisan tinker
 Then in the Tinker REPL:
 ```php
 $user = User::where('email', 'user@example.com')->first();
-$user->is_admin = true;
+$user->is_admin = true;        // award administration (fulfillment, sailor logs)
+$user->is_super_admin = true;  // elevated site-operator tier (site settings)
 $user->save();
 ```
 
-Press `Ctrl+C` to exit Tinker.
+`is_admin` and `is_super_admin` are independent — grant `is_super_admin` to access `/admin/settings` (the community goal). Press `Ctrl+C` to exit Tinker.
 
 **Security Note:** Only grant admin access to trusted users. Admins can:
 - View all user addresses and contact information
