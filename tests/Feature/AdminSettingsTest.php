@@ -123,7 +123,7 @@ class AdminSettingsTest extends TestCase
     public function test_shows_prior_year_historical_reference(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        $expected = (int) config('community.historical_totals')[2025];
+        $expected = number_format((int) config('community.historical_totals')[2025]);
 
         Livewire::actingAs($admin)
             ->test('admin-settings')

@@ -174,25 +174,25 @@ class CommunityStatsTest extends TestCase
         $this->assertSame(2, $stats['heatmap']['2026-05-01']);
     }
 
-    public function test_age_distribution_buckets_implausible_ages_as_unknown(): void
+    public function test_age_distribution_redistributes_implausible_ages(): void
     {
         // Babies are legitimately brought aboard, so there is no lower age floor;
         // only a missing DOB or an implausible age (an absurd birth year from bad
-        // data) reads as Unknown. Both sailors are counted — the bad one just
-        // lands in Unknown rather than inflating a real division.
+        // data) reads as unknown. Unknown ages are redistributed into the displayed
+        // divisions proportionally, so there is no Unknown bucket and everyone is
+        // counted. Here the only disclosed division is 33–54, so the lone bad-data
+        // sailor lands there rather than inflating Youth or surfacing as Unknown.
         $sailor = User::factory()->create(['date_of_birth' => '1990-06-01', 'gender' => 'male']); // 36 in 2026 → 33–54
-        $implausible = User::factory()->create(['date_of_birth' => '1900-01-02', 'gender' => 'male']); // age > 100 → Unknown
+        $implausible = User::factory()->create(['date_of_birth' => '1900-01-02', 'gender' => 'male']); // age > 100 → unknown
         Flash::factory()->forUser($sailor)->sailing()->onDate('2026-05-01')->create();
         Flash::factory()->forUser($implausible)->sailing()->onDate('2026-05-02')->create();
 
         $ages = Livewire::test('community-stats')->viewData('stats')['ages'];
 
         $total = array_sum(array_map('array_sum', $ages['counts']));
-        $this->assertSame(2, $total);
-        $this->assertSame(1, $ages['counts']['33–54']['male']);
-        $this->assertContains('Unknown', $ages['labels']);
-        $this->assertSame(1, $ages['counts']['Unknown']['male']);
-        $this->assertSame(0, $ages['counts']['Youth']['male']); // an over-100 age is not youth
+        $this->assertSame(2, $total); // both counted
+        $this->assertNotContains('Unknown', $ages['labels']); // no Unknown bucket
+        $this->assertSame(2, $ages['counts']['33–54']['male']); // bad-data sailor redistributed here
     }
 
     public function test_age_distribution_counts_young_children_as_youth(): void
@@ -225,7 +225,7 @@ class CommunityStatsTest extends TestCase
         }
     }
 
-    public function test_age_distribution_splits_by_gender_and_omits_undisclosed(): void
+    public function test_age_distribution_redistributes_undisclosed_gender(): void
     {
         $female = User::factory()->create(['date_of_birth' => '2000-06-01', 'gender' => 'female']);
         $male = User::factory()->create(['date_of_birth' => '2000-06-01', 'gender' => 'male']);
@@ -239,11 +239,11 @@ class CommunityStatsTest extends TestCase
         $genderKeys = array_column($dist['genders'], 'key');
         $this->assertContains('female', $genderKeys);
         $this->assertContains('male', $genderKeys);
-        // "prefer not to say" is not shown on the public chart
+        // "prefer not to say" carries no series — it is redistributed into the shown
+        // genders (not dropped), so all three sailors are still counted in U32.
         $this->assertNotContains('prefer_not_to_say', $genderKeys);
-        $this->assertSame(1, $dist['counts']['U32']['female']);
-        $this->assertSame(1, $dist['counts']['U32']['male']);
         $this->assertArrayNotHasKey('prefer_not_to_say', $dist['counts']['U32']);
+        $this->assertSame(3, $dist['counts']['U32']['male'] + $dist['counts']['U32']['female']);
     }
 
     public function test_award_funnel_is_cumulative_registered_to_tiers(): void
@@ -288,7 +288,7 @@ class CommunityStatsTest extends TestCase
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
         Setting::set('community_goal_2026', '2000');
 
-        $expected = (int) config('community.historical_totals')[2025];
+        $expected = number_format((int) config('community.historical_totals')[2025]);
 
         Livewire::test('community-stats')
             ->assertSet('selectedYear', 2026)

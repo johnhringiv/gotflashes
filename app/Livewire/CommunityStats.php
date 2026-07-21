@@ -183,29 +183,117 @@ class CommunityStats extends Component
         return 'masters';
     }
 
+    // Displayed group orders for the demographic charts. Members whose gender is
+    // undisclosed, or whose age is unknown (missing/typo'd DOB), are redistributed
+    // into these groups in proportion to the disclosed population (see
+    // redistributeUnknown()), so no Unknown/Undisclosed series can single them out.
+    private const GENDER_GROUPS = ['male', 'female', 'non_binary'];
+
+    private const AGE_GROUPS = ['youth', 'u32', 'mid', 'masters'];
+
+    // Raw dimension keys for a member (the sentinel marks undisclosed/unknown).
+    private function rawGenderKey(?string $gender): string
+    {
+        return in_array($gender, self::GENDER_GROUPS, true) ? $gender : 'prefer_not_to_say';
+    }
+
+    private function ageKeyFromDob(?string $dob, int $year): string
+    {
+        return $this->ageGroupKey($dob ? $year - (int) substr($dob, 0, 4) : null);
+    }
+
+    /**
+     * Proportionally impute a dimension's "unknown" members into the displayed
+     * groups, so the charts carry no Unknown/Undisclosed series and members who
+     * opted out (or have bad data) can't be re-identified from a lone small cell.
+     * Deterministic largest-remainder (Hamilton) allocation keyed on user id:
+     * reproducible across renders, integer counts, no fabricated fractions.
+     *
+     * @param  array<int, string>  $raw  userId => raw group key
+     * @param  string  $unknownKey  the sentinel to redistribute
+     * @param  list<string>  $displayGroups  displayed groups, in order
+     * @return array<int, string> userId => resolved group key
+     */
+    private function redistributeUnknown(array $raw, string $unknownKey, array $displayGroups): array
+    {
+        $known = array_fill_keys($displayGroups, 0);
+        $unknownIds = [];
+        foreach ($raw as $uid => $group) {
+            if (isset($known[$group])) {
+                $known[$group]++;
+            } else {
+                $unknownIds[] = $uid; // the unknown sentinel (or any stray value)
+            }
+        }
+
+        $totalKnown = array_sum($known);
+        // Nothing disclosed to base proportions on (real data never hits this),
+        // or nothing to redistribute — leave the input untouched.
+        if ($totalKnown === 0 || $unknownIds === []) {
+            return $raw;
+        }
+
+        sort($unknownIds); // stable, deterministic assignment order
+        $n = count($unknownIds);
+
+        // Largest-remainder quotas proportional to the disclosed distribution.
+        $quota = $remainder = [];
+        $seated = 0;
+        foreach ($displayGroups as $group) {
+            $exact = $known[$group] / $totalKnown * $n;
+            $quota[$group] = (int) floor($exact);
+            $remainder[$group] = $exact - $quota[$group];
+            $seated += $quota[$group];
+        }
+        // Hand out leftover seats to the largest remainders (ties → display order).
+        $byRemainder = $displayGroups;
+        usort($byRemainder, fn ($a, $b) => ($remainder[$b] <=> $remainder[$a])
+            ?: (array_search($a, $displayGroups) <=> array_search($b, $displayGroups)));
+        foreach (array_slice($byRemainder, 0, $n - $seated) as $group) {
+            $quota[$group]++;
+        }
+
+        $resolved = $raw;
+        $i = 0;
+        foreach ($displayGroups as $group) {
+            for ($k = 0; $k < $quota[$group]; $k++) {
+                $resolved[$unknownIds[$i++]] = $group;
+            }
+        }
+
+        return $resolved;
+    }
+
     /**
      * Per-(date, category, gender, age-group) flash counts, plus the dimension
      * values present, for the client-side-filterable cumulative chart. The
      * frontend re-aggregates as toggles change, so counts stay at daily
-     * increments here (not cumulative).
+     * increments here (not cumulative). Undisclosed gender / unknown age are
+     * redistributed per member so those series never appear.
      */
     private function getFlashFilterData(int $year): array
     {
         $flashes = DB::table('flashes as f')
             ->join('users as u', 'u.id', '=', 'f.user_id')
-            ->selectRaw("DATE(f.date) as day, CASE WHEN f.activity_type = 'sailing' THEN f.event_type ELSE f.activity_type END as category, u.gender as gender, u.date_of_birth as dob")
+            ->selectRaw("f.user_id as user_id, DATE(f.date) as day, CASE WHEN f.activity_type = 'sailing' THEN f.event_type ELSE f.activity_type END as category, u.gender as gender, u.date_of_birth as dob")
             ->whereRaw("strftime('%Y', f.date) = ?", [(string) $year])
             ->get();
+
+        // Resolve each member's gender/age once, redistributing undisclosed/unknown.
+        $rawGender = $rawAge = [];
+        foreach ($flashes as $flash) {
+            $rawGender[$flash->user_id] = $this->rawGenderKey($flash->gender);
+            $rawAge[$flash->user_id] = $this->ageKeyFromDob($flash->dob, $year);
+        }
+        $gender = $this->redistributeUnknown($rawGender, 'prefer_not_to_say', self::GENDER_GROUPS);
+        $age = $this->redistributeUnknown($rawAge, 'unknown', self::AGE_GROUPS);
 
         $agg = [];
         foreach ($flashes as $flash) {
             if (! in_array($flash->category, self::FLASH_CATEGORIES, true)) {
                 continue;
             }
-            $gender = in_array($flash->gender, ['male', 'female', 'non_binary'], true) ? $flash->gender : 'prefer_not_to_say';
-            $age = $flash->dob ? $year - (int) substr($flash->dob, 0, 4) : null;
-            $ageGroup = $this->ageGroupKey($age);
-            $key = "{$flash->day}\x1f{$flash->category}\x1f{$gender}\x1f{$ageGroup}";
+            $key = "{$flash->day}\x1f{$flash->category}\x1f{$gender[$flash->user_id]}\x1f{$age[$flash->user_id]}";
             $agg[$key] = ($agg[$key] ?? 0) + 1;
         }
 
@@ -243,18 +331,24 @@ class CommunityStats extends Component
     private function getSailorGrowthData(int $year): array
     {
         $users = DB::table('users')
-            ->selectRaw("DATE(created_at) as day, CAST(strftime('%Y', created_at) AS INTEGER) as created_year, gender, date_of_birth as dob")
+            ->selectRaw("id as user_id, DATE(created_at) as day, CAST(strftime('%Y', created_at) AS INTEGER) as created_year, gender, date_of_birth as dob")
             ->whereRaw('CAST(strftime(\'%Y\', created_at) AS INTEGER) <= ?', [$year])
             ->get();
+
+        // Resolve each member's gender/age once, redistributing undisclosed/unknown.
+        $rawGender = $rawAge = [];
+        foreach ($users as $user) {
+            $rawGender[$user->user_id] = $this->rawGenderKey($user->gender);
+            $rawAge[$user->user_id] = $this->ageKeyFromDob($user->dob, $year);
+        }
+        $gender = $this->redistributeUnknown($rawGender, 'prefer_not_to_say', self::GENDER_GROUPS);
+        $age = $this->redistributeUnknown($rawAge, 'unknown', self::AGE_GROUPS);
 
         $agg = [];
         $perDate = [];
         foreach ($users as $user) {
-            $gender = in_array($user->gender, ['male', 'female', 'non_binary'], true) ? $user->gender : 'prefer_not_to_say';
-            $age = $user->dob ? $year - (int) substr($user->dob, 0, 4) : null;
-            $ageGroup = $this->ageGroupKey($age);
             $date = ((int) $user->created_year < $year) ? "{$year}-01-01" : $user->day;
-            $key = "{$date}\x1f{$gender}\x1f{$ageGroup}";
+            $key = "{$date}\x1f{$gender[$user->user_id]}\x1f{$age[$user->user_id]}";
             $agg[$key] = ($agg[$key] ?? 0) + 1;
             $perDate[$date] = ($perDate[$date] ?? 0) + 1;
         }
@@ -405,9 +499,9 @@ class CommunityStats extends Component
     }
 
     // Gender display labels + canonical order (also the stack order, bottom→top).
-    // "Prefer not to say" / unset are deliberately excluded from the public
-    // gender split — it isn't a gender identity, and tiny undisclosed cells
-    // risk being identifying on a public page.
+    // "Prefer not to say" / unset carry no series of their own — those members
+    // are redistributed into the displayed genders (see redistributeUnknown()),
+    // so a tiny undisclosed cell can never single someone out on a public page.
     private const GENDER_LABELS = [
         'female' => 'Female',
         'male' => 'Male',
@@ -417,43 +511,48 @@ class CommunityStats extends Component
     /**
      * Age distribution of sailors active in the year, bucketed by Lightning
      * Class age division and split by gender. Youth and U32 are the class's
-     * growth segments; Masters is 55+. Implausible (too old/young, i.e. typo'd
-     * birth dates) or missing birth dates land in an "Unknown" bucket, shown
-     * only when non-empty. Only genders present are returned.
+     * growth segments; Masters is 55+. Undisclosed gender and unknown age
+     * (implausible/typo'd or missing birth dates) are redistributed into the
+     * displayed groups, so there is no Unknown/Undisclosed cell. Only genders
+     * present are returned.
      */
     private function getAgeDistribution(int $year): array
     {
-        $sailors = DB::query()
+        $rows = DB::query()
             ->fromSub($this->userFlashesSubquery($year), 'user_flashes')
             ->join('users', 'users.id', '=', 'user_flashes.user_id')
-            ->selectRaw('users.date_of_birth as dob, users.gender as gender')
-            ->get()
-            ->map(fn ($r) => (object) [
-                'ageGroup' => $this->ageGroupKey($r->dob ? $year - (int) substr($r->dob, 0, 4) : null),
-                // Normalise blank/unknown gender values to "undisclosed"
-                'gender' => in_array($r->gender, ['female', 'male', 'non_binary'], true) ? $r->gender : 'prefer_not_to_say',
-            ]);
+            ->selectRaw('users.id as user_id, users.date_of_birth as dob, users.gender as gender')
+            ->get();
+
+        // Resolve each active sailor's gender/age once, redistributing undisclosed
+        // gender and unknown age into the displayed groups.
+        $rawGender = $rawAge = [];
+        foreach ($rows as $r) {
+            $rawGender[$r->user_id] = $this->rawGenderKey($r->gender);
+            $rawAge[$r->user_id] = $this->ageKeyFromDob($r->dob, $year);
+        }
+        $genderMap = $this->redistributeUnknown($rawGender, 'prefer_not_to_say', self::GENDER_GROUPS);
+        $ageMap = $this->redistributeUnknown($rawAge, 'unknown', self::AGE_GROUPS);
+        $sailors = $rows->map(fn ($r) => (object) [
+            'ageGroup' => $ageMap[$r->user_id],
+            'gender' => $genderMap[$r->user_id],
+        ]);
 
         // Ordered young → old. "Open" was dropped — in sailing "open" means the
-        // all-comers division, not an age band.
+        // all-comers division, not an age band. No Unknown bucket: unknown ages
+        // are redistributed into these divisions.
         $divisions = [
             ['label' => 'Youth', 'range' => '20 & under', 'key' => 'youth'],
             ['label' => 'U32', 'range' => '21–32', 'key' => 'u32'],
             ['label' => '33–54', 'range' => '33–54', 'key' => 'mid'],
             ['label' => 'Masters', 'range' => '55 & over', 'key' => 'masters'],
-            ['label' => 'Unknown', 'range' => 'Age not given', 'key' => 'unknown'],
         ];
 
-        // Genders actually present, in canonical order
+        // Genders actually present, in canonical order.
         $present = array_values(array_filter(
             array_keys(self::GENDER_LABELS),
             fn ($g) => $sailors->contains('gender', $g)
         ));
-
-        // Only keep the Unknown bucket if a shown-gender sailor lands in it.
-        // (It is the last division, so filtering it never leaves a keyed gap.)
-        $divisions = array_filter($divisions, fn ($d) => $d['key'] !== 'unknown'
-            || $sailors->contains(fn ($s) => $s->ageGroup === 'unknown' && in_array($s->gender, $present, true)));
 
         $counts = [];
         foreach ($divisions as $d) {
