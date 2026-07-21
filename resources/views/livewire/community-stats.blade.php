@@ -97,25 +97,51 @@
 
             {{-- Flashes over the season — interactive running total. Leads the
                  activity block: it extends the hero's qualifying-days thread.
-                 Table twin shows season totals per activity type (the chart is
-                 filterable, so the twin gives the aggregate like Community growth). --}}
+                 Table twin: flashes per month × activity type (the chart is
+                 filterable, so the twin gives the full aggregate). --}}
             <x-chart-card chart-id="chart-flash-filter"
                           title="Flashes over the season"
                           subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share">
                 <x-slot:table>
                     @php
-                        $catTotals = [];
+                        $monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        $cats = $stats['flashFilter']['categories'];
+                        $matrix = $monthTotals = $catTotals = [];
                         foreach ($stats['flashFilter']['rows'] as $r) {
+                            $m = (int) substr($r['date'], 5, 2);
+                            $matrix[$m][$r['category']] = ($matrix[$m][$r['category']] ?? 0) + $r['count'];
+                            $monthTotals[$m] = ($monthTotals[$m] ?? 0) + $r['count'];
                             $catTotals[$r['category']] = ($catTotals[$r['category']] ?? 0) + $r['count'];
                         }
+                        $activeMonths = array_filter(range(1, 12), fn ($m) => ($monthTotals[$m] ?? 0) > 0);
                     @endphp
                     <table class="table table-xs">
-                        <thead><tr><th>Activity</th><th class="text-right">Flashes</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                @foreach ($cats as $cat)
+                                    <th class="text-right">{{ $cat['label'] }}</th>
+                                @endforeach
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            @foreach ($stats['flashFilter']['categories'] as $cat)
-                                <tr><td>{{ $cat['label'] }}</td><td class="text-right">{{ $catTotals[$cat['key']] ?? 0 }}</td></tr>
+                            @foreach ($activeMonths as $m)
+                                <tr>
+                                    <td>{{ $monthNames[$m] }}</td>
+                                    @foreach ($cats as $cat)
+                                        <td class="text-right">{{ $matrix[$m][$cat['key']] ?? 0 }}</td>
+                                    @endforeach
+                                    <td class="text-right">{{ $monthTotals[$m] }}</td>
+                                </tr>
                             @endforeach
-                            <tr class="font-semibold"><td>Total</td><td class="text-right">{{ array_sum($catTotals) }}</td></tr>
+                            <tr class="font-semibold">
+                                <td>Total</td>
+                                @foreach ($cats as $cat)
+                                    <td class="text-right">{{ $catTotals[$cat['key']] ?? 0 }}</td>
+                                @endforeach
+                                <td class="text-right">{{ array_sum($catTotals) }}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </x-slot:table>
