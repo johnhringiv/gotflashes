@@ -95,8 +95,50 @@
                 </x-slot:table>
             </x-chart-card>
 
-            {{-- items-start so expanding one card's data table doesn't push its
-                 grid neighbor down (default stretch equalizes row height). --}}
+            {{-- Flashes over the season — interactive running total. Leads the
+                 activity block: it extends the hero's qualifying-days thread.
+                 Table twin shows season totals per activity type (the chart is
+                 filterable, so the twin gives the aggregate like Community growth). --}}
+            <x-chart-card chart-id="chart-flash-filter"
+                          title="Flashes over the season"
+                          subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share">
+                <x-slot:table>
+                    @php
+                        $catTotals = [];
+                        foreach ($stats['flashFilter']['rows'] as $r) {
+                            $catTotals[$r['category']] = ($catTotals[$r['category']] ?? 0) + $r['count'];
+                        }
+                    @endphp
+                    <table class="table table-xs">
+                        <thead><tr><th>Activity</th><th class="text-right">Flashes</th></tr></thead>
+                        <tbody>
+                            @foreach ($stats['flashFilter']['categories'] as $cat)
+                                <tr><td>{{ $cat['label'] }}</td><td class="text-right">{{ $catTotals[$cat['key']] ?? 0 }}</td></tr>
+                            @endforeach
+                            <tr class="font-semibold"><td>Total</td><td class="text-right">{{ array_sum($catTotals) }}</td></tr>
+                        </tbody>
+                    </table>
+                </x-slot:table>
+            </x-chart-card>
+
+            {{-- Community growth — cumulative sailors, stackable (defaults to age) --}}
+            <x-chart-card chart-id="chart-cumulative"
+                          title="Community growth"
+                          subtitle="Running total of registered sailors through {{ $selectedYear }} — stack by age or gender, count or share">
+                <x-slot:table>
+                    <table class="table table-xs">
+                        <thead><tr><th>Date</th><th class="text-right">Total sailors</th></tr></thead>
+                        <tbody>
+                            @foreach ($stats['sailorGrowth']['totals'] as $point)
+                                <tr><td>{{ $point['date'] }}</td><td class="text-right">{{ $point['total'] }}</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </x-slot:table>
+            </x-chart-card>
+
+            {{-- Sailor ages + award funnel — compact pair. items-start so expanding
+                 one card's data table doesn't push its grid neighbor down. --}}
             <div class="grid md:grid-cols-2 gap-6 items-start stats-duo">
                 {{-- G. Age distribution --}}
                 <x-chart-card chart-id="chart-ages"
@@ -152,27 +194,6 @@
                     </x-slot:table>
                 </x-chart-card>
             </div>
-
-            {{-- F2. Community growth — cumulative sailors, stackable --}}
-            <x-chart-card chart-id="chart-cumulative"
-                          title="Community growth"
-                          subtitle="Running total of registered sailors through {{ $selectedYear }} — stack by gender or age, count or share">
-                <x-slot:table>
-                    <table class="table table-xs">
-                        <thead><tr><th>Date</th><th class="text-right">Total sailors</th></tr></thead>
-                        <tbody>
-                            @foreach ($stats['sailorGrowth']['totals'] as $point)
-                                <tr><td>{{ $point['date'] }}</td><td class="text-right">{{ $point['total'] }}</td></tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </x-slot:table>
-            </x-chart-card>
-
-            {{-- F3. Flashes over the season — interactive running total --}}
-            <x-chart-card chart-id="chart-flash-filter"
-                          title="Flashes over the season"
-                          subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share" />
 
             {{-- J. Fun facts --}}
             @if (count($stats['funFacts']) > 0)

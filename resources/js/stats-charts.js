@@ -564,7 +564,10 @@ function renderSailorGrowth() {
     };
 
     const state = {
-        stackBy: 'gender',
+        // Default to age: it maps to the class's youth/U32 growth goal, gives
+        // four meaningful bands (vs a male-skewed gender split), and pairs with
+        // the age×gender snapshot in the Sailor ages chart. Gender is a toggle.
+        stackBy: 'age',
         mode: 'count',
         active: {
             gender: new Set(sailorGrowth.genders.map((g) => g.key)),
