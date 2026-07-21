@@ -86,9 +86,25 @@ window.addEventListener('resize', () => {
     resizeTimer = setTimeout(() => renderAll(), 150);
 });
 
+// Interactive filter state for the two cumulative-area charts, persisted across
+// re-renders so a resize redraw (phone rotation, devtools, URL-bar show/hide)
+// doesn't wipe a visitor's selections. Reset when the payload changes; see below.
+let sailorGrowthState = null;
+let flashFilterState = null;
+let chartStateToken = null;
+
 function renderAll() {
     if (!currentPayload) {
         return;
+    }
+
+    // A resize re-render keeps the same payload object, so filter state survives.
+    // A year switch or fresh load swaps in a new payload object, which resets the
+    // charts to their default (all-on) filters.
+    if (currentPayload !== chartStateToken) {
+        chartStateToken = currentPayload;
+        sailorGrowthState = null;
+        flashFilterState = null;
     }
 
     renderHeatmap();
@@ -250,9 +266,9 @@ function filterChip(label, swatchColor, initiallyOn, onToggle) {
 }
 
 // Mount a single "Reset" control in the top-right of the chart's card. Clicking
-// re-invokes the chart's render fn, which rebuilds it with default (all-on)
-// state — the filter state is local to that fn, so re-running is the reset.
-// Re-render-safe: a prior Reset (from a year change) is removed first.
+// runs the supplied handler, which clears the chart's persisted filter state and
+// re-renders it at defaults (all-on). Re-render-safe: a prior Reset (from a year
+// change or resize) is removed first.
 function mountReset(el, rerender) {
     const card = el.closest('.card');
     if (!card) {
@@ -567,17 +583,20 @@ function renderSailorGrowth() {
         age: { label: 'Age', field: 'ageGroup', values: sailorGrowth.ageGroups, color: (k) => GROWTH_AGE_COLORS[k] || COLORS.text },
     };
 
-    const state = {
-        // Default to age: it maps to the class's youth/U32 growth goal, gives
-        // four meaningful bands (vs a male-skewed gender split), and pairs with
-        // the age×gender snapshot in the Sailor ages chart. Gender is a toggle.
-        stackBy: 'age',
-        mode: 'count',
-        active: {
-            gender: new Set(sailorGrowth.genders.map((g) => g.key)),
-            age: new Set(sailorGrowth.ageGroups.map((a) => a.key)),
-        },
-    };
+    if (!sailorGrowthState) {
+        sailorGrowthState = {
+            // Default to age: it maps to the class's youth/U32 growth goal, gives
+            // four meaningful bands (vs a male-skewed gender split), and pairs with
+            // the age×gender snapshot in the Sailor ages chart. Gender is a toggle.
+            stackBy: 'age',
+            mode: 'count',
+            active: {
+                gender: new Set(sailorGrowth.genders.map((g) => g.key)),
+                age: new Set(sailorGrowth.ageGroups.map((a) => a.key)),
+            },
+        };
+    }
+    const state = sailorGrowthState;
 
     const controls = document.createElement('div');
     controls.className = 'flash-filter-controls';
@@ -642,7 +661,10 @@ function renderSailorGrowth() {
         }
     }
     draw();
-    resetBtn = mountReset(el, renderSailorGrowth);
+    resetBtn = mountReset(el, () => {
+        sailorGrowthState = null;
+        renderSailorGrowth();
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -813,12 +835,15 @@ function renderFlashFilter() {
     const catColor = Object.fromEntries(FLASH_CATEGORIES.map((c) => [c.key, c.color]));
     const categories = flashFilter.categories.map((c) => ({ ...c, color: catColor[c.key] || COLORS.text }));
 
-    const state = {
-        gender: new Set(flashFilter.genders.map((g) => g.key)),
-        ageGroup: new Set(flashFilter.ageGroups.map((a) => a.key)),
-        category: new Set(categories.map((c) => c.key)),
-        mode: 'count',
-    };
+    if (!flashFilterState) {
+        flashFilterState = {
+            gender: new Set(flashFilter.genders.map((g) => g.key)),
+            ageGroup: new Set(flashFilter.ageGroups.map((a) => a.key)),
+            category: new Set(categories.map((c) => c.key)),
+            mode: 'count',
+        };
+    }
+    const state = flashFilterState;
 
     const controls = document.createElement('div');
     controls.className = 'flash-filter-controls';
@@ -881,7 +906,10 @@ function renderFlashFilter() {
         }
     }
     draw();
-    resetBtn = mountReset(el, renderFlashFilter);
+    resetBtn = mountReset(el, () => {
+        flashFilterState = null;
+        renderFlashFilter();
+    });
 }
 
 // ---------------------------------------------------------------------------
