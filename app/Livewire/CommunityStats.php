@@ -567,6 +567,15 @@ class CommunityStats extends Component
             fn ($g) => $sailors->contains('gender', $g)
         ));
 
+        // Degenerate all-undisclosed year: redistribution had no disclosed group
+        // to impute into, so surface the undisclosed sailors rather than an empty
+        // chart. Only reachable if every active sailor that year is undisclosed.
+        if ($present === [] && $sailors->isNotEmpty()) {
+            $present = ['prefer_not_to_say'];
+        }
+
+        $genderLabel = fn (string $g): string => self::GENDER_LABELS[$g] ?? 'Undisclosed';
+
         $counts = [];
         foreach ($divisions as $d) {
             $inDivision = $sailors->where('ageGroup', $d['key']);
@@ -579,7 +588,7 @@ class CommunityStats extends Component
         return [
             'labels' => array_column($divisions, 'label'),
             'ranges' => array_column($divisions, 'range'),
-            'genders' => array_map(fn ($g) => ['key' => $g, 'label' => self::GENDER_LABELS[$g]], $present),
+            'genders' => array_map(fn ($g) => ['key' => $g, 'label' => $genderLabel($g)], $present),
             'counts' => $counts,
         ];
     }

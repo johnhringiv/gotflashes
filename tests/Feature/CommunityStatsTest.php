@@ -246,6 +246,23 @@ class CommunityStatsTest extends TestCase
         $this->assertSame(3, $dist['counts']['U32']['male'] + $dist['counts']['U32']['female']);
     }
 
+    public function test_age_distribution_surfaces_undisclosed_when_no_disclosed_gender(): void
+    {
+        // Degenerate year: every active sailor is undisclosed, so there is no
+        // disclosed group to redistribute into. The chart must still show them
+        // rather than silently rendering zero everywhere.
+        foreach (['2000-06-01', '1985-06-01'] as $dob) {
+            $u = User::factory()->create(['date_of_birth' => $dob, 'gender' => 'prefer_not_to_say']);
+            Flash::factory()->forUser($u)->sailing()->onDate('2026-05-01')->create();
+        }
+
+        $dist = Livewire::test('community-stats')->viewData('stats')['ages'];
+
+        $total = array_sum(array_map('array_sum', $dist['counts']));
+        $this->assertSame(2, $total); // both counted, not dropped
+        $this->assertContains('prefer_not_to_say', array_column($dist['genders'], 'key'));
+    }
+
     public function test_award_funnel_is_cumulative_registered_to_tiers(): void
     {
         // 3 registered: one never logs, one logs 1 day, one reaches 10+ days

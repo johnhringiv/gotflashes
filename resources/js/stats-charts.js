@@ -43,7 +43,7 @@ const FLASH_CATEGORIES = [
     { key: 'practice', label: 'Practice', color: '#e87ba4' },
     { key: 'leisure', label: 'Day Sailing', color: '#eda100' },
     { key: 'maintenance', label: 'Maintenance', color: '#1baf7a' },
-    { key: 'race_committee', label: 'Race Committee', color: '#eb6834' },
+    { key: 'race_committee', label: 'Race Committee', color: '#4a3aa7' },
 ];
 
 let currentPayload = null;
@@ -426,9 +426,13 @@ function renderHeatmap() {
     // Only weeks up to today are painted (a mid-season year stops in July), so
     // size the grid to what's actually shown rather than the full 53 weeks —
     // otherwise the right half is blank and the grid looks left-shoved.
+    // Use UTC throughout so the last painted day matches the UTC day loop below.
+    // (Mixing local getDate() here with the loop's UTC dates clipped the heatmap a
+    // day short around timezone boundaries — US offsets are negative, so local
+    // lags UTC for several evening hours.)
     const today = new Date();
-    const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const lastDay = year < today.getFullYear() ? dec31 : new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+    const todayISO = today.toISOString().slice(0, 10);
+    const lastDay = year < today.getUTCFullYear() ? dec31 : new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
     const lastDayOfYear = Math.round((lastDay - jan1) / 86400000);
     const weeksShown = Math.floor((lastDayOfYear + firstDayOffset) / 7) + 1;
 
