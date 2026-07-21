@@ -170,6 +170,36 @@ class ExportTest extends TestCase
         $this->assertStringContainsString('Mission Bay Fleet', $content);
     }
 
+    public function test_export_renders_none_affiliation_with_blank_fleet_number(): void
+    {
+        $user = User::factory()->create();
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => 2024,
+        ]);
+
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => '2024-06-15',
+            'activity_type' => 'sailing',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('export.user-data'));
+
+        $content = $response->streamedContent();
+        $flashRow = collect(explode('
+', $content))
+            ->first(fn ($line) => str_contains($line, '2024-06-15'));
+
+        $this->assertNotNull($flashRow);
+        // District/fleet names export honestly; the sentinel fleet_number 0 is
+        // blanked rather than exported as a fake fleet number
+        $this->assertStringContainsString('Unaffiliated/None,,None', $flashRow);
+    }
+
     public function test_export_handles_membership_changes_across_years(): void
     {
         // Create two districts and fleets

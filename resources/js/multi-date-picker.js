@@ -226,6 +226,12 @@ function initializeDatePicker(datePickerElement, mode) {
             static: false,
             disableMobile: false,
             onDayCreate: function(dObj, dStr, fp, dayElem) {
+                // flatpickr renders each day as <span aria-label="...">, which is invalid
+                // HTML (aria-label is not permitted on a generic span). The day spans are
+                // interactive, so role="button" is both semantically correct and makes the
+                // aria-label valid. No visual effect.
+                dayElem.setAttribute('role', 'button');
+
                 // Add custom class to existing dates to style them differently
                 const dateStr = fp.formatDate(dayElem.dateObj, 'Y-m-d');
                 if (existingDates.includes(dateStr)) {

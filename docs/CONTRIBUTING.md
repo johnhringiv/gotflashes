@@ -103,6 +103,21 @@ php artisan test --filter=FlashTest
 
 PHPUnit tests use in-memory SQLite. Browser tests use Pest 4's in-process server with `LazilyRefreshDatabase`.
 
+**HTML validation (W3C):** `tests/Browser/HtmlValidation` posts each page's rendered
+DOM to a [validator.nu](https://validator.nu) instance. Start one locally so the
+W3C checks actually run (otherwise they skip gracefully):
+
+```bash
+docker run -d --name vnu-validator -p 8888:8888 ghcr.io/validator/validator
+HTML_VALIDATOR_URL=http://localhost:8888 ./vendor/bin/pest tests/Browser/HtmlValidation
+```
+
+The harness filters two classes of framework-generated markup it can't control —
+Livewire's `wire:*` attributes and Laravel's `@csrf` `autocomplete="off"` on the
+hidden token (see the rationale in `HtmlQualityTest.php`). It validates each
+route's default state plus the logbook edit-modal state; other interaction states
+(form-error renders, modals, mobile W3C) aren't exhaustively covered.
+
 ### Test Data Seeding
 
 The `e2e:seed` command creates test users and data for local development and browser tests. It only runs in `local` and `testing` environments.

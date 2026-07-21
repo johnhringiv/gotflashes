@@ -53,8 +53,8 @@
                                     data-fleet-number="{{ $fleet->fleet_number }}"
                                     data-district-id="{{ $fleet->district_id ?? '' }}"
                                     data-district-name="{{ $fleet->district_name ?? '' }}">
-                                Fleet {{ $fleet->fleet_number }}
-                                @if(!$selectedDistrict && isset($fleet->district_name))
+                                {{ $fleet->fleet_number ? 'Fleet '.$fleet->fleet_number : 'None' }}
+                                @if(!$selectedDistrict && isset($fleet->district_name) && $fleet->fleet_number)
                                     ({{ $fleet->district_name }})
                                 @endif
                             </option>
@@ -166,7 +166,7 @@
                             <td class="text-sm">{{ $flash->location ?? '—' }}</td>
                             <td class="text-sm">{{ $flash->sail_number ?? '—' }}</td>
                             <td class="text-sm">{{ $membership?->district->name ?? '—' }}</td>
-                            <td class="text-sm">{{ $membership?->fleet->fleet_number ?? '—' }}</td>
+                            <td class="text-sm">{{ $membership?->fleet->fleet_number ?: '—' }}</td>
                             <td class="text-sm max-w-xs truncate" title="{{ $flash->notes }}">
                                 {{ $flash->notes ?? '' }}
                             </td>
@@ -189,7 +189,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <h3 class="text-xl font-bold mt-4">No flash entries found</h3>
+                <h2 class="text-xl font-bold mt-4">No flash entries found</h2>
                 <p class="text-base-content/60 mt-2">
                     @if($searchQuery || $selectedDistrict || $selectedFleet)
                         Try adjusting your filters to see more results.

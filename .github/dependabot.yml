@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Keep workflow actions on current majors (Node deprecations etc.)
+  # Version updates only — Dependabot security-update PRs are disabled;
+  # composer/npm are updated manually in maintenance batches.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # PRs follow the normal release path (develop -> main)
+    target-branch: develop

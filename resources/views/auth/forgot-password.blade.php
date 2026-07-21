@@ -50,8 +50,7 @@
         </div>
     </div>
 
-    <!-- Toast notification container -->
-    <div id="toast-container" class="toast toast-top toast-end"></div>
+    {{-- Toasts render into the shared #toast-container provided by <x-layout>. --}}
 
     <script @cspNonce type="module">
         document.addEventListener('DOMContentLoaded', function() {

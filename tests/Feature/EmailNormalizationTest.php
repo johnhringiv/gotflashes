@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Livewire\ProfileForm;
 use App\Livewire\RegistrationForm;
+use App\Models\District;
+use App\Models\Fleet;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
@@ -35,8 +38,8 @@ class EmailNormalizationTest extends TestCase
             'state' => 'CA',
             'zip_code' => '12345',
             'country' => 'USA',
-            'district_id' => 'none',
-            'fleet_id' => 'none',
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
             'yacht_club' => '',
         ], $overrides);
 
@@ -113,6 +116,13 @@ class EmailNormalizationTest extends TestCase
     public function test_profile_email_change_stores_pending_email_lowercased(): void
     {
         $user = User::factory()->create(['email' => 'current@example.com']);
+        // Profile saves require an affiliation (every registered user has one)
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => now()->year,
+        ]);
         $this->actingAs($user);
 
         Livewire::test(ProfileForm::class)

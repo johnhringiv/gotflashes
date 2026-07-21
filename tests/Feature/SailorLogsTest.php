@@ -235,6 +235,49 @@ class SailorLogsTest extends TestCase
         $component->assertSee('Next');
     }
 
+    public function test_csv_export_renders_none_fleet_as_dash_not_zero(): void
+    {
+        // Regression: the None fleet's fleet_number is 0 (non-null), so the
+        // old `?? '—'` fallback let a literal 0 through into the CSV.
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $user = User::factory()->create([
+            'first_name' => 'Unaff',
+            'last_name' => 'Iliated',
+        ]);
+
+        Member::factory()->create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => now()->year,
+        ]);
+
+        Flash::factory()->create([
+            'user_id' => $user->id,
+            'date' => now()->startOfYear()->addDays(1),
+            'activity_type' => 'sailing',
+            'event_type' => 'regatta',
+        ]);
+
+        $response = Livewire::actingAs($admin)
+            ->test('sailor-logs')
+            ->call('exportCsv')
+            ->assertSuccessful();
+
+        $content = $response->effects['download']['content'];
+        if (base64_encode(base64_decode($content, true)) === $content) {
+            $content = base64_decode($content);
+        }
+
+        $row = collect(explode("\n", $content))
+            ->first(fn ($line) => str_contains($line, 'Unaff Iliated'));
+
+        $this->assertNotNull($row);
+        // District name exports honestly; fleet_number 0 renders as a dash
+        $this->assertStringContainsString('Unaffiliated/None,—', $row);
+    }
+
     public function test_csv_export_includes_correct_data(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

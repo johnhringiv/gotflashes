@@ -15,6 +15,23 @@ class ProfileFormTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Profile saves require an affiliation; every registered user gets a
+     * membership row at registration, so tests mirror that invariant.
+     */
+    private function createUserWithNoneMembership(array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => now()->year,
+        ]);
+
+        return $user;
+    }
+
     public function test_component_renders_successfully(): void
     {
         $user = User::factory()->create();
@@ -92,7 +109,7 @@ class ProfileFormTest extends TestCase
 
     public function test_can_update_profile(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createUserWithNoneMembership([
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email' => 'john@example.com',
@@ -176,6 +193,81 @@ class ProfileFormTest extends TestCase
 
         $this->assertEquals($district2->id, $membership->district_id);
         $this->assertEquals($fleet2->id, $membership->fleet_id);
+    }
+
+    public function test_no_change_save_with_district_and_none_fleet_saves_cleanly(): void
+    {
+        // Regression: on profile-page load the TomSelect init re-syncs the
+        // district to Livewire as a STRING (HTML select values are strings)
+        // while the fleet's visible "None" is set silently and stays null.
+        // save() compared the string district to the DB's int with !== and
+        // misread an unchanged district as changed, then demanded a fleet
+        // re-pick ("Please select a fleet or choose None") on a no-op save.
+        $district = District::first();
+        $user = User::factory()->create();
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $district->id,
+            'fleet_id' => Fleet::noneId(),
+            'year' => now()->year,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('district_id', (string) $district->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $membership = Member::where('user_id', $user->id)
+            ->where('year', now()->year)
+            ->first();
+
+        $this->assertEquals($district->id, $membership->district_id);
+        $this->assertEquals(Fleet::noneId(), $membership->fleet_id);
+    }
+
+    public function test_selecting_none_for_district_or_fleet_shows_no_live_validation_error(): void
+    {
+        // Unaffiliated/None is a real district/fleet row, so picking it live-
+        // validates cleanly like any other selection (regression: the old
+        // 'none' sentinel was instantly flagged by the exists rule).
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('fleet_id', (string) Fleet::noneId())
+            ->assertHasNoErrors()
+            ->set('district_id', (string) District::noneId())
+            ->assertHasNoErrors();
+    }
+
+    public function test_picking_none_clears_a_stale_fleet_error(): void
+    {
+        // Regression: change district (JS auto-clears the fleet) -> save fails
+        // with "Please select a fleet or choose None" -> picking None then left
+        // the error on screen, because the live-validation guard skipped
+        // validateOnly() without resetting the field's existing error.
+        $district1 = District::first();
+        $district2 = District::skip(1)->first();
+        $fleet1 = Fleet::where('district_id', $district1->id)->first();
+        $user = User::factory()->create();
+
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => $district1->id,
+            'fleet_id' => $fleet1->id,
+            'year' => now()->year,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileForm::class)
+            ->set('district_id', (string) $district2->id)
+            ->set('fleet_id', null)
+            ->call('save')
+            ->assertHasErrors(['fleet_id'])
+            ->set('fleet_id', (string) Fleet::noneId())
+            ->assertHasNoErrors(['fleet_id']);
     }
 
     public function test_creates_membership_if_none_exists(): void
@@ -303,7 +395,7 @@ class ProfileFormTest extends TestCase
 
     public function test_optional_fields_can_be_empty(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithNoneMembership();
 
         Livewire::actingAs($user)
             ->test(ProfileForm::class)
@@ -318,8 +410,6 @@ class ProfileFormTest extends TestCase
             ->set('state', $user->state)
             ->set('zip_code', $user->zip_code)
             ->set('country', $user->country)
-            ->set('district_id', null) // Optional
-            ->set('fleet_id', null) // Optional
             ->set('yacht_club', '') // Optional
             ->call('save')
             ->assertHasNoErrors();
@@ -369,7 +459,7 @@ class ProfileFormTest extends TestCase
 
     public function test_shows_success_toast_after_save(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithNoneMembership();
 
         Livewire::actingAs($user)
             ->test(ProfileForm::class)
@@ -419,7 +509,7 @@ class ProfileFormTest extends TestCase
 
     public function test_can_keep_same_email_when_updating_profile(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createUserWithNoneMembership([
             'email' => 'john@example.com',
         ]);
 

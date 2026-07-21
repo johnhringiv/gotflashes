@@ -31,8 +31,10 @@ class UserProfileRules
             'state' => ['required', 'string', 'max:255'],
             'zip_code' => ['required', 'string', 'max:20'],
             'country' => ['required', 'string', 'max:255'],
-            'district_id' => ['nullable', 'exists:districts,id'],
-            'fleet_id' => ['nullable', 'exists:fleets,id'],
+            // district_id/fleet_id intentionally absent: both consumers
+            // (RegistrationForm, ProfileForm) define explicit-selection
+            // closures — a nullable base rule here would be dead code that
+            // misleadingly suggests null is acceptable.
             'yacht_club' => ['nullable', 'string', 'max:255'],
         ];
 

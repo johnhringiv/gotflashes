@@ -8,24 +8,6 @@ use Illuminate\Support\Str;
 class UserDataService
 {
     /**
-     * Normalize "none" values to null for district/fleet IDs.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    public static function normalizeAffiliationIds(array $data): array
-    {
-        if (isset($data['district_id']) && in_array($data['district_id'], ['none', '', null, 0], true)) {
-            $data['district_id'] = null;
-        }
-        if (isset($data['fleet_id']) && in_array($data['fleet_id'], ['none', '', null, 0], true)) {
-            $data['fleet_id'] = null;
-        }
-
-        return $data;
-    }
-
-    /**
      * Build user data array from validated input (for create/update).
      *
      * @param  array<string, mixed>  $validated
@@ -78,7 +60,7 @@ class UserDataService
      *
      * @return array<string, mixed>
      */
-    public static function buildMemberData(int $userId, ?int $districtId, ?int $fleetId, int $year): array
+    public static function buildMemberData(int $userId, int $districtId, int $fleetId, int $year): array
     {
         return [
             'user_id' => $userId,

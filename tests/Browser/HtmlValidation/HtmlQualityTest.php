@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Flash;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -35,6 +36,20 @@ if (! function_exists('e2eCheckStructure')) {
                     ->filter(fn ($m) => ($m['type'] ?? '') === 'error')
                     // Livewire adds non-standard attributes that validator.nu flags
                     ->reject(fn ($m) => str_contains($m['message'] ?? '', 'wire:'))
+                    // Laravel's @csrf helper emits <input type="hidden" name="_token"
+                    // autocomplete="off">. The WHATWG spec disallows autocomplete on/off on
+                    // hidden inputs, so validator.nu flags it, but the attribute is a
+                    // deliberate framework default (it stops browsers restoring a stale token
+                    // from bfcache on back-navigation, which would cause a 419). We don't
+                    // control this markup and don't want to lose that protection, so it is
+                    // filtered here — same rationale as the wire: exclusion above. The
+                    // filter is pinned to the _token field via the message's source
+                    // extract, so an autocomplete error on any OTHER hidden input still
+                    // fails the build (and a missing extract fails open — surfaced, not
+                    // swallowed).
+                    ->reject(fn ($m) => str_contains($m['message'] ?? '', 'autocomplete')
+                        && str_contains($m['message'] ?? '', 'hidden')
+                        && str_contains($m['extract'] ?? '', '_token'))
                     ->values();
 
                 expect($errors)->toBeEmpty('W3C errors: '.$errors->pluck('message')->join('; '));
@@ -67,8 +82,22 @@ foreach ($publicPaths as $path) {
         e2eCheckStructure($page);
     });
 
-    it("passes W3C validation on {$path}")->skip('Fix HTML errors first — see #34');
+    it("passes W3C validation on {$path}", function () use ($path, $validatorUrl) {
+        $page = visit($path);
+        e2eCheckW3C($page, $validatorUrl);
+    });
 }
+
+// The set-new-password view lives at /password/reset/{token}; it needs a token
+// segment so it can't go in $publicPaths above. (Distinct from /password/reset,
+// which renders the request-a-link form.)
+it('has valid HTML structure on /password/reset/{token}', function () {
+    e2eCheckStructure(visit('/password/reset/tok123?email=test@test.com'));
+});
+
+it('passes W3C validation on /password/reset/{token}', function () use ($validatorUrl) {
+    e2eCheckW3C(visit('/password/reset/tok123?email=test@test.com'), $validatorUrl);
+});
 
 foreach ($authPaths as $path) {
     it("has valid HTML structure on {$path} (auth)", function () use ($path) {
@@ -78,8 +107,34 @@ foreach ($authPaths as $path) {
         e2eCheckStructure($page);
     });
 
-    it("passes W3C validation on {$path} (auth)")->skip('Fix HTML errors first — see #34');
+    it("passes W3C validation on {$path} (auth)", function () use ($path, $validatorUrl) {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $page = visit($path);
+        e2eCheckW3C($page, $validatorUrl);
+    });
 }
+
+// Dynamic state: the logbook edit modal renders a SECOND flash-form (edit mode)
+// while the create-mode form stays on the page. Element IDs must stay unique
+// across both, so this state gets its own validation pass rather than relying on
+// the default (modal-closed) logbook render above.
+it('passes W3C validation on /logbook with the edit modal open (auth)', function () use ($validatorUrl) {
+    $user = User::factory()->create();
+    Flash::create([
+        'user_id' => $user->id,
+        'date' => now()->format('Y-m-d'),
+        'activity_type' => 'sailing',
+        'event_type' => 'regatta',
+    ]);
+    $this->actingAs($user);
+
+    $page = visit('/logbook');
+    $page->click('button:has-text("Edit")');
+    // The edit modal's submit button reads "Update Activity" once rendered.
+    $page->waitForText('Update Activity');
+    e2eCheckW3C($page, $validatorUrl);
+});
 
 foreach ($adminPaths as $path) {
     it("has valid HTML structure on {$path} (admin)", function () use ($path) {
@@ -91,7 +146,14 @@ foreach ($adminPaths as $path) {
         e2eCheckStructure($page);
     });
 
-    it("passes W3C validation on {$path} (admin)")->skip('Fix HTML errors first — see #34');
+    it("passes W3C validation on {$path} (admin)", function () use ($path, $validatorUrl) {
+        $user = User::factory()->create();
+        $user->is_admin = true;
+        $user->save();
+        $this->actingAs($user);
+        $page = visit($path);
+        e2eCheckW3C($page, $validatorUrl);
+    });
 }
 
 // Mobile tooltip-overflow regression guard (pages that render tooltips).

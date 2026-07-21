@@ -25,8 +25,8 @@ class MemberTest extends TestCase
     public function test_member_belongs_to_user(): void
     {
         $user = User::factory()->create();
-        $district = District::first();
-        $fleet = Fleet::first();
+        $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
+        $fleet = Fleet::where('fleet_number', '!=', Fleet::NONE_NUMBER)->firstOrFail();
 
         $member = Member::create([
             'user_id' => $user->id,
@@ -75,19 +75,21 @@ class MemberTest extends TestCase
 
     public function test_member_can_be_unaffiliated(): void
     {
+        // Unaffiliated = the sentinel None district/fleet rows; the columns
+        // are NOT NULL (see make_none_a_real_district_and_fleet migration)
         $user = User::factory()->create();
 
         $member = Member::create([
             'user_id' => $user->id,
-            'district_id' => null,
-            'fleet_id' => null,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
             'year' => 2025,
         ]);
 
-        $this->assertNull($member->district_id);
-        $this->assertNull($member->fleet_id);
-        $this->assertNull($member->district);
-        $this->assertNull($member->fleet);
+        $this->assertSame(District::noneId(), $member->district_id);
+        $this->assertSame(Fleet::noneId(), $member->fleet_id);
+        $this->assertSame(District::NONE_NAME, $member->district->name);
+        $this->assertSame(Fleet::NONE_NUMBER, $member->fleet->fleet_number);
     }
 
     public function test_user_can_have_multiple_memberships_across_years(): void
@@ -213,46 +215,41 @@ class MemberTest extends TestCase
         $this->assertDatabaseMissing('members', ['id' => $memberId]);
     }
 
-    public function test_deleting_district_cascades_to_fleets_and_nullifies_member_records(): void
+    public function test_deleting_district_with_member_records_is_blocked(): void
     {
         $user = User::factory()->create();
-        $district = District::first();
-        $fleet = Fleet::where('district_id', $district->id)->first();
+        $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
+        $fleet = Fleet::where('district_id', $district->id)->firstOrFail();
 
-        $member = Member::create([
+        Member::create([
             'user_id' => $user->id,
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
             'year' => 2025,
         ]);
 
-        // Deleting district cascades to delete its fleets
-        // This triggers onDelete('set null') on members table for both district_id and fleet_id
+        // members.district_id is NOT NULL, so the old onDelete('set null')
+        // behavior now blocks deleting a district that still has members
+        $this->expectException(QueryException::class);
         $district->delete();
-
-        $member->refresh();
-        $this->assertNull($member->district_id);
-        $this->assertNull($member->fleet_id); // Fleet was deleted, so also set to null
     }
 
-    public function test_deleting_fleet_sets_fleet_id_to_null(): void
+    public function test_deleting_fleet_with_member_records_is_blocked(): void
     {
         $user = User::factory()->create();
         $district = District::first();
         $fleet = Fleet::first();
 
-        $member = Member::create([
+        Member::create([
             'user_id' => $user->id,
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
             'year' => 2025,
         ]);
 
+        // members.fleet_id is NOT NULL, so deleting a referenced fleet is blocked
+        $this->expectException(QueryException::class);
         $fleet->delete();
-
-        $member->refresh();
-        $this->assertNull($member->fleet_id);
-        $this->assertNotNull($member->district_id); // District should remain
     }
 
     public function test_user_can_have_different_memberships_for_different_years(): void

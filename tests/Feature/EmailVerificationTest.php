@@ -5,6 +5,9 @@ namespace Tests\Feature;
 use App\Livewire\EmailVerificationBanner;
 use App\Livewire\ProfileForm;
 use App\Livewire\RegistrationForm;
+use App\Models\District;
+use App\Models\Fleet;
+use App\Models\Member;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailChange;
@@ -217,6 +220,14 @@ class EmailVerificationTest extends TestCase
         $user = User::factory()->create([
             'email' => 'john@example.com',
             'email_verified_at' => now(),
+        ]);
+
+        // Profile saves require an affiliation (every registered user has one)
+        Member::create([
+            'user_id' => $user->id,
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
+            'year' => now()->year,
         ]);
 
         Livewire::actingAs($user)

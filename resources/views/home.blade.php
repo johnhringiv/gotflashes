@@ -29,21 +29,21 @@
             <div class="card bg-base-100 shadow-lg">
                 <div class="card-body items-center text-center">
                     <div class="text-5xl font-bold text-primary">10</div>
-                    <h3 class="card-title text-xl">Days</h3>
+                    <h2 class="card-title text-xl">Days</h2>
                     <p class="text-base-content/70">First tier award - Get started!</p>
                 </div>
             </div>
             <div class="card bg-base-100 shadow-lg">
                 <div class="card-body items-center text-center">
                     <div class="text-5xl font-bold text-secondary">25</div>
-                    <h3 class="card-title text-xl">Days</h3>
+                    <h2 class="card-title text-xl">Days</h2>
                     <p class="text-base-content/70">Second tier award - Keep sailing!</p>
                 </div>
             </div>
             <div class="card bg-base-100 shadow-lg">
                 <div class="card-body items-center text-center">
                     <div class="text-5xl font-bold text-accent">50+</div>
-                    <h3 class="card-title text-xl">Days</h3>
+                    <h2 class="card-title text-xl">Days</h2>
                     <p class="text-base-content/70">Third tier award + Burgee eligibility!</p>
                 </div>
             </div>

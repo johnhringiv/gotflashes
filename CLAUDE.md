@@ -216,11 +216,13 @@ Routes in `routes/web.php`:
 
 **districts table:**
 - Lightning Class districts for geographic organization
+- Includes the sentinel "Unaffiliated/None" district (`District::NONE_NAME`/`District::noneId()`) — a real row so member affiliations are never null; excluded from the district leaderboard
 - Used in leaderboard aggregation
 
 **fleets table:**
 - Lightning Class fleets (numbered)
 - Includes fleet_number and fleet_name
+- Includes the sentinel "None" fleet (`fleet_number` 0, `Fleet::NONE_NUMBER`/`Fleet::noneId()`), selectable alongside ANY district; excluded from the fleet leaderboard; display code renders `fleet_number ?: '—'`
 - Used in leaderboard aggregation
 
 **flashes table:**
