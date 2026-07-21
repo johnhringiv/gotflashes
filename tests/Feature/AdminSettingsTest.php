@@ -130,4 +130,22 @@ class AdminSettingsTest extends TestCase
             ->assertSee("2025 finished at {$expected} days")
             ->assertSee('pre-launch process');
     }
+
+    public function test_available_years_excludes_pre_launch_years(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        // A flash dated before START_YEAR (2026) must not become a selectable year:
+        // the public stats page floors at the launch year, and getQualifyingTotal()
+        // would silently report 0 for such a year.
+        Flash::factory()->forUser($admin)->sailing()->onDate('2025-07-01')->create();
+        Flash::factory()->forUser($admin)->sailing()->onDate('2026-07-01')->create();
+
+        $years = Livewire::actingAs($admin)
+            ->test('admin-settings')
+            ->viewData('availableYears');
+
+        $this->assertContains(2026, $years);
+        $this->assertNotContains(2025, $years);
+    }
 }

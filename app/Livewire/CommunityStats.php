@@ -157,6 +157,12 @@ class CommunityStats extends Component
 
     private function ageGroupKey(?int $age): string
     {
+        // $age is calendar-year age (statsYear - birthYear) = the age the sailor
+        // reaches by Dec 31 of the stats year. This is a deliberate convention, not
+        // an approximation: it matches how one-design age divisions ("U32") are
+        // defined and stays stable regardless of when the page is viewed, unlike an
+        // exact age-as-of-today that would shift a sailor across a division mid-season.
+        //
         // Babies and young children are legitimately brought aboard, so there is
         // no lower age floor. Only a missing DOB or an implausible age (a future
         // or absurd birth year from bad data) reads as Unknown, rather than being
@@ -322,7 +328,10 @@ class CommunityStats extends Component
     }
 
     // Qualifying total per user: sailing days + at most 5 non-sailing days.
-    private const QUALIFYING_SQL = 'sailing_count + CASE WHEN non_sailing_count > 5 THEN 5 ELSE non_sailing_count END';
+    // Canonical expression for the "5 non-sailing days per year" cap — shared
+    // with AdminSettings so the admin goal page can never desync from /stats.
+    // Expects `sailing_count`/`non_sailing_count` columns in the enclosing query.
+    public const QUALIFYING_SQL = 'sailing_count + CASE WHEN non_sailing_count > 5 THEN 5 ELSE non_sailing_count END';
 
     private function getKeyCounters(int $year): array
     {

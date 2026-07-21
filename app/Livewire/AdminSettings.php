@@ -66,8 +66,14 @@ class AdminSettings extends AdminComponent
      */
     private function getAvailableYearsWithCurrent(): array
     {
+        // Floor at the launch year, exactly as CommunityStats::getAvailableYears()
+        // does, so the admin year picker never offers a pre-launch year the public
+        // stats page would reject (and for which getQualifyingTotal() is a silent 0).
+        $launchYear = (int) config('app.start_year', 2026);
+
         return collect($this->getAvailableYears())
             ->push(now()->year)
+            ->filter(fn ($year) => $year >= $launchYear)
             ->unique()
             ->sortDesc()
             ->values()
@@ -92,7 +98,7 @@ class AdminSettings extends AdminComponent
                     ->groupBy('user_id'),
                 'user_flashes'
             )
-            ->selectRaw('COALESCE(SUM(sailing_count + CASE WHEN non_sailing_count > 5 THEN 5 ELSE non_sailing_count END), 0) as total')
+            ->selectRaw('COALESCE(SUM('.CommunityStats::QUALIFYING_SQL.'), 0) as total')
             ->first();
 
         return (int) ($row->total ?? 0);
