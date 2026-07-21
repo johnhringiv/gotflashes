@@ -98,7 +98,8 @@ class Leaderboard extends Component
                 groupByColumns: ['fleets.id', 'fleets.fleet_number', 'fleets.fleet_name'],
                 userFlashesSubquery: $userFlashesSubquery,
                 mostRecentMembershipSubquery: $mostRecentMembershipSubquery,
-                year: $year
+                year: $year,
+                excludeId: Fleet::noneId()
             ),
             'district' => $this->buildGroupedQuery(
                 table: 'districts',
@@ -107,7 +108,8 @@ class Leaderboard extends Component
                 groupByColumns: ['districts.id', 'districts.name'],
                 userFlashesSubquery: $userFlashesSubquery,
                 mostRecentMembershipSubquery: $mostRecentMembershipSubquery,
-                year: $year
+                year: $year,
+                excludeId: District::noneId()
             ),
             default => $this->buildSailorQuery($userFlashesSubquery, $mostRecentMembershipSubquery, $year),
         };
@@ -152,7 +154,8 @@ class Leaderboard extends Component
         array $groupByColumns,
         $userFlashesSubquery,
         $mostRecentMembershipSubquery,
-        int $year
+        int $year,
+        int $excludeId = 0
     ): LengthAwarePaginator {
         $aggregatedColumns = [
             DB::raw('COUNT(DISTINCT recent_members.user_id) as member_count'),
@@ -166,6 +169,8 @@ class Leaderboard extends Component
 
         return DB::table($table)
             ->select(array_merge($selectColumns, $aggregatedColumns))
+            // The sentinel Unaffiliated/None row never ranks
+            ->where("{$table}.id", '!=', $excludeId)
             ->joinSub($mostRecentMembershipSubquery, 'recent_members', "{$table}.id", '=', $joinColumn)
             ->joinSub($userFlashesSubquery, 'user_flashes', 'recent_members.user_id', '=', 'user_flashes.user_id')
             ->groupBy($groupByColumns)

@@ -32,17 +32,20 @@ The `members` table tracks per-year affiliations:
 ```
 members
   - user_id (foreign key to users)
-  - district_id (foreign key to districts, nullable)
-  - fleet_id (foreign key to fleets, nullable)
+  - district_id (foreign key to districts, NOT NULL)
+  - fleet_id (foreign key to fleets, NOT NULL)
   - year (integer)
   - unique constraint on (user_id, year)
 ```
 
 **Key Constraints:**
 - One membership record per user per year
-- Both `district_id` and `fleet_id` are nullable (for unaffiliated users)
+- `district_id` and `fleet_id` are NOT NULL — "Unaffiliated/None" is a real
+  district row and a real fleet row (fleet_number 0, always selectable
+  alongside any district; both excluded from the grouped leaderboards).
+  See the `make_none_a_real_district_and_fleet` migration.
 - Cascade delete when the user is deleted
-- Set null when a district/fleet is deleted
+- Deleting a district/fleet that still has member records is blocked
 
 ### 3. When Membership Records Are Created or Updated
 
@@ -50,7 +53,7 @@ members
 - A membership record is created for the **current year** only
   (`RegistrationForm`, via `UserDataService::buildMemberData(...)`)
 - Uses the `district_id` / `fleet_id` selected during registration
-- If the user selects "Unaffiliated/None", both fields are null
+- If the user selects "Unaffiliated/None", the sentinel None district/fleet ids are stored
 
 **On Profile Update:**
 - Updating district/fleet in the profile writes to the **current year's** membership row
@@ -74,7 +77,7 @@ carry-forward subquery (`Leaderboard.php`), then aggregate:
 
 ### 5. Unaffiliated Users
 
-Users with `district_id` and/or `fleet_id` set to null for the resolved year:
+Users whose resolved membership points at the None district/fleet rows:
 - Have their flashes count toward their personal totals
 - Do **not** contribute to district or fleet leaderboard totals
 - Still appear on the sailor leaderboard
@@ -138,8 +141,9 @@ public function currentMembership(): ?Member
 - Membership records are cascade-deleted; historical leaderboard data no longer includes them.
 
 **District/Fleet deleted:**
-- Affected membership rows have `district_id`/`fleet_id` set to null; those users become
-  unaffiliated for the affected years. Historical flash data is preserved but unattributed.
+- Blocked while member records still reference the row (`district_id`/`fleet_id`
+  are NOT NULL); reassign the members first. Reference data is effectively
+  append-only in practice.
 
 ### 8. Implementation Notes & Possible Future Work
 

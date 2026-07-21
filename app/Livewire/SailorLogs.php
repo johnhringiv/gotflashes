@@ -192,7 +192,7 @@ class SailorLogs extends AdminComponent
                         $flash->location ?? '—',
                         $flash->sail_number ?? '—',
                         $membership?->district->name ?? '—',
-                        $membership?->fleet->fleet_number ?? '—',
+                        $membership?->fleet?->fleet_number ?: '—',  // 0 = the None fleet
                         $user->yacht_club ?? '—',
                         $flash->notes ?? '',
                         $flash->created_at->format('Y-m-d H:i:s'),

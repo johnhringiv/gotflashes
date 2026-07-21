@@ -272,24 +272,28 @@
 }
 
 .ts-wrapper.focus .ts-control {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 20%);
+    /* Secondary to match the native focus rings (see the .input:focus block) */
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px oklch(from var(--color-secondary) l c h / 20%);
     outline: none;
     background: var(--color-base-100) !important;
 }
 
 /* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
-   focus outline is base-content, which reads as black). --input-color also
-   drives DaisyUI's focus box-shadow underline. */
+   focus outline is base-content, which reads as black). Secondary, not
+   primary: thin strokes lose perceived hue, so the dark primary navy also
+   read near-black at 2px — and secondary is already the interaction color
+   (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
+   underline. */
 .input:focus,
 .input:focus-within,
 .select:focus,
 .select:focus-within,
 .textarea:focus,
 .textarea:focus-within {
-    --input-color: var(--color-primary);
+    --input-color: var(--color-secondary);
 
-    outline-color: var(--color-primary);
+    outline-color: var(--color-secondary);
 }
 
 /* Error-state fields keep an error-colored focus, mirroring
@@ -303,6 +307,13 @@
     --input-color: var(--color-error);
 
     outline-color: var(--color-error);
+}
+
+/* A select still showing its empty-value placeholder option ("Select activity
+   type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
+   currentcolor at 50%) so it can't be mistaken for a real selection. */
+.select:has(option[value='']:checked) {
+    color: color-mix(in oklab, currentcolor 50%, transparent);
 }
 
 /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
@@ -320,6 +331,13 @@
     background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
     color: var(--color-base-content);
     box-shadow: none;
+}
+
+/* Placeholder dimming targets the closed control's displayed text; option rows
+   in the open picker inherit the select's color in Chromium, so restore full
+   contrast for the actual choices. */
+.select:has(option[value='']:checked) option {
+    color: var(--color-base-content);
 }
 
 .ts-wrapper.disabled .ts-control,

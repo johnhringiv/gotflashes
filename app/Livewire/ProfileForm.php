@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\SuggestsEmailCorrections;
+use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
@@ -42,8 +43,10 @@ class ProfileForm extends Component
     public string $country = '';
 
     // Lightning Class Info (from current membership)
-    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
-    // until save() normalizes it to null after validation.
+    // mixed, not ?int: pre-filled as ints from the membership row, then
+    // numeric strings once the JS re-syncs them (HTML select values).
+    // fleet_id alone can also be null: the JS auto-clears it when the
+    // district changes. "Unaffiliated/None" is a real district/fleet row.
     public mixed $district_id = null;
 
     public mixed $fleet_id = null;
@@ -83,8 +86,36 @@ class ProfileForm extends Component
     public function rules()
     {
         $user = auth()->user();
+        $rules = UserProfileRules::rules((string) $user->id, false);
 
-        return UserProfileRules::rules((string) $user->id, false);
+        // Same explicit-selection closures as RegistrationForm: null/''/0 =
+        // untouched or auto-cleared by the JS. Run for both validateOnly()
+        // and validate(); 'nullable' is intentionally omitted — it
+        // short-circuits closures on null values.
+        $rules['district_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    $fail('Please select a district or choose Unaffiliated/None.');
+                } elseif (! District::where('id', $value)->exists()) {
+                    $fail('The selected district is invalid.');
+                }
+            },
+        ];
+        $rules['fleet_id'] = [
+            function ($attr, $value, $fail) {
+                if (in_array($value, ['', null, 0, '0'], true)) {
+                    // Reached on save when the JS auto-cleared the fleet after
+                    // a district change and the user never re-picked.
+                    $fail('Please select a fleet or choose None.');
+                } elseif ((int) $value !== Fleet::noneId() && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // The None fleet may accompany ANY district; a real fleet
+                    // must exist AND belong to the selected district.
+                    $fail('The selected fleet is invalid.');
+                }
+            },
+        ];
+
+        return $rules;
     }
 
     public function messages()
@@ -103,15 +134,11 @@ class ProfileForm extends Component
 
         // District/fleet are cleared programmatically (picking a district clears
         // the fleet), so don't flag them while empty — that would error an
-        // untouched field. 'none' is the explicit Unaffiliated/None pick, which
-        // only save() normalizes to null — the base exists:… rule here would
-        // reject the sentinel on the spot. They still validate on save. An
-        // explicit None pick must still CLEAR a stale "pick a fleet" error
-        // left by a failed save, hence the resetValidation.
+        // untouched field. They still validate on save. Any real pick —
+        // including Unaffiliated/None, which is a real row — falls through to
+        // validateOnly(), which also clears a stale error from a failed save.
         if (in_array($propertyName, ['district_id', 'fleet_id'], true)
-            && in_array($this->{$propertyName}, ['none', '', null, 0, '0'], true)) {
-            $this->resetValidation($propertyName);
-
+            && in_array($this->{$propertyName}, ['', null, 0, '0'], true)) {
             return;
         }
 
@@ -128,44 +155,10 @@ class ProfileForm extends Component
         // lowercased/trimmed form.
         $this->email = User::normalizeEmail($this->email);
 
-        // Capture raw values to distinguish "explicit None" ('none') from auto-clear (null)
-        // before normalization. JS sends 'none' for an explicit pick; null for auto-clear.
-        // Real ids arrive as STRINGS (HTML select values; the TomSelect init re-syncs them
-        // even untouched), so cast to int — the district-changed check below compares
-        // against the DB's int with !==, and "5" !== 5 would misread a no-op save as a
-        // district change and demand a fleet re-pick.
-        $fleetRaw = $this->fleet_id;
-        if (in_array($this->district_id, ['none', '', null, 0, '0'], true)) {
-            $this->district_id = null;
-        } else {
-            $this->district_id = (int) $this->district_id;
-        }
-        if (in_array($this->fleet_id, ['none', '', null, 0, '0'], true)) {
-            $this->fleet_id = null;
-        } else {
-            $this->fleet_id = (int) $this->fleet_id;
-        }
-
-        // Detect "district changed, fleet was auto-cleared, user didn't re-select".
-        // Auto-clear is identified by: district differs from DB AND fleet arrived as raw null
-        // (an explicit None pick would have arrived as 'none').
-        $originalDistrict = $user->currentMembership()?->district_id;
-        $rules = UserProfileRules::rules((string) $user->id, false);
-        $rules['fleet_id'] = [
-            function ($attr, $value, $fail) use ($originalDistrict, $fleetRaw) {
-                $districtChanged = $this->district_id !== $originalDistrict;
-                if ($districtChanged && $fleetRaw === null) {
-                    $fail('Please select a fleet or choose None.');
-                } elseif ($value !== null && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
-                    // Every fleet belongs to a district, so the fleet must exist
-                    // AND belong to the selected district — rejecting a cross-district
-                    // fleet or a fleet with no district selected.
-                    $fail('The selected fleet is invalid.');
-                }
-            },
-        ];
-
-        $validated = $this->validate($rules);
+        // rules() requires an explicit district and fleet (Unaffiliated/None is
+        // a real row); an empty fleet here means the JS auto-cleared it on a
+        // district change and the user never re-picked.
+        $validated = $this->validate();
 
         // Check if email has changed
         $emailChanged = $validated['email'] !== $user->email;
@@ -196,8 +189,8 @@ class ProfileForm extends Component
                     'year' => now()->year,
                 ],
                 [
-                    'district_id' => $validated['district_id'] ?? null,
-                    'fleet_id' => $validated['fleet_id'] ?? null,
+                    'district_id' => (int) $validated['district_id'],
+                    'fleet_id' => (int) $validated['fleet_id'],
                 ]
             );
         });

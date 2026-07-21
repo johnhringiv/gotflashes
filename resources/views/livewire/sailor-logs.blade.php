@@ -53,8 +53,8 @@
                                     data-fleet-number="{{ $fleet->fleet_number }}"
                                     data-district-id="{{ $fleet->district_id ?? '' }}"
                                     data-district-name="{{ $fleet->district_name ?? '' }}">
-                                Fleet {{ $fleet->fleet_number }}
-                                @if(!$selectedDistrict && isset($fleet->district_name))
+                                {{ $fleet->fleet_number ? 'Fleet '.$fleet->fleet_number : 'None' }}
+                                @if(!$selectedDistrict && isset($fleet->district_name) && $fleet->fleet_number)
                                     ({{ $fleet->district_name }})
                                 @endif
                             </option>
@@ -166,7 +166,7 @@
                             <td class="text-sm">{{ $flash->location ?? '—' }}</td>
                             <td class="text-sm">{{ $flash->sail_number ?? '—' }}</td>
                             <td class="text-sm">{{ $membership?->district->name ?? '—' }}</td>
-                            <td class="text-sm">{{ $membership?->fleet->fleet_number ?? '—' }}</td>
+                            <td class="text-sm">{{ $membership?->fleet->fleet_number ?: '—' }}</td>
                             <td class="text-sm max-w-xs truncate" title="{{ $flash->notes }}">
                                 {{ $flash->notes ?? '' }}
                             </td>

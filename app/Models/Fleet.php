@@ -19,6 +19,22 @@ class Fleet extends Model
     ];
 
     /**
+     * Fleet number of the sentinel "None" fleet (real fleets are numbered
+     * from 1). A real row so member affiliations are never null; selectable
+     * alongside ANY district, and excluded from the fleet leaderboard.
+     */
+    public const NONE_NUMBER = 0;
+
+    public static function noneId(): int
+    {
+        // once(): rules()/API endpoints call this repeatedly per request.
+        // The sentinel row is immutable after the migration runs, so even a
+        // long-lived worker can't cache a stale id; Laravel flushes the memo
+        // between tests, so RefreshDatabase stays safe.
+        return once(fn (): int => (int) static::query()->where('fleet_number', self::NONE_NUMBER)->value('id'));
+    }
+
+    /**
      * Get the district that owns the fleet.
      */
     public function district(): BelongsTo

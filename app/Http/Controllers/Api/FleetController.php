@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\District;
+use App\Models\Fleet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -33,6 +35,11 @@ class FleetController extends Controller
         $response = [
             'districts' => $districts,
             'fleets' => $fleets,
+            // Sentinel row ids so the frontend can special-case
+            // "Unaffiliated/None" (always-selectable fleet, blank-district
+            // auto-fill) without string matching
+            'none_district_id' => District::noneId(),
+            'none_fleet_id' => Fleet::noneId(),
         ];
 
         return response()->json($response);

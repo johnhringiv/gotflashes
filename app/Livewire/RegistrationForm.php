@@ -48,8 +48,8 @@ class RegistrationForm extends Component
     public string $country = 'United States';
 
     // Lightning Class Info
-    // mixed, not ?int: holds 'none' (the TomSelect Unaffiliated/None option)
-    // until register() normalizes it to null after validation.
+    // mixed, not ?int: null until touched, then a numeric id (as a string —
+    // HTML select values). "Unaffiliated/None" is a real district/fleet row.
     public mixed $district_id = null;
 
     public mixed $fleet_id = null;
@@ -59,15 +59,16 @@ class RegistrationForm extends Component
     public function rules()
     {
         $rules = UserProfileRules::rules(null, true);
-        // Override district/fleet to require explicit selection ('none' or a valid id).
-        // null/''/0 = untouched. These run for both validateOnly() (per-field on blur/change)
-        // and validate() (on submit). 'nullable' is intentionally omitted — it short-circuits
-        // closures on null values.
+        // Override district/fleet to require explicit selection. null/''/0 =
+        // untouched (or auto-cleared by the JS when the district changed).
+        // These run for both validateOnly() (per-field on blur/change) and
+        // validate() (on submit). 'nullable' is intentionally omitted — it
+        // short-circuits closures on null values.
         $rules['district_id'] = [
             function ($attr, $value, $fail) {
                 if (in_array($value, ['', null, 0, '0'], true)) {
                     $fail('Please select a district or choose Unaffiliated/None.');
-                } elseif ($value !== 'none' && ! District::where('id', $value)->exists()) {
+                } elseif (! District::where('id', $value)->exists()) {
                     $fail('The selected district is invalid.');
                 }
             },
@@ -76,11 +77,12 @@ class RegistrationForm extends Component
             function ($attr, $value, $fail) {
                 if (in_array($value, ['', null, 0, '0'], true)) {
                     $fail('Please select a fleet or choose None.');
-                } elseif ($value !== 'none' && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
-                    // Every fleet belongs to a district, so the fleet must exist
-                    // AND belong to the selected district. This rejects both a
-                    // cross-district fleet and a fleet with no district selected
-                    // (the frontend filters by district and auto-sets it).
+                } elseif ((int) $value !== Fleet::noneId() && ! Fleet::where('id', $value)->where('district_id', $this->district_id)->exists()) {
+                    // The None fleet may accompany ANY district; a real fleet
+                    // must exist AND belong to the selected district. This
+                    // rejects both a cross-district fleet and a fleet with no
+                    // district selected (the frontend filters by district and
+                    // auto-sets it).
                     $fail('The selected fleet is invalid.');
                 }
             },
@@ -148,18 +150,10 @@ class RegistrationForm extends Component
         // that never triggered the updated() hook).
         $this->email = User::normalizeEmail($this->email);
 
-        // Validation uses rules() which includes district/fleet "explicit selection required" closures.
-        // 'none' is accepted as a valid explicit choice — normalized to null after validation passes.
+        // Validation uses rules() which includes district/fleet "explicit selection
+        // required" closures. Unaffiliated/None is a real district/fleet row, so
+        // its ids validate like any other selection.
         $validated = $this->validate();
-
-        if ($this->district_id === 'none') {
-            $this->district_id = null;
-            $validated['district_id'] = null;
-        }
-        if ($this->fleet_id === 'none') {
-            $this->fleet_id = null;
-            $validated['fleet_id'] = null;
-        }
 
         // Create user and membership in a transaction
         $user = DB::transaction(function () use ($validated) {
@@ -172,11 +166,12 @@ class RegistrationForm extends Component
             // Create the user
             $user = User::create($userData);
 
-            // Always create membership record for current year (even if unaffiliated)
+            // Always create membership record for current year (unaffiliated =
+            // the None district/fleet)
             Member::create(UserDataService::buildMemberData(
                 $user->id,
-                $validated['district_id'] ?? null,
-                $validated['fleet_id'] ?? null,
+                (int) $validated['district_id'],
+                (int) $validated['fleet_id'],
                 now()->year
             ));
 

@@ -80,8 +80,8 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'female',
-            'district_id' => 'none', // Livewire converts 'none' to 0
-            'fleet_id' => 'none',
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -100,8 +100,8 @@ class RegistrationWithMembershipsTest extends TestCase
             ->first();
 
         $this->assertNotNull($membership);
-        $this->assertNull($membership->district_id);
-        $this->assertNull($membership->fleet_id);
+        $this->assertEquals(District::noneId(), $membership->district_id);
+        $this->assertEquals(Fleet::noneId(), $membership->fleet_id);
     }
 
     public function test_user_can_register_with_only_district(): void
@@ -111,7 +111,7 @@ class RegistrationWithMembershipsTest extends TestCase
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'non_binary',
             'district_id' => $district->id,
-            'fleet_id' => 'none',
+            'fleet_id' => Fleet::noneId(),
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -123,18 +123,18 @@ class RegistrationWithMembershipsTest extends TestCase
         $membership = $user->currentMembership();
 
         $this->assertEquals($district->id, $membership->district_id);
-        $this->assertNull($membership->fleet_id);
+        $this->assertEquals(Fleet::noneId(), $membership->fleet_id);
     }
 
     public function test_registration_rejects_a_fleet_without_a_district(): void
     {
-        // Every fleet belongs to a district, so a fleet with no district selected
-        // is invalid and must be rejected.
-        $fleet = Fleet::first();
+        // A real fleet must belong to the *selected* district — pairing one
+        // with the Unaffiliated/None district is invalid.
+        $fleet = Fleet::where('fleet_number', '!=', Fleet::NONE_NUMBER)->firstOrFail();
 
         $data = array_merge($this->getBaseRegistrationData(), [
             'gender' => 'prefer_not_to_say',
-            'district_id' => 'none',
+            'district_id' => District::noneId(),
             'fleet_id' => $fleet->id,
         ]);
 
@@ -150,7 +150,7 @@ class RegistrationWithMembershipsTest extends TestCase
     public function test_registration_rejects_a_fleet_from_a_different_district(): void
     {
         // The fleet must belong to the *selected* district, not just exist.
-        $fleet = Fleet::first();
+        $fleet = Fleet::where('fleet_number', '!=', Fleet::NONE_NUMBER)->firstOrFail();
         $otherDistrict = District::where('id', '!=', $fleet->district_id)->firstOrFail();
 
         $data = array_merge($this->getBaseRegistrationData(), [
@@ -172,7 +172,7 @@ class RegistrationWithMembershipsTest extends TestCase
     {
         $data = array_merge($this->getBaseRegistrationData(), [
             'district_id' => 99999, // Invalid ID
-            'fleet_id' => 'none',
+            'fleet_id' => Fleet::noneId(),
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -225,8 +225,8 @@ class RegistrationWithMembershipsTest extends TestCase
     public function test_user_without_district_or_fleet_still_creates_membership(): void
     {
         $data = array_merge($this->getBaseRegistrationData(), [
-            'district_id' => 'none',
-            'fleet_id' => 'none',
+            'district_id' => District::noneId(),
+            'fleet_id' => Fleet::noneId(),
         ]);
 
         Livewire::test(RegistrationForm::class)
@@ -237,8 +237,8 @@ class RegistrationWithMembershipsTest extends TestCase
 
         // Should create membership record even for unaffiliated users
         $this->assertEquals(1, $user->members()->count());
-        $this->assertNull($user->currentMembership()->district_id);
-        $this->assertNull($user->currentMembership()->fleet_id);
+        $this->assertEquals(District::noneId(), $user->currentMembership()->district_id);
+        $this->assertEquals(Fleet::noneId(), $user->currentMembership()->fleet_id);
     }
 
     public function test_registration_does_not_store_district_or_fleet_on_user_table(): void

@@ -168,7 +168,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="text-center">{{ $membership?->fleet?->fleet_number ?? '—' }}</td>
+                            <td class="text-center">{{ $membership?->fleet?->fleet_number ?: '—' }}</td>
                             <td class="text-center">{{ $membership?->district?->name ?? '—' }}</td>
                             <td class="text-center">
                                 <span class="badge badge-primary">

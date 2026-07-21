@@ -94,7 +94,7 @@ class ExportController extends Controller
                             $flash->location ?? '',
                             $flash->sail_number ?? '',
                             data_get($member, 'district.name', ''),
-                            data_get($member, 'fleet.fleet_number', ''),
+                            data_get($member, 'fleet.fleet_number') ?: '',  // 0 = the None fleet
                             data_get($member, 'fleet.fleet_name', ''),
                             $flash->notes ?? '',
                             $flash->created_at ?? '',
