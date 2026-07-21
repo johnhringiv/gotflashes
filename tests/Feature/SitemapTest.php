@@ -58,6 +58,7 @@ class SitemapTest extends TestCase
         $this->assertStringContainsString("<loc>{$baseUrl}/register</loc>", $content);
         $this->assertStringContainsString("<loc>{$baseUrl}/login</loc>", $content);
         $this->assertStringContainsString("<loc>{$baseUrl}/leaderboard</loc>", $content);
+        $this->assertStringContainsString("<loc>{$baseUrl}/stats</loc>", $content);
     }
 
     public function test_sitemap_uses_configured_app_url(): void
