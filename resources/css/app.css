@@ -630,23 +630,37 @@ span.flatpickr-weekday {
     }
 }
 
-/* Prior-year benchmark: a thin blue dashed line marking last year's level.
-   Masked to the bolt (same box + mask as the fill) so it spans exactly the
-   bolt at that height and never overhangs the logo — at any goal value. */
-.lightning-fill-prior {
+/* Prior-year benchmark. Two parts: a solid line across the bolt (masked to the
+   bolt so it spans exactly the red at that height and never overhangs), and a
+   dashed leader running right to the year chip. */
+.lightning-fill-prior-solid {
     position: absolute;
     inset: 15%;
     pointer-events: none;
     mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
 }
 
-.lightning-fill-prior::before {
+.lightning-fill-prior-solid::before {
     content: '';
     position: absolute;
     left: 0;
     right: 0;
     bottom: calc(var(--lf-prior, 0) * 100%);
+
+    /* Dark blue reads clearly over the red bolt fill */
+    border-top: 1.5px solid var(--color-primary);
+}
+
+.lightning-fill-prior-leader {
+    position: absolute;
+
+    /* Starts just past the bolt's right edge at the benchmark height, so the
+       dashes sit on the white only — the solid part carries it across the bolt. */
+    left: 61%;
+    right: 13%;
+    bottom: calc(15% + var(--lf-prior, 0) * 70%);
     border-top: 1px dashed var(--color-secondary);
+    pointer-events: none;
 }
 
 .lightning-fill-prior-chip {
@@ -699,7 +713,8 @@ span.flatpickr-weekday {
     max-width: 100%;
 }
 
-/* Wide charts (heatmap) scroll inside their own container */
+/* Wide charts (heatmap) scroll inside their own container only when they
+   overflow; JS centres them and switches off the scrollbar when they fit. */
 .stats-chart .chart-scroll {
     overflow-x: auto;
     padding-bottom: 0.25rem;
@@ -707,6 +722,183 @@ span.flatpickr-weekday {
 
 .stats-chart .chart-scroll svg {
     max-width: none;
+}
+
+/* Filterable cumulative-flashes chart: toggle chips grouped by dimension */
+.stats-chart .flash-filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.stats-chart .flash-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.stats-chart .ff-group-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.55;
+    margin-right: 0.15rem;
+}
+
+/* Multi-select toggle pill — pressed/unpressed states so it reads as a control,
+   not a legend swatch. */
+.stats-chart .ff-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    padding: 0.16rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-base-300);
+    background: var(--color-base-100);
+    color: var(--color-base-content);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.stats-chart .ff-chip:hover {
+    background: var(--color-base-200);
+    border-color: var(--color-base-content);
+}
+
+.stats-chart .ff-chip:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+/* On = included: clean neutral pill — colour lives in the swatch, not a fill,
+   so an all-on row stays calm. The swatch + hover carry the affordance. */
+.stats-chart .ff-chip[data-on='1'] {
+    border-color: var(--color-base-300);
+    background: var(--color-base-100);
+}
+
+/* Off = excluded: faded + struck through, an unambiguous "removed" signal. */
+.stats-chart .ff-chip[data-on='0'] {
+    opacity: 0.5;
+    background: transparent;
+    text-decoration: line-through;
+}
+
+.stats-chart .ff-chip .ff-swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.stats-chart .ff-chip[data-on='0'] .ff-swatch {
+    opacity: 0.35;
+}
+
+/* Pick-one segmented control (Stack by / Show) — a connected pill with a filled
+   active segment; unmistakably a toggle, unlike faded text. */
+.stats-chart .ff-segmented {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9999px;
+    background: var(--color-base-200);
+    border: 1px solid var(--color-base-300);
+}
+
+.stats-chart .ff-seg {
+    border: none;
+    background: transparent;
+    color: var(--color-base-content);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    padding: 0.14rem 0.7rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+}
+
+.stats-chart .ff-seg:hover {
+    opacity: 1;
+}
+
+.stats-chart .ff-seg[data-on='1'] {
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    opacity: 1;
+    font-weight: 600;
+}
+
+.stats-chart .ff-seg:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+/* Side-by-side charts (Sailor ages / award funnel): reserve a common chart
+   height so the two cards line up at the bottom (items-start keeps a data-table
+   expansion from shoving its neighbour). */
+.stats-duo .stats-chart {
+    min-height: 280px;
+}
+
+/* Single "Reset" control, top-right of a toggleable chart's card. Muted text
+   button that restores all filters (and stack/mode) to their defaults. */
+.stats-reset {
+    position: absolute;
+    top: 1.15rem;
+    right: 1.4rem;
+    z-index: 2;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.72rem;
+    line-height: 1;
+    color: var(--color-base-content);
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.12s ease;
+}
+
+.stats-reset:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.stats-reset:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+    opacity: 1;
+}
+
+/* Filters applied → the reset is actionable, so surface it. */
+.stats-reset[data-active='1'] {
+    opacity: 1;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* Heatmap "Less → More" scale — a centred row under the grid */
+.stats-chart .chart-heat-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--color-base-content);
+    opacity: 0.7;
+}
+
+.stats-chart .chart-heat-legend .heat-swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 2px;
 }
 
 .stats-chart .chart-tooltip {

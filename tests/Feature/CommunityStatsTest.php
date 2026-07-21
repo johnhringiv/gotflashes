@@ -119,31 +119,47 @@ class CommunityStatsTest extends TestCase
         $this->assertSame(1, $counters['activeSailors']);
     }
 
-    public function test_monthly_chart_data_includes_current_and_previous_year(): void
+    public function test_flash_filter_data_breaks_down_by_dimensions(): void
     {
-        $user = User::factory()->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-02')->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2025-03-10')->create();
+        $male = User::factory()->create(['gender' => 'male', 'date_of_birth' => '2000-01-01']); // U32 in 2026
+        Flash::factory()->forUser($male)->sailing()->onDate('2026-05-01')->create(['event_type' => 'regatta']);
 
-        $stats = Livewire::test('community-stats')->viewData('stats');
+        $female = User::factory()->create(['gender' => 'female', 'date_of_birth' => '1960-01-01']); // Masters
+        Flash::factory()->forUser($female)->maintenance()->onDate('2026-05-01')->create();
 
-        $this->assertSame(2, $stats['monthly']['current'][4]); // May 2026
-        $this->assertSame(1, $stats['monthly']['previous'][2]); // March 2025
+        $filter = Livewire::test('community-stats')->viewData('stats')['flashFilter'];
+
+        $this->assertContains('male', array_column($filter['genders'], 'key'));
+        $this->assertContains('female', array_column($filter['genders'], 'key'));
+        $this->assertContains('u32', array_column($filter['ageGroups'], 'key'));
+        $this->assertContains('masters', array_column($filter['ageGroups'], 'key'));
+
+        $row = collect($filter['rows'])->firstWhere(fn ($r) => $r['category'] === 'regatta');
+        $this->assertSame('male', $row['gender']);
+        $this->assertSame('u32', $row['ageGroup']);
+        $this->assertSame(1, $row['count']);
     }
 
-    public function test_event_mix_counts_sailing_days_by_type_and_month(): void
+    public function test_sailor_growth_totals_are_a_running_total_by_date(): void
     {
-        $user = User::factory()->create();
-        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create(['event_type' => 'regatta']);
-        Flash::factory()->forUser($user)->sailing()->onDate('2026-05-02')->create(['event_type' => 'leisure']);
-        Flash::factory()->forUser($user)->maintenance()->onDate('2026-05-03')->create();
+        User::factory()->create(['created_at' => '2026-02-05 10:00:00', 'gender' => 'male', 'date_of_birth' => '2000-01-01']);
+        User::factory()->create(['created_at' => '2026-02-05 12:00:00', 'gender' => 'female', 'date_of_birth' => '1960-01-01']);
+        User::factory()->create(['created_at' => '2026-04-10 09:00:00', 'gender' => 'male', 'date_of_birth' => '2000-01-01']);
 
-        $stats = Livewire::test('community-stats')->viewData('stats');
+        $growth = Livewire::test('community-stats')->viewData('stats')['sailorGrowth'];
+        $byDate = collect($growth['totals'])->keyBy('date');
 
-        $this->assertSame(1, $stats['eventMix'][5]['regatta']);
-        $this->assertSame(1, $stats['eventMix'][5]['leisure']);
-        $this->assertSame(0, $stats['eventMix'][5]['practice']);
+        $this->assertSame(2, $byDate['2026-02-05']['total']);
+        $this->assertSame(3, $byDate['2026-04-10']['total']);
+
+        // Broken down for stacking by gender and age
+        $this->assertContains('male', array_column($growth['genders'], 'key'));
+        $this->assertContains('female', array_column($growth['genders'], 'key'));
+        $this->assertContains('u32', array_column($growth['ageGroups'], 'key'));
+        $this->assertContains('masters', array_column($growth['ageGroups'], 'key'));
+        $feb5Male = collect($growth['rows'])->first(fn ($r) => $r['date'] === '2026-02-05' && $r['gender'] === 'male');
+        $this->assertSame('u32', $feb5Male['ageGroup']);
+        $this->assertSame(1, $feb5Male['count']);
     }
 
     public function test_heatmap_contains_flash_counts_per_day(): void
@@ -158,58 +174,99 @@ class CommunityStatsTest extends TestCase
         $this->assertSame(2, $stats['heatmap']['2026-05-01']);
     }
 
-    public function test_age_distribution_excludes_implausible_ages(): void
+    public function test_age_distribution_buckets_implausible_ages_as_unknown(): void
     {
-        $sailor = User::factory()->create(['date_of_birth' => '1990-06-01']); // 36 in 2026 → Open
-        $typo = User::factory()->create(['date_of_birth' => '2026-01-01']); // age 0 — excluded
+        // Babies are legitimately brought aboard, so there is no lower age floor;
+        // only a missing DOB or an implausible age (an absurd birth year from bad
+        // data) reads as Unknown. Both sailors are counted — the bad one just
+        // lands in Unknown rather than inflating a real division.
+        $sailor = User::factory()->create(['date_of_birth' => '1990-06-01', 'gender' => 'male']); // 36 in 2026 → 33–54
+        $implausible = User::factory()->create(['date_of_birth' => '1900-01-02', 'gender' => 'male']); // age > 100 → Unknown
         Flash::factory()->forUser($sailor)->sailing()->onDate('2026-05-01')->create();
-        Flash::factory()->forUser($typo)->sailing()->onDate('2026-05-02')->create();
+        Flash::factory()->forUser($implausible)->sailing()->onDate('2026-05-02')->create();
 
         $ages = Livewire::test('community-stats')->viewData('stats')['ages'];
 
-        $this->assertSame(1, array_sum($ages['counts']));
-        $this->assertSame(1, $ages['counts'][array_search('Open', $ages['labels'])]);
+        $total = array_sum(array_map('array_sum', $ages['counts']));
+        $this->assertSame(2, $total);
+        $this->assertSame(1, $ages['counts']['33–54']['male']);
+        $this->assertContains('Unknown', $ages['labels']);
+        $this->assertSame(1, $ages['counts']['Unknown']['male']);
+        $this->assertSame(0, $ages['counts']['Youth']['male']); // an over-100 age is not youth
+    }
+
+    public function test_age_distribution_counts_young_children_as_youth(): void
+    {
+        // A genuine young child (age 3) counts as Youth, not Unknown.
+        $child = User::factory()->create(['date_of_birth' => '2023-06-01', 'gender' => 'female']);
+        Flash::factory()->forUser($child)->sailing()->onDate('2026-05-01')->create();
+
+        $ages = Livewire::test('community-stats')->viewData('stats')['ages'];
+
+        $this->assertSame(1, $ages['counts']['Youth']['female']);
+        $this->assertNotContains('Unknown', $ages['labels']);
     }
 
     public function test_age_distribution_buckets_by_class_division(): void
     {
-        // One sailor per division: Youth (≤20), U32 (21–32), Open (33–54), Masters (55+)
-        $ages = [
-            'Youth' => 2011,   // 15
-            'U32' => 2000,     // 26
-            'Open' => 1985,    // 41
-            'Masters' => 1960, // 66
-        ];
-        foreach ($ages as $birthYear) {
-            $u = User::factory()->create(['date_of_birth' => "{$birthYear}-06-01"]);
+        // One sailor per division; "Open" is intentionally gone (a misnomer for age).
+        $birthYears = ['Youth' => 2011, 'U32' => 2000, '33–54' => 1985, 'Masters' => 1960];
+        foreach ($birthYears as $birthYear) {
+            $u = User::factory()->create(['date_of_birth' => "{$birthYear}-06-01", 'gender' => 'female']);
             Flash::factory()->forUser($u)->sailing()->onDate('2026-05-01')->create();
         }
 
         $dist = Livewire::test('community-stats')->viewData('stats')['ages'];
 
-        $this->assertSame(['Youth', 'U32', 'Open', 'Masters'], $dist['labels']);
-        foreach (['Youth', 'U32', 'Open', 'Masters'] as $division) {
-            $this->assertSame(1, $dist['counts'][array_search($division, $dist['labels'])], "{$division} bucket");
+        $this->assertSame(['Youth', 'U32', '33–54', 'Masters'], $dist['labels']);
+        $this->assertNotContains('Open', $dist['labels']);
+        foreach (['Youth', 'U32', '33–54', 'Masters'] as $division) {
+            $this->assertSame(1, $dist['counts'][$division]['female'], "{$division} bucket");
         }
     }
 
-    public function test_award_funnel_buckets_sailors_by_qualifying_days(): void
+    public function test_age_distribution_splits_by_gender_and_omits_undisclosed(): void
     {
+        $female = User::factory()->create(['date_of_birth' => '2000-06-01', 'gender' => 'female']);
+        $male = User::factory()->create(['date_of_birth' => '2000-06-01', 'gender' => 'male']);
+        $undisclosed = User::factory()->create(['date_of_birth' => '2000-06-01', 'gender' => 'prefer_not_to_say']);
+        foreach ([$female, $male, $undisclosed] as $u) {
+            Flash::factory()->forUser($u)->sailing()->onDate('2026-05-01')->create();
+        }
+
+        $dist = Livewire::test('community-stats')->viewData('stats')['ages'];
+
+        $genderKeys = array_column($dist['genders'], 'key');
+        $this->assertContains('female', $genderKeys);
+        $this->assertContains('male', $genderKeys);
+        // "prefer not to say" is not shown on the public chart
+        $this->assertNotContains('prefer_not_to_say', $genderKeys);
+        $this->assertSame(1, $dist['counts']['U32']['female']);
+        $this->assertSame(1, $dist['counts']['U32']['male']);
+        $this->assertArrayNotHasKey('prefer_not_to_say', $dist['counts']['U32']);
+    }
+
+    public function test_award_funnel_is_cumulative_registered_to_tiers(): void
+    {
+        // 3 registered: one never logs, one logs 1 day, one reaches 10+ days
+        User::factory()->create(); // never logged
+
         $starter = User::factory()->create();
         Flash::factory()->forUser($starter)->sailing()->onDate('2026-05-01')->create();
 
         $achiever = User::factory()->create();
         foreach (range(1, 11) as $day) {
-            $date = sprintf('2026-04-%02d', $day);
-            Flash::factory()->forUser($achiever)->sailing()->onDate($date)->create();
+            Flash::factory()->forUser($achiever)->sailing()->onDate(sprintf('2026-04-%02d', $day))->create();
         }
 
         $funnel = Livewire::test('community-stats')->viewData('stats')['funnel'];
 
-        $this->assertSame(1, $funnel[0]['count']); // 1-9 days
-        $this->assertSame(1, $funnel[1]['count']); // 10-24 days
-        $this->assertSame(0, $funnel[2]['count']);
-        $this->assertSame(0, $funnel[3]['count']);
+        $this->assertSame('Registered', $funnel[0]['label']);
+        $this->assertSame(3, $funnel[0]['count']);  // all registered
+        $this->assertSame(2, $funnel[1]['count']);  // logged a day (active)
+        $this->assertSame(1, $funnel[2]['count']);  // reached 10+
+        $this->assertSame(0, $funnel[3]['count']);  // reached 25+
+        $this->assertSame(0, $funnel[4]['count']);  // reached 50+
     }
 
     public function test_goal_display_with_goal_set(): void

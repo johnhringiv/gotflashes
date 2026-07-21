@@ -29,9 +29,11 @@
             @endif
         </div>
 
-        {{-- Prior-year benchmark line + chip, clipped to the circle --}}
+        {{-- Prior-year benchmark: solid across the bolt (masked, never overhangs),
+             a dashed leader out to the year chip on the right. --}}
         @if ($showPrior)
-            <div class="lightning-fill-prior" aria-hidden="true"></div>
+            <div class="lightning-fill-prior-solid" aria-hidden="true"></div>
+            <div class="lightning-fill-prior-leader" aria-hidden="true"></div>
             @if ($priorYear)
                 <div class="lightning-fill-prior-chip" aria-hidden="true">{{ $priorYear }}</div>
             @endif

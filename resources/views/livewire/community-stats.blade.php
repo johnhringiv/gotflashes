@@ -1,8 +1,6 @@
 @php
-    $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     $counters = $stats['counters'];
     $hasActivity = $counters['activeSailors'] > 0;
-    $eventTypeLabels = ['regatta' => 'Regatta', 'club_race' => 'Club Race', 'practice' => 'Practice', 'leisure' => 'Day Sailing'];
 @endphp
 
 <div>
@@ -64,68 +62,30 @@
     </div>
 
     {{-- B. Key counters --}}
+    @php
+        $counterTiles = [
+            ['title' => 'Qualifying Days', 'value' => $counters['totalQualifying'], 'desc' => 'Sailing + capped non-sailing'],
+            ['title' => 'Active Sailors', 'value' => $counters['activeSailors'], 'desc' => 'Logged at least one day'],
+            ['title' => 'Active Fleets', 'value' => $counters['activeFleets'], 'desc' => 'Represented on the water'],
+            ['title' => 'Active Districts', 'value' => $counters['activeDistricts'], 'desc' => 'Represented on the water'],
+            ['title' => 'Award Achievers', 'value' => $counters['awardAchievers'], 'desc' => 'Reached 10+ days', 'span' => 'col-span-2 md:col-span-1'],
+        ];
+    @endphp
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <div class="card bg-base-100 shadow-md">
-            <div class="stat">
-                <div class="stat-title">Qualifying Days</div>
-                <div class="stat-value text-primary text-3xl">{{ number_format($counters['totalQualifying']) }}</div>
-                <div class="stat-desc">Sailing + capped non-sailing</div>
+        @foreach ($counterTiles as $i => $tile)
+            <div class="card bg-base-100 shadow-md {{ $tile['span'] ?? '' }}">
+                <div class="stat">
+                    <div class="stat-title">{{ $tile['title'] }}</div>
+                    {{-- Alternating brand blues: primary (dark) / secondary (the homepage "25" blue) --}}
+                    <div class="stat-value text-3xl {{ $i % 2 === 0 ? 'text-primary' : 'text-secondary' }}">{{ number_format($tile['value']) }}</div>
+                    <div class="stat-desc">{{ $tile['desc'] }}</div>
+                </div>
             </div>
-        </div>
-        <div class="card bg-base-100 shadow-md">
-            <div class="stat">
-                <div class="stat-title">Active Sailors</div>
-                <div class="stat-value text-primary text-3xl">{{ number_format($counters['activeSailors']) }}</div>
-                <div class="stat-desc">Logged at least one day</div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-md">
-            <div class="stat">
-                <div class="stat-title">Active Fleets</div>
-                <div class="stat-value text-primary text-3xl">{{ number_format($counters['activeFleets']) }}</div>
-                <div class="stat-desc">Represented on the water</div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-md">
-            <div class="stat">
-                <div class="stat-title">Active Districts</div>
-                <div class="stat-value text-primary text-3xl">{{ number_format($counters['activeDistricts']) }}</div>
-                <div class="stat-desc">Represented on the water</div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-md col-span-2 md:col-span-1">
-            <div class="stat">
-                <div class="stat-title">Award Achievers</div>
-                <div class="stat-value text-primary text-3xl">{{ number_format($counters['awardAchievers']) }}</div>
-                <div class="stat-desc">Reached 10+ days</div>
-            </div>
-        </div>
+        @endforeach
     </div>
 
     @if ($hasActivity)
         <div class="space-y-6" wire:loading.class="opacity-50 transition-opacity">
-            {{-- C. Flashes by month, year over year --}}
-            <x-chart-card chart-id="chart-monthly"
-                          title="Flashes by month"
-                          subtitle="All logged days, {{ $selectedYear }} vs {{ $selectedYear - 1 }}">
-                <x-slot:table>
-                    <table class="table table-xs">
-                        <thead>
-                            <tr><th>Month</th><th class="text-right">{{ $selectedYear }}</th><th class="text-right">{{ $selectedYear - 1 }}</th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($monthNames as $i => $name)
-                                <tr>
-                                    <td>{{ $name }}</td>
-                                    <td class="text-right">{{ $stats['monthly']['current'][$i] }}</td>
-                                    <td class="text-right">{{ $stats['monthly']['previous'][$i] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </x-slot:table>
-            </x-chart-card>
-
             {{-- D. Activity heatmap --}}
             <x-chart-card chart-id="chart-heatmap"
                           title="When the community sails"
@@ -142,66 +102,56 @@
                 </x-slot:table>
             </x-chart-card>
 
-            {{-- E. Event type mix --}}
-            <x-chart-card chart-id="chart-event-mix"
-                          title="Sailing mix through the season"
-                          subtitle="Share of sailing days by event type">
-                <x-slot:table>
-                    <table class="table table-xs">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                @foreach ($eventTypeLabels as $label)
-                                    <th class="text-right">{{ $label }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($stats['eventMix'] as $month => $types)
-                                @if (array_sum($types) > 0)
-                                    <tr>
-                                        <td>{{ $monthNames[$month - 1] }}</td>
-                                        @foreach (array_keys($eventTypeLabels) as $type)
-                                            <td class="text-right">{{ $types[$type] }}</td>
-                                        @endforeach
-                                    </tr>
-                                @endif
-                            @endforeach
-                        </tbody>
-                    </table>
-                </x-slot:table>
-            </x-chart-card>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                {{-- F. New accounts by month --}}
-                <x-chart-card chart-id="chart-signups"
-                              title="New sailors by month"
-                              subtitle="Accounts created in {{ $selectedYear }}">
+            {{-- items-start so expanding one card's data table doesn't push its
+                 grid neighbor down (default stretch equalizes row height). --}}
+            <div class="grid md:grid-cols-2 gap-6 items-start stats-duo">
+                {{-- G. Age distribution --}}
+                <x-chart-card chart-id="chart-ages"
+                              title="Sailor ages"
+                              subtitle="Active sailors in {{ $selectedYear }}, by Lightning Class age division and gender">
                     <x-slot:table>
                         <table class="table table-xs">
-                            <thead><tr><th>Month</th><th class="text-right">Signups</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Division</th>
+                                    <th>Ages</th>
+                                    @foreach ($stats['ages']['genders'] as $g)
+                                        <th class="text-right">{{ $g['label'] }}</th>
+                                    @endforeach
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                @foreach ($monthNames as $i => $name)
-                                    <tr><td>{{ $name }}</td><td class="text-right">{{ $stats['signups'][$i] }}</td></tr>
+                                @foreach ($stats['ages']['labels'] as $i => $label)
+                                    @php $row = $stats['ages']['counts'][$label] ?? []; @endphp
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td class="opacity-70">{{ $stats['ages']['ranges'][$i] }}</td>
+                                        @foreach ($stats['ages']['genders'] as $g)
+                                            <td class="text-right">{{ $row[$g['key']] ?? 0 }}</td>
+                                        @endforeach
+                                        <td class="text-right">{{ array_sum($row) }}</td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </x-slot:table>
                 </x-chart-card>
 
-                {{-- G. Age distribution --}}
-                <x-chart-card chart-id="chart-ages"
-                              title="Sailor ages"
-                              subtitle="Active sailors in {{ $selectedYear }}, by Lightning Class age division">
+                {{-- H. Award tier funnel --}}
+                <x-chart-card chart-id="chart-funnel"
+                              title="From sign-up to award"
+                              subtitle="How far {{ $selectedYear }} sailors climb — registered, active, then each award">
                     <x-slot:table>
                         <table class="table table-xs">
-                            <thead><tr><th>Division</th><th>Ages</th><th class="text-right">Sailors</th></tr></thead>
+                            <thead><tr><th>Stage</th><th class="text-right">Sailors</th><th class="text-right">% of registered</th></tr></thead>
                             <tbody>
-                                @foreach ($stats['ages']['labels'] as $i => $label)
+                                @php $registered = $stats['funnel'][0]['count'] ?? 0; @endphp
+                                @foreach ($stats['funnel'] as $stage)
                                     <tr>
-                                        <td>{{ $label }}</td>
-                                        <td class="opacity-70">{{ $stats['ages']['ranges'][$i] }}</td>
-                                        <td class="text-right">{{ $stats['ages']['counts'][$i] }}</td>
+                                        <td>{{ $stage['label'] }}</td>
+                                        <td class="text-right">{{ $stage['count'] }}</td>
+                                        <td class="text-right opacity-70">{{ $registered ? round($stage['count'] / $registered * 100) : 0 }}%</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -210,23 +160,28 @@
                 </x-chart-card>
             </div>
 
-            {{-- H. Award tier funnel --}}
-            <x-chart-card chart-id="chart-funnel"
-                          title="Progress toward awards"
-                          subtitle="Where active sailors sit on the award ladder">
+            {{-- F2. Community growth — cumulative sailors, stackable --}}
+            <x-chart-card chart-id="chart-cumulative"
+                          title="Community growth"
+                          subtitle="Running total of registered sailors through {{ $selectedYear }} — stack by gender or age, count or share">
                 <x-slot:table>
                     <table class="table table-xs">
-                        <thead><tr><th>Band</th><th class="text-right">Sailors</th></tr></thead>
+                        <thead><tr><th>Date</th><th class="text-right">Total sailors</th></tr></thead>
                         <tbody>
-                            @foreach ($stats['funnel'] as $band)
-                                <tr><td>{{ $band['label'] }}</td><td class="text-right">{{ $band['count'] }}</td></tr>
+                            @foreach ($stats['sailorGrowth']['totals'] as $point)
+                                <tr><td>{{ $point['date'] }}</td><td class="text-right">{{ $point['total'] }}</td></tr>
                             @endforeach
                         </tbody>
                     </table>
                 </x-slot:table>
             </x-chart-card>
 
-            {{-- I. Fun facts --}}
+            {{-- F3. Flashes over the season — interactive running total --}}
+            <x-chart-card chart-id="chart-flash-filter"
+                          title="Flashes over the season"
+                          subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share" />
+
+            {{-- J. Fun facts --}}
             @if (count($stats['funFacts']) > 0)
                 <div>
                     <h2 class="text-xl font-bold mb-4">Fun facts</h2>

@@ -23,6 +23,10 @@ class CommunityStats extends Component
 {
     private const CACHE_MINUTES = 15;
 
+    // Bump when the cached stats shape changes, so old payloads are ignored
+    // rather than 500-ing the view after a deploy.
+    private const CACHE_VERSION = 12;
+
     #[Url]
     public int $selectedYear;
 
@@ -66,7 +70,12 @@ class CommunityStats extends Component
 
     public static function clearCache(int $year): void
     {
-        Cache::forget("community-stats-{$year}");
+        Cache::forget(self::cacheKey($year));
+    }
+
+    private static function cacheKey(int $year): string
+    {
+        return 'community-stats-v'.self::CACHE_VERSION."-{$year}";
     }
 
     /**
@@ -107,12 +116,10 @@ class CommunityStats extends Component
     {
         return [
             'year' => $stats['year'],
-            'previousYear' => $stats['year'] - 1,
             'monthsToShow' => $stats['monthsToShow'],
-            'monthly' => $stats['monthly'],
             'heatmap' => $stats['heatmap'],
-            'eventMix' => $stats['eventMix'],
-            'signups' => $stats['signups'],
+            'sailorGrowth' => $stats['sailorGrowth'],
+            'flashFilter' => $stats['flashFilter'],
             'ages' => $stats['ages'],
             'funnel' => $stats['funnel'],
         ];
@@ -121,7 +128,7 @@ class CommunityStats extends Component
     private function statsForYear(int $year): array
     {
         return Cache::remember(
-            "community-stats-{$year}",
+            self::cacheKey($year),
             now()->addMinutes(self::CACHE_MINUTES),
             fn () => $this->buildStats($year)
         );
@@ -134,16 +141,145 @@ class CommunityStats extends Component
             'monthsToShow' => $year === now()->year ? now()->month : 12,
             'counters' => $this->getKeyCounters($year),
             'priorTotal' => $this->getPriorYearTotal($year),
-            'monthly' => [
-                'current' => $this->getFlashesByMonth($year),
-                'previous' => $this->getFlashesByMonth($year - 1),
-            ],
             'heatmap' => $this->getActivityHeatmap($year),
-            'eventMix' => $this->getEventTypeMix($year),
-            'signups' => $this->getSignupsByMonth($year),
+            'sailorGrowth' => $this->getSailorGrowthData($year),
+            'flashFilter' => $this->getFlashFilterData($year),
             'ages' => $this->getAgeDistribution($year),
             'funnel' => $this->getAwardFunnel($year),
             'funFacts' => $this->getFunFacts($year),
+        ];
+    }
+
+    // Finest-grained flash category (stack order): sailing event types, then
+    // the two non-sailing activity types.
+    private const FLASH_CATEGORIES = ['regatta', 'club_race', 'practice', 'leisure', 'maintenance', 'race_committee'];
+
+    private function ageGroupKey(?int $age): string
+    {
+        // Babies and young children are legitimately brought aboard, so there is
+        // no lower age floor. Only a missing DOB or an implausible age (a future
+        // or absurd birth year from bad data) reads as Unknown, rather than being
+        // forced into a real division.
+        if ($age === null || $age < 0 || $age > 100) {
+            return 'unknown';
+        }
+        if ($age <= 20) {
+            return 'youth';
+        }
+        if ($age <= 32) {
+            return 'u32';
+        }
+        if ($age <= 54) {
+            return 'mid';
+        }
+
+        return 'masters';
+    }
+
+    /**
+     * Per-(date, category, gender, age-group) flash counts, plus the dimension
+     * values present, for the client-side-filterable cumulative chart. The
+     * frontend re-aggregates as toggles change, so counts stay at daily
+     * increments here (not cumulative).
+     */
+    private function getFlashFilterData(int $year): array
+    {
+        $flashes = DB::table('flashes as f')
+            ->join('users as u', 'u.id', '=', 'f.user_id')
+            ->selectRaw("DATE(f.date) as day, CASE WHEN f.activity_type = 'sailing' THEN f.event_type ELSE f.activity_type END as category, u.gender as gender, u.date_of_birth as dob")
+            ->whereRaw("strftime('%Y', f.date) = ?", [(string) $year])
+            ->get();
+
+        $agg = [];
+        foreach ($flashes as $flash) {
+            if (! in_array($flash->category, self::FLASH_CATEGORIES, true)) {
+                continue;
+            }
+            $gender = in_array($flash->gender, ['male', 'female', 'non_binary'], true) ? $flash->gender : 'prefer_not_to_say';
+            $age = $flash->dob ? $year - (int) substr($flash->dob, 0, 4) : null;
+            $ageGroup = $this->ageGroupKey($age);
+            $key = "{$flash->day}\x1f{$flash->category}\x1f{$gender}\x1f{$ageGroup}";
+            $agg[$key] = ($agg[$key] ?? 0) + 1;
+        }
+
+        $rows = [];
+        $seenGenders = $seenAges = $seenCats = [];
+        foreach ($agg as $key => $count) {
+            [$day, $category, $gender, $ageGroup] = explode("\x1f", $key);
+            $rows[] = ['date' => $day, 'category' => $category, 'gender' => $gender, 'ageGroup' => $ageGroup, 'count' => $count];
+            $seenGenders[$gender] = $seenAges[$ageGroup] = $seenCats[$category] = true;
+        }
+
+        $genderLabels = ['male' => 'Male', 'female' => 'Female', 'non_binary' => 'Non-binary', 'prefer_not_to_say' => 'Undisclosed'];
+        $ageLabels = ['youth' => 'Youth', 'u32' => 'U32', 'mid' => '33–54', 'masters' => 'Masters', 'unknown' => 'Unknown'];
+        $catLabels = ['regatta' => 'Regatta', 'club_race' => 'Club Race', 'practice' => 'Practice', 'leisure' => 'Day Sailing', 'maintenance' => 'Maintenance', 'race_committee' => 'Race Committee'];
+
+        $present = fn (array $order, array $labels, array $seen) => array_values(array_map(
+            fn ($k) => ['key' => $k, 'label' => $labels[$k]],
+            array_filter($order, fn ($k) => isset($seen[$k]))
+        ));
+
+        return [
+            'rows' => $rows,
+            'genders' => $present(array_keys($genderLabels), $genderLabels, $seenGenders),
+            'ageGroups' => $present(array_keys($ageLabels), $ageLabels, $seenAges),
+            'categories' => $present(self::FLASH_CATEGORIES, $catLabels, $seenCats),
+        ];
+    }
+
+    /**
+     * Sailor growth at date resolution, broken down by gender and age group so
+     * the frontend can stack by either. Accounts created before the year collapse
+     * to a year-start baseline; created_at is a full timestamp so points track
+     * actual signup dates. Also returns cumulative totals for the table twin.
+     */
+    private function getSailorGrowthData(int $year): array
+    {
+        $users = DB::table('users')
+            ->selectRaw("DATE(created_at) as day, CAST(strftime('%Y', created_at) AS INTEGER) as created_year, gender, date_of_birth as dob")
+            ->whereRaw('CAST(strftime(\'%Y\', created_at) AS INTEGER) <= ?', [$year])
+            ->get();
+
+        $agg = [];
+        $perDate = [];
+        foreach ($users as $user) {
+            $gender = in_array($user->gender, ['male', 'female', 'non_binary'], true) ? $user->gender : 'prefer_not_to_say';
+            $age = $user->dob ? $year - (int) substr($user->dob, 0, 4) : null;
+            $ageGroup = $this->ageGroupKey($age);
+            $date = ((int) $user->created_year < $year) ? "{$year}-01-01" : $user->day;
+            $key = "{$date}\x1f{$gender}\x1f{$ageGroup}";
+            $agg[$key] = ($agg[$key] ?? 0) + 1;
+            $perDate[$date] = ($perDate[$date] ?? 0) + 1;
+        }
+
+        $rows = [];
+        $seenGenders = $seenAges = [];
+        foreach ($agg as $key => $count) {
+            [$date, $gender, $ageGroup] = explode("\x1f", $key);
+            $rows[] = ['date' => $date, 'gender' => $gender, 'ageGroup' => $ageGroup, 'count' => $count];
+            $seenGenders[$gender] = $seenAges[$ageGroup] = true;
+        }
+
+        ksort($perDate);
+        $running = 0;
+        $totals = [];
+        foreach ($perDate as $date => $count) {
+            $running += $count;
+            $totals[] = ['date' => $date, 'total' => $running];
+        }
+
+        $genderLabels = ['male' => 'Male', 'female' => 'Female', 'non_binary' => 'Non-binary', 'prefer_not_to_say' => 'Undisclosed'];
+        $ageLabels = ['youth' => 'Youth', 'u32' => 'U32', 'mid' => '33–54', 'masters' => 'Masters', 'unknown' => 'Unknown'];
+        $present = fn (array $order, array $labels, array $seen) => array_values(array_map(
+            fn ($k) => ['key' => $k, 'label' => $labels[$k]],
+            array_filter($order, fn ($k) => isset($seen[$k]))
+        ));
+
+        return [
+            'rows' => $rows,
+            'genders' => $present(array_keys($genderLabels), $genderLabels, $seenGenders),
+            'ageGroups' => $present(array_keys($ageLabels), $ageLabels, $seenAges),
+            'totals' => $totals,
         ];
     }
 
@@ -242,22 +378,6 @@ class CommunityStats extends Component
     }
 
     /**
-     * Flash counts per month (all activity types).
-     *
-     * @return array<int> 12 entries, index 0 = January
-     */
-    private function getFlashesByMonth(int $year): array
-    {
-        $rows = DB::table('flashes')
-            ->selectRaw("CAST(strftime('%m', date) AS INTEGER) as month, COUNT(*) as count")
-            ->whereRaw("strftime('%Y', date) = ?", [(string) $year])
-            ->groupBy('month')
-            ->pluck('count', 'month');
-
-        return array_map(fn ($m) => (int) ($rows[$m] ?? 0), range(1, 12));
-    }
-
-    /**
      * Flash count per date, for the contribution-style heatmap.
      *
      * @return array<string, int> 'Y-m-d' => count
@@ -274,101 +394,101 @@ class CommunityStats extends Component
             ->toArray();
     }
 
-    /**
-     * Sailing event-type counts per month, for the stacked mix chart.
-     *
-     * @return array<int, array<string, int>> month (1-12) => type => count
-     */
-    private function getEventTypeMix(int $year): array
-    {
-        $rows = DB::table('flashes')
-            ->selectRaw("CAST(strftime('%m', date) AS INTEGER) as month, event_type, COUNT(*) as count")
-            ->where('activity_type', 'sailing')
-            ->whereNotNull('event_type')
-            ->whereRaw("strftime('%Y', date) = ?", [(string) $year])
-            ->groupBy('month', 'event_type')
-            ->get();
-
-        $mix = [];
-        foreach (range(1, 12) as $month) {
-            $mix[$month] = ['regatta' => 0, 'club_race' => 0, 'practice' => 0, 'leisure' => 0];
-        }
-        foreach ($rows as $row) {
-            if (isset($mix[$row->month][$row->event_type])) {
-                $mix[$row->month][$row->event_type] = (int) $row->count;
-            }
-        }
-
-        return $mix;
-    }
-
-    /**
-     * New account signups per month.
-     *
-     * @return array<int> 12 entries, index 0 = January
-     */
-    private function getSignupsByMonth(int $year): array
-    {
-        $rows = DB::table('users')
-            ->selectRaw("CAST(strftime('%m', created_at) AS INTEGER) as month, COUNT(*) as count")
-            ->whereRaw("strftime('%Y', created_at) = ?", [(string) $year])
-            ->groupBy('month')
-            ->pluck('count', 'month');
-
-        return array_map(fn ($m) => (int) ($rows[$m] ?? 0), range(1, 12));
-    }
+    // Gender display labels + canonical order (also the stack order, bottom→top).
+    // "Prefer not to say" / unset are deliberately excluded from the public
+    // gender split — it isn't a gender identity, and tiny undisclosed cells
+    // risk being identifying on a public page.
+    private const GENDER_LABELS = [
+        'female' => 'Female',
+        'male' => 'Male',
+        'non_binary' => 'Non-binary',
+    ];
 
     /**
      * Age distribution of sailors active in the year, bucketed by Lightning
-     * Class age division. Youth and U32 are the class's growth segments;
-     * Masters is 55+. Implausible ages (outside 8-100, i.e. typo'd birth
-     * dates) are excluded.
+     * Class age division and split by gender. Youth and U32 are the class's
+     * growth segments; Masters is 55+. Implausible (too old/young, i.e. typo'd
+     * birth dates) or missing birth dates land in an "Unknown" bucket, shown
+     * only when non-empty. Only genders present are returned.
      */
     private function getAgeDistribution(int $year): array
     {
-        $ages = DB::query()
+        $sailors = DB::query()
             ->fromSub($this->userFlashesSubquery($year), 'user_flashes')
             ->join('users', 'users.id', '=', 'user_flashes.user_id')
-            ->whereNotNull('users.date_of_birth')
-            ->selectRaw("? - CAST(strftime('%Y', users.date_of_birth) AS INTEGER) as age", [$year])
-            ->pluck('age')
-            ->filter(fn ($age) => $age >= 8 && $age <= 100);
+            ->selectRaw('users.date_of_birth as dob, users.gender as gender')
+            ->get()
+            ->map(fn ($r) => (object) [
+                'ageGroup' => $this->ageGroupKey($r->dob ? $year - (int) substr($r->dob, 0, 4) : null),
+                // Normalise blank/unknown gender values to "undisclosed"
+                'gender' => in_array($r->gender, ['female', 'male', 'non_binary'], true) ? $r->gender : 'prefer_not_to_say',
+            ]);
 
-        // Ordered young → old; ranges are inclusive.
+        // Ordered young → old. "Open" was dropped — in sailing "open" means the
+        // all-comers division, not an age band.
         $divisions = [
-            ['label' => 'Youth', 'range' => 'Under 21', 'test' => fn ($a) => $a <= 20],
-            ['label' => 'U32', 'range' => '21–32', 'test' => fn ($a) => $a >= 21 && $a <= 32],
-            ['label' => 'Open', 'range' => '33–54', 'test' => fn ($a) => $a >= 33 && $a <= 54],
-            ['label' => 'Masters', 'range' => '55+', 'test' => fn ($a) => $a >= 55],
+            ['label' => 'Youth', 'range' => '20 & under', 'key' => 'youth'],
+            ['label' => 'U32', 'range' => '21–32', 'key' => 'u32'],
+            ['label' => '33–54', 'range' => '33–54', 'key' => 'mid'],
+            ['label' => 'Masters', 'range' => '55 & over', 'key' => 'masters'],
+            ['label' => 'Unknown', 'range' => 'Age not given', 'key' => 'unknown'],
         ];
+
+        // Genders actually present, in canonical order
+        $present = array_values(array_filter(
+            array_keys(self::GENDER_LABELS),
+            fn ($g) => $sailors->contains('gender', $g)
+        ));
+
+        // Only keep the Unknown bucket if a shown-gender sailor lands in it.
+        // (It is the last division, so filtering it never leaves a keyed gap.)
+        $divisions = array_filter($divisions, fn ($d) => $d['key'] !== 'unknown'
+            || $sailors->contains(fn ($s) => $s->ageGroup === 'unknown' && in_array($s->gender, $present, true)));
+
+        $counts = [];
+        foreach ($divisions as $d) {
+            $inDivision = $sailors->where('ageGroup', $d['key']);
+            $counts[$d['label']] = [];
+            foreach ($present as $g) {
+                $counts[$d['label']][$g] = $inDivision->where('gender', $g)->count();
+            }
+        }
 
         return [
             'labels' => array_column($divisions, 'label'),
             'ranges' => array_column($divisions, 'range'),
-            'counts' => array_map(fn ($d) => $ages->filter($d['test'])->count(), $divisions),
+            'genders' => array_map(fn ($g) => ['key' => $g, 'label' => self::GENDER_LABELS[$g]], $present),
+            'counts' => $counts,
         ];
     }
 
     /**
-     * How many active sailors sit in each award-progress band.
+     * Award-progress funnel: cumulative "reached at least this stage" counts,
+     * from registered accounts down through activation and each award tier, so
+     * the drop-off at each step is visible.
      *
      * @return array<array{label: string, count: int}>
      */
     private function getAwardFunnel(int $year): array
     {
+        $registered = DB::table('users')
+            ->whereRaw("strftime('%Y', created_at) <= ?", [(string) $year])
+            ->count();
+
         $row = DB::query()
             ->fromSub($this->userFlashesSubquery($year), 'user_flashes')
-            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' < 10 THEN 1 ELSE 0 END) as tier0')
-            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' BETWEEN 10 AND 24 THEN 1 ELSE 0 END) as tier10')
-            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' BETWEEN 25 AND 49 THEN 1 ELSE 0 END) as tier25')
-            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' >= 50 THEN 1 ELSE 0 END) as tier50')
+            ->selectRaw('COUNT(*) as active')
+            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' >= 10 THEN 1 ELSE 0 END) as reached10')
+            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' >= 25 THEN 1 ELSE 0 END) as reached25')
+            ->selectRaw('SUM(CASE WHEN '.self::QUALIFYING_SQL.' >= 50 THEN 1 ELSE 0 END) as reached50')
             ->first();
 
         return [
-            ['label' => 'Getting started (1–9 days)', 'count' => (int) ($row->tier0 ?? 0)],
-            ['label' => '10-day award (10–24)', 'count' => (int) ($row->tier10 ?? 0)],
-            ['label' => '25-day award (25–49)', 'count' => (int) ($row->tier25 ?? 0)],
-            ['label' => '50-day award + burgee (50+)', 'count' => (int) ($row->tier50 ?? 0)],
+            ['label' => 'Registered', 'count' => $registered],
+            ['label' => 'Logged a day', 'count' => (int) ($row->active ?? 0)],
+            ['label' => '10-day award', 'count' => (int) ($row->reached10 ?? 0)],
+            ['label' => '25-day award', 'count' => (int) ($row->reached25 ?? 0)],
+            ['label' => '50-day award', 'count' => (int) ($row->reached50 ?? 0)],
         ];
     }
 
@@ -437,38 +557,6 @@ class CommunityStats extends Component
                 'title' => 'Most flashes logged at once',
                 'value' => "{$batch->n} flashes",
                 'detail' => "Logged in a single entry by {$batch->first_name} {$batch->last_name}",
-            ];
-        }
-
-        // Favorite day of the week
-        $dowRow = DB::table('flashes')
-            ->selectRaw("CAST(strftime('%w', date) AS INTEGER) as dow, COUNT(*) as count")
-            ->whereRaw("strftime('%Y', date) = ?", [(string) $year])
-            ->groupBy('dow')
-            ->orderByDesc('count')
-            ->first();
-
-        if ($dowRow && $dowRow->count >= 3) {
-            $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            $facts[] = [
-                'title' => 'Favorite day of the week',
-                'value' => "{$days[$dowRow->dow]}s",
-                'detail' => "{$dowRow->count} days logged on {$days[$dowRow->dow]}s",
-            ];
-        }
-
-        // Newest sailor (joined during the selected year)
-        $newest = DB::table('users')
-            ->select('first_name', 'last_name', 'created_at')
-            ->whereRaw("strftime('%Y', created_at) = ?", [(string) $year])
-            ->orderByDesc('created_at')
-            ->first();
-
-        if ($newest) {
-            $facts[] = [
-                'title' => 'Newest sailor',
-                'value' => "{$newest->first_name} {$newest->last_name}",
-                'detail' => 'Joined '.Carbon::parse($newest->created_at)->format('F j, Y'),
             ];
         }
 

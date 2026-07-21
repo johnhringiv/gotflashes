@@ -50,3 +50,6 @@ tests/Browser/Screenshots/
 
 # 2025 season report drop (contains member PII — never commit)
 /Report *.xlsx
+
+# Playwright MCP screenshot/artifact output
+.playwright-mcp/
