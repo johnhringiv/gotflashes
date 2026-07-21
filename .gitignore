@@ -47,3 +47,9 @@ tests/Browser/Screenshots/
 # Windows "Mark of the Web" alternate-data-stream artifacts (appear on WSL when
 # files are copied/downloaded via Windows, e.g. nginx-access.log:Zone.Identifier)
 *:Zone.Identifier
+
+# 2025 season report drop (contains member PII — never commit)
+/Report *.xlsx
+
+# Playwright MCP screenshot/artifact output
+.playwright-mcp/

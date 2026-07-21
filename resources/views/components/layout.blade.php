@@ -56,11 +56,15 @@
                 @auth
                     <li><a href="/logbook" class="text-base py-3 {{ str_starts_with(request()->path(), 'logbook') ? 'active font-bold text-accent' : '' }}">Logbook</a></li>
                 @endauth
+                <li><a href="/stats" class="text-base py-3 {{ str_starts_with(request()->path(), 'stats') ? 'active font-bold text-accent' : '' }}">Stats</a></li>
                 <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
                 @auth
                     @if(auth()->user()->is_admin)
                         <li><a href="/admin/fulfillment" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'active font-bold text-accent' : '' }}">Award Fulfillment</a></li>
                         <li><a href="/admin/sailor-logs" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'active font-bold text-accent' : '' }}">Sailor Logs</a></li>
+                    @endif
+                    @if(auth()->user()->isSuperAdmin())
+                        <li><a href="/admin/settings" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/settings') ? 'active font-bold text-accent' : '' }}">Settings</a></li>
                     @endif
                 @endauth
 
@@ -94,11 +98,15 @@
             @auth
                 <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
             @endauth
+            <li><a href="/stats" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'stats') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Stats</a></li>
             <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
             @auth
                 @if(auth()->user()->is_admin)
                     <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
                     <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
+                @endif
+                @if(auth()->user()->isSuperAdmin())
+                    <li><a href="/admin/settings" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/settings') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Settings</a></li>
                 @endif
             @endauth
         </ul>

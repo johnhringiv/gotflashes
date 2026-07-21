@@ -138,8 +138,10 @@ Routes in `routes/web.php`:
 - `/profile` - View/edit profile - auth required
 - `/export/user-data` - CSV export of profile + activity - auth required
 - `/leaderboard` - Public leaderboard with three tabs: sailor, fleet, district
+- `/stats` - Public community statistics page (lightning goal fill-up + D3 charts)
 - `/password/*`, `/verify-email/{token}` - Password reset and email verification
-- `/admin/fulfillment`, `/admin/sailor-logs` - Admin dashboards - auth + admin required
+- `/admin/fulfillment`, `/admin/sailor-logs` - Award-admin dashboards - auth + `admin` (`is_admin`) required
+- `/admin/settings` - Site settings (community goal) - auth + `super_admin` (`is_super_admin`, elevated tier) required
 
 ### Frontend Architecture
 
@@ -177,6 +179,14 @@ Routes in `routes/web.php`:
   - URL query parameter support via `#[Url]` attribute for bookmarking
   - Pagination resets automatically when switching tabs
   - Uses Livewire pagination theme for consistent styling
+- **CommunityStats** (`app/Livewire/CommunityStats.php`): Public `/stats` page
+  - Aggregates per year (15-min `Cache::remember`, key `community-stats-{year}`): key counters, monthly/heatmap/event-mix/signups/age/funnel chart data, fun facts
+  - Reuses the leaderboard's capped-qualifying-count + membership carry-forward SQL patterns; excludes the sentinel None fleet/district from group counts
+  - Chart data flows to D3 (`resources/js/stats-charts.js`) via a JSON script tag on load and the `community-stats-updated` browser event on year change; chart containers sit in `wire:ignore`
+  - Lightning goal fill-up hero: `<x-lightning-fill :percentage>` (CSS clip-path keyframe animation, no Alpine — CSP has no `unsafe-eval`); goal stored via `Setting::get("community_goal_{year}")`
+  - Every chart has a server-rendered `<details>` data-table twin (accessibility + no hover-gated values)
+- **AdminSettings** (`app/Livewire/AdminSettings.php`): `/admin/settings`, extends `AdminComponent`
+  - Sets the per-year community goal (`settings` table via `App\Models\Setting` key-value helpers); saving clears that year's stats cache
 
 **Multi-Date Picker** (`resources/js/multi-date-picker.js`):
 - Uses flatpickr for date selection with multiple date support
@@ -395,6 +405,7 @@ This allows tracking of:
   - Filtering and search capabilities
   - Admin action logging
 - ✅ Automated daily SQLite database backups (validated, WAL-aware, 90-day retention, logged to `backup` channel)
+- ✅ Public community stats page (`/stats`, issue #33): lightning goal fill-up hero (configurable default goal, site-admin override at `/admin/settings`), key counters, five D3 charts (activity heatmap, flashes over the season, community growth, sailor ages, award funnel), fun facts; undisclosed gender / unknown age redistributed into displayed groups
 
 **Planned:**
 - 📋 Historical year views (read-only previous years)
