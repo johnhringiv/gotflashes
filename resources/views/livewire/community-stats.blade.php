@@ -4,20 +4,13 @@
 @endphp
 
 <div>
-    {{-- Header: title + year selector --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-primary">Community Stats</h1>
-            <p class="text-base-content/70 mt-1">The Lightning community's season, at a glance</p>
-        </div>
-        <label class="flex items-center gap-2" for="stats-year">
-            <span class="text-sm font-medium">Year</span>
-            <select id="stats-year" wire:model.live="selectedYear" class="select select-bordered select-sm w-28">
-                @foreach ($availableYears as $year)
-                    <option value="{{ $year }}">{{ $year }}</option>
-                @endforeach
-            </select>
-        </label>
+    {{-- Header. The year selector is intentionally omitted: the app launched in
+         start_year, so there is only ever one selectable year today. Per-metric
+         time framing (all-time / YTD / current) is the planned replacement (#33).
+         The component still resolves selectedYear to the current year internally. --}}
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-primary">Community Stats</h1>
+        <p class="text-base-content/70 mt-1">The Lightning community's season, at a glance</p>
     </div>
 
     {{-- A. Lightning fill-up hero --}}
