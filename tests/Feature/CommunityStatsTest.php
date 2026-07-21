@@ -481,6 +481,6 @@ class CommunityStatsTest extends TestCase
 
         $this->get('/stats')
             ->assertSee('community-stats-data', false)
-            ->assertSee('"monthsToShow"', false);
+            ->assertSee('"heatmap"', false);
     }
 }

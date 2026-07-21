@@ -79,7 +79,8 @@ sh "$DIR/deploy.sh" "$ENV_FILE"
 # Confirm the edge too (deploy.sh only checks localhost).
 if [ -n "$PUBLIC_URL" ]; then
     if edge_healthy; then
-        echo "$(date -u +%FT%TZ) deploy healthy at edge"
+        ver=$(curl -sf -m 5 "$PUBLIC_URL/version" 2>/dev/null | tr -d '[:space:]')
+        echo "$(date -u +%FT%TZ) deploy healthy at edge (version ${ver:-unknown})"
         exit 0
     fi
     echo "$(date -u +%FT%TZ) DEPLOY UNHEALTHY: ${PUBLIC_URL}/up not responding"

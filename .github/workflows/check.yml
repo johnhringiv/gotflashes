@@ -65,6 +65,8 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          build-args: |
+            APP_VERSION=${{ github.sha }}
           load: true # export to the local daemon for the smoke test below
           tags: gotflashes:ci
           # The monthly scheduled run exists to pick up base-image/apk CVE
@@ -86,6 +88,8 @@ jobs:
           done
           curl -sf http://localhost:8080/up >/dev/null || { docker logs gotflashes-ci; exit 1; }
           curl -sf http://localhost:8080/ >/dev/null || { docker logs gotflashes-ci; exit 1; }
+          ver=$(curl -sf http://localhost:8080/version) || { docker logs gotflashes-ci; exit 1; }
+          [ "$ver" = "${{ github.sha }}" ] || { echo "version endpoint mismatch: served '$ver' != '${{ github.sha }}'"; docker logs gotflashes-ci; exit 1; }
 
       - name: Stop container
         if: always()
@@ -129,6 +133,8 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
+          build-args: |
+            APP_VERSION=${{ github.sha }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
