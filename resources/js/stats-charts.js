@@ -660,11 +660,14 @@ function renderSailorGrowth() {
             resetBtn.dataset.active = isFiltered() ? '1' : '0';
         }
     }
-    draw();
+    // Mount Reset before the first draw so draw() can set its active state — on a
+    // resize re-render the persisted filters may already be active, and a button
+    // mounted after draw() would default to inactive and fall out of sync.
     resetBtn = mountReset(el, () => {
         sailorGrowthState = null;
         renderSailorGrowth();
     });
+    draw();
 }
 
 // ---------------------------------------------------------------------------
@@ -905,11 +908,14 @@ function renderFlashFilter() {
             resetBtn.dataset.active = isFiltered() ? '1' : '0';
         }
     }
-    draw();
+    // Mount Reset before the first draw so draw() can set its active state — on a
+    // resize re-render the persisted filters may already be active, and a button
+    // mounted after draw() would default to inactive and fall out of sync.
     resetBtn = mountReset(el, () => {
         flashFilterState = null;
         renderFlashFilter();
     });
+    draw();
 }
 
 // ---------------------------------------------------------------------------
