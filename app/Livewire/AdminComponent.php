@@ -19,8 +19,17 @@ abstract class AdminComponent extends Component
 
     public function mount(): void
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
         $this->initializeYear();
+    }
+
+    /**
+     * Access gate for the component. Defaults to award-admin; subclasses that
+     * need the elevated site-operator tier override this (see AdminSettings).
+     */
+    protected function authorizeAccess(): void
+    {
+        $this->authorizeAdmin();
     }
 
     /**
@@ -31,6 +40,17 @@ abstract class AdminComponent extends Component
     {
         if (! auth()->check() || ! auth()->user()->is_admin) {
             abort(403, 'Unauthorized. Admin access required.');
+        }
+    }
+
+    /**
+     * Ensure the current user holds the elevated site-operator tier.
+     * Aborts with 403 if not authenticated or not a super admin.
+     */
+    protected function authorizeSuperAdmin(): void
+    {
+        if (! auth()->check() || ! auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Site admin access required.');
         }
     }
 

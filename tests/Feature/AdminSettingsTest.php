@@ -32,9 +32,18 @@ class AdminSettingsTest extends TestCase
         $this->actingAs($user)->get('/admin/settings')->assertStatus(403);
     }
 
+    public function test_award_admins_without_super_admin_get_403(): void
+    {
+        // Award administration (is_admin) is not enough for site settings —
+        // the settings page requires the elevated site-operator tier.
+        $awardAdmin = User::factory()->create(['is_admin' => true, 'is_super_admin' => false]);
+
+        $this->actingAs($awardAdmin)->get('/admin/settings')->assertStatus(403);
+    }
+
     public function test_admins_can_view_settings_page(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
 
         $response = $this->actingAs($admin)->get('/admin/settings');
 
@@ -44,7 +53,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_admin_can_save_goal(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
 
         Livewire::actingAs($admin)
             ->test('admin-settings')
@@ -58,7 +67,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_saving_goal_clears_stats_cache_for_that_year(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
         // Matches CommunityStats::cacheKey() (versioned)
         Cache::put('community-stats-v13-2026', ['stale' => true], 900);
 
@@ -72,7 +81,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_goal_validation_rejects_non_positive_values(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
 
         Livewire::actingAs($admin)
             ->test('admin-settings')
@@ -84,7 +93,7 @@ class AdminSettingsTest extends TestCase
     public function test_goal_can_be_cleared(): void
     {
         Setting::set('community_goal_2026', '1000');
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
 
         Livewire::actingAs($admin)
             ->test('admin-settings')
@@ -99,7 +108,7 @@ class AdminSettingsTest extends TestCase
     {
         Setting::set('community_goal_2026', '1500');
         Setting::set('community_goal_2025', '800');
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
         Flash::factory()->forUser($admin)->sailing()->onDate('2025-05-01')->create();
 
         Livewire::actingAs($admin)
@@ -111,7 +120,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_shows_progress_toward_goal(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
         Flash::factory()->forUser($admin)->sailing()->onDate('2026-05-01')->create();
         Setting::set('community_goal_2026', '100');
 
@@ -122,7 +131,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_shows_prior_year_historical_reference(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
         $expected = number_format((int) config('community.historical_totals')[2025]);
 
         Livewire::actingAs($admin)
@@ -133,7 +142,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_available_years_excludes_pre_launch_years(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
 
         // A flash dated before START_YEAR (2026) must not become a selectable year:
         // the public stats page floors at the launch year, and getQualifyingTotal()

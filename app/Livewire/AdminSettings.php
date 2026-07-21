@@ -19,6 +19,12 @@ class AdminSettings extends AdminComponent
         $this->loadGoal();
     }
 
+    // Site settings require the elevated site-operator tier, not just award-admin.
+    protected function authorizeAccess(): void
+    {
+        $this->authorizeSuperAdmin();
+    }
+
     public function updatedSelectedYear(): void
     {
         $this->loadGoal();

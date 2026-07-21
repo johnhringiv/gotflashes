@@ -93,10 +93,14 @@ Route::post('/password/reset', ResetPassword::class)
 Route::get('/verify-email/{token}', VerifyEmailChangeController::class)
     ->name('verify-email-change');
 
-// Admin routes
+// Admin routes (award administration)
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::view('/fulfillment', 'admin.awards-dashboard')->name('admin.fulfillment');
     Route::view('/sailor-logs', 'admin.sailor-logs')->name('admin.sailor-logs');
+});
+
+// Site-operator routes (elevated tier) — site configuration
+Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::view('/settings', 'admin.settings')->name('admin.settings');
 });
 
