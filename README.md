@@ -31,6 +31,10 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 ![Multi-Date Calendar Picker](docs/screenshots/datepicker.png)
 *Select multiple dates at once with existing entries marked*
 
+### Community Statistics
+![Community Statistics](docs/screenshots/stats.jpg)
+*Public dashboard: community-goal progress, activity heatmap, growth and season charts, and fun facts*
+
 ### Award Fulfillment Dashboard (Admin)
 ![Award Fulfillment Dashboard](docs/screenshots/fulfillment.png)
 *Admin interface for managing physical award mailings with batch operations and CSV export*
@@ -78,6 +82,11 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - **Sailor**: Individual rankings by total flashes with year-specific memberships
   - **Fleet**: Fleet-level rankings with member counts
   - **District**: District-level rankings with member counts
+- **Community Statistics** (Public `/stats`): Class-wide participation dashboard
+  - Animated "lightning fill-up" progress toward the year's community goal (admin-set) with a prior-year benchmark line
+  - Headline counters plus five self-hosted D3 charts: activity heatmap, flashes over the season (filter by activity type / gender / age, count or share), community growth by age or gender, sailor ages, and a sign-up→award funnel
+  - Fun facts (season opener, longest sailing streak, and more) with all tied sailors credited
+  - Every chart has an accessible, hover-free data-table twin; aggregates cached per year for fast public loads
 - **User Authentication**: Secure registration, login, password reset, and email verification system
   - Soft email verification - new users can immediately use the app without verifying
   - Persistent verification reminder banner for unverified accounts
