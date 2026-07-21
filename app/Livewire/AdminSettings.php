@@ -41,9 +41,9 @@ class AdminSettings extends AdminComponent
             $this->goal !== null ? (string) $this->goal : null
         );
 
-        // The public stats page caches per year; show the new goal immediately
-        CommunityStats::clearCache($this->selectedYear);
-
+        // No cache to bust: the goal is read fresh (uncached) on every /stats
+        // render, so a saved goal is live immediately; the 15-min stats cache
+        // holds only goal-independent aggregates.
         $this->dispatch('toast', type: 'success', message: "Community goal for {$this->selectedYear} saved.");
     }
 

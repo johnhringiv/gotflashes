@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 
 $validatorUrl = env('HTML_VALIDATOR_URL', 'http://localhost:8888');
 
-$publicPaths = ['/', '/leaderboard', '/login', '/register', '/password/reset'];
+$publicPaths = ['/', '/leaderboard', '/stats', '/login', '/register', '/password/reset'];
 $authPaths = ['/logbook', '/profile'];
 $adminPaths = ['/admin/fulfillment', '/admin/sailor-logs'];
 

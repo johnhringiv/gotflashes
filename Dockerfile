@@ -125,6 +125,15 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Bake this build's git revision into a static file nginx serves at /version, so
+# a deploy (and anyone with curl) can confirm exactly which build is live. Static
+# so it answers even if PHP-FPM is down and bypasses the app's basic auth; the CI
+# publish job stamps the same SHA as the OCI image 'revision' label. Written as
+# root (public/ is root-owned; nginx still reads it) and kept near the end so a
+# per-commit version bump doesn't bust the cache for the expensive build layers.
+ARG APP_VERSION=dev
+RUN printf '%s' "$APP_VERSION" > /var/www/html/public/version
+
 # Expose port 8080 (nginx listens on non-privileged port for Synology compatibility)
 EXPOSE 8080
 

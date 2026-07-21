@@ -69,11 +69,6 @@ class CommunityStats extends Component
         ]);
     }
 
-    public static function clearCache(int $year): void
-    {
-        Cache::forget(self::cacheKey($year));
-    }
-
     private static function cacheKey(int $year): string
     {
         return 'community-stats-v'.self::CACHE_VERSION."-{$year}";
@@ -129,7 +124,6 @@ class CommunityStats extends Component
     {
         return [
             'year' => $stats['year'],
-            'monthsToShow' => $stats['monthsToShow'],
             'heatmap' => $stats['heatmap'],
             'sailorGrowth' => $stats['sailorGrowth'],
             'flashFilter' => $stats['flashFilter'],
@@ -151,7 +145,6 @@ class CommunityStats extends Component
     {
         return [
             'year' => $year,
-            'monthsToShow' => $year === now()->year ? now()->month : 12,
             'counters' => $this->getKeyCounters($year),
             'priorTotal' => $this->getPriorYearTotal($year),
             'heatmap' => $this->getActivityHeatmap($year),
@@ -180,16 +173,20 @@ class CommunityStats extends Component
         // no lower age floor. Only a missing DOB or an implausible age (a future
         // or absurd birth year from bad data) reads as Unknown, rather than being
         // forced into a real division.
-        if ($age === null || $age < 0 || $age > 100) {
+        // Division boundaries live in config/community.php so they can be tuned
+        // without touching this logic; fall back to the shipped defaults.
+        $divisions = (array) config('community.age_divisions', []);
+        $maxPlausible = (int) ($divisions['max_plausible_age'] ?? 100);
+        if ($age === null || $age < 0 || $age > $maxPlausible) {
             return 'unknown';
         }
-        if ($age <= 20) {
+        if ($age <= (int) ($divisions['youth'] ?? 20)) {
             return 'youth';
         }
-        if ($age <= 32) {
+        if ($age <= (int) ($divisions['u32'] ?? 32)) {
             return 'u32';
         }
-        if ($age <= 54) {
+        if ($age <= (int) ($divisions['mid'] ?? 54)) {
             return 'mid';
         }
 
@@ -624,12 +621,6 @@ class CommunityStats extends Component
     }
 
     /**
-     * Dynamically generated highlight cards. Facts without enough data are
-     * skipped rather than rendered empty.
-     *
-     * @return array<array{title: string, value: string, detail: string}>
-     */
-    /**
      * Busiest day on the water: the date with the most distinct sailing sailors.
      * Shown as a caption on the activity-heatmap card. Null below 2 sailors.
      *
@@ -656,6 +647,12 @@ class CommunityStats extends Component
         ];
     }
 
+    /**
+     * Dynamically generated highlight cards. Facts without enough data are
+     * skipped rather than rendered empty.
+     *
+     * @return array<array{title: string, value: string, detail: string}>
+     */
     private function getFunFacts(int $year): array
     {
         $facts = [];

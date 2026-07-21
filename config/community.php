@@ -39,4 +39,25 @@ return [
 
     'default_goal' => 2500,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Age divisions
+    |--------------------------------------------------------------------------
+    |
+    | Inclusive upper bounds (calendar-year age = statsYear - birthYear) for the
+    | age-division buckets on the /stats "Sailor ages" chart, young → old. A
+    | sailor at or below each bound falls in that division; anyone above the last
+    | bound is "Masters". An age outside [0, max_plausible_age] reads as Unknown
+    | (missing or typo'd DOB) rather than being forced into a real division.
+    | See App\Livewire\CommunityStats::ageGroupKey().
+    |
+    */
+
+    'age_divisions' => [
+        'youth' => 20,
+        'u32' => 32,
+        'mid' => 54,
+        'max_plausible_age' => 100,
+    ],
+
 ];

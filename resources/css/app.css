@@ -162,6 +162,16 @@
     z-index: 10;
 }
 
+/* DaisyUI's .label (used for @error field messages) is inline-flex with
+   white-space: nowrap, so a long validation message stays on one line and
+   overflows into the neighbouring grid column — visible on the two-up
+   Date of Birth / Gender row, where the DOB error collided with the Gender
+   error. Render the field error as a normal wrapping block within its field. */
+.floating-label-visible > .label {
+    display: block;
+    white-space: normal;
+}
+
 /* Tooltip inside a floating label (district/fleet) must stay hoverable. */
 .floating-label-visible label .tooltip {
     pointer-events: auto;

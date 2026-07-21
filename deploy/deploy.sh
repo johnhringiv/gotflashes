@@ -58,14 +58,18 @@ for d in "$DATA_DIR/data" "$DATA_DIR/logs" "$DATA_DIR/backup"; do
 done
 
 echo "$(date -u +%FT%TZ) recreating $CONTAINER on :$PORT from $IMAGE"
-# Graceful stop first (SIGTERM -> supervisord clean shutdown) so Synology's
-# Container Manager doesn't report a "stopped unexpectedly" (which a SIGKILL
-# from `rm -f` on a running container triggers). rm -f then just removes the
-# already-stopped container.
-docker stop "$CONTAINER" >/dev/null 2>&1 || true
+# Graceful stop first (SIGTERM -> supervisord shuts its children down and exits
+# 0) so Synology's Container Manager doesn't report "stopped unexpectedly" (a
+# SIGKILL exit, 137). The -t 30 is load-bearing: supervisord's orderly shutdown
+# takes ~2s, but the container's default stop grace is only ~1s, so the stock
+# `docker stop` SIGKILLs it mid-shutdown. rm -f then removes the stopped container.
+docker stop -t 30 "$CONTAINER" >/dev/null 2>&1 || true
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 docker run -d --name "$CONTAINER" --restart unless-stopped \
     `# no --cpus: DSM kernels lack the CFS scheduler` \
+    `# --stop-timeout 30: bake the grace into the container so a stop from the` \
+    `# Synology GUI (or any bare 'docker stop') also gets a clean exit 0, not 137` \
+    --stop-timeout 30 \
     -p "$PORT:8080" \
     -v "$DATA_DIR/data:/var/www/html/database/data" \
     -v "$DATA_DIR/logs:/var/www/html/storage/logs" \
@@ -79,6 +83,20 @@ i=0
 while [ $i -lt 24 ]; do
     if curl -sf -m 5 "http://localhost:$PORT/up" >/dev/null 2>&1; then
         echo "$(date -u +%FT%TZ) $CONTAINER healthy on :$PORT"
+        # Version gate: confirm the container is actually serving the build we
+        # just pulled (catches a stale image left answering on the port, or a
+        # botched recreate). The baked /version file and the image's OCI
+        # 'revision' label are stamped from the same commit SHA, so a mismatch
+        # means the wrong build is live. Skipped when the image carries no label
+        # (e.g. a locally built image), which just logs the served version.
+        expected=$(docker image inspect "$IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' 2>/dev/null || echo "")
+        served=$(curl -sf -m 5 "http://localhost:$PORT/version" 2>/dev/null | tr -d '[:space:]')
+        if [ -n "$expected" ] && [ -n "$served" ] && [ "$expected" != "$served" ]; then
+            echo "$(date -u +%FT%TZ) FAILED: $CONTAINER is serving version $served but $IMAGE expects $expected"
+            docker logs "$CONTAINER" 2>&1 | tail -20
+            exit 1
+        fi
+        echo "$(date -u +%FT%TZ) $CONTAINER version ${served:-unknown}"
         docker image prune -f >/dev/null 2>&1 || true
         docker ps --filter "name=$CONTAINER" --format '{{.Names}}: {{.Status}}'
         echo "$(date -u +%FT%TZ) deployed $IMAGE"

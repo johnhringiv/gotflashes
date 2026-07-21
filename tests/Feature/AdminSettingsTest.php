@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\AdminSettings;
+use App\Livewire\CommunityStats;
 use App\Models\Flash;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -65,18 +66,23 @@ class AdminSettingsTest extends TestCase
         $this->assertSame('2000', Setting::get('community_goal_2026'));
     }
 
-    public function test_saving_goal_clears_stats_cache_for_that_year(): void
+    public function test_saved_goal_shows_immediately_even_with_stats_cached(): void
     {
+        // Prime the 15-minute aggregate cache for the current year.
+        Livewire::test(CommunityStats::class)->assertViewHas('goalIsDefault', true);
+
         $admin = User::factory()->create(['is_super_admin' => true]);
-        // Matches CommunityStats::cacheKey() (versioned)
-        Cache::put('community-stats-v13-2026', ['stale' => true], 900);
-
         Livewire::actingAs($admin)
-            ->test('admin-settings')
-            ->set('goal', 500)
-            ->call('save');
+            ->test(AdminSettings::class)
+            ->set('goal', 777)
+            ->call('save')
+            ->assertHasNoErrors();
 
-        $this->assertNull(Cache::get('community-stats-v13-2026'));
+        // The goal is read fresh on every /stats render (it is not part of the
+        // cached aggregates), so a saved goal is live without any cache bust.
+        Livewire::test(CommunityStats::class)
+            ->assertViewHas('goal', 777)
+            ->assertViewHas('goalIsDefault', false);
     }
 
     public function test_goal_validation_rejects_non_positive_values(): void
