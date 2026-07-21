@@ -39,17 +39,17 @@
                         {{ $selectedYear - 1 }} finished at {{ number_format($priorTotal) }} days
                     </p>
                 @endif
+                @if ($goalIsDefault && auth()->check() && auth()->user()->isSuperAdmin())
+                    <p class="text-sm text-base-content/60">
+                        Showing the default {{ number_format($goal) }}-day goal —
+                        <a href="/admin/settings" class="link link-primary">set a {{ $selectedYear }} goal in Settings</a>
+                    </p>
+                @endif
             @else
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
                     <span class="font-normal text-base-content/70">community qualifying days in {{ $selectedYear }}</span>
                 </p>
-                @if (auth()->check() && auth()->user()->is_admin)
-                    <p class="text-sm text-base-content/60">
-                        No community goal set for {{ $selectedYear }} —
-                        <a href="/admin/settings" class="link link-primary">set one in Settings</a>
-                    </p>
-                @endif
             @endif
         </div>
     </div>

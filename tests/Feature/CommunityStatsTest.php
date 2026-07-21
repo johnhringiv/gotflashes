@@ -319,23 +319,36 @@ class CommunityStatsTest extends TestCase
             ->assertSee('Goal achieved!');
     }
 
-    public function test_admins_see_set_goal_hint_when_no_goal_is_set(): void
+    public function test_super_admins_see_default_goal_hint_when_no_explicit_goal(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
-        Flash::factory()->forUser($admin)->sailing()->onDate('2026-05-01')->create();
+        // With no year-specific goal set, the page uses the config default and
+        // nudges a site admin to set one; award-admins don't get the nudge.
+        $siteAdmin = User::factory()->create(['is_super_admin' => true]);
+        Flash::factory()->forUser($siteAdmin)->sailing()->onDate('2026-05-01')->create();
 
-        Livewire::actingAs($admin)
+        Livewire::actingAs($siteAdmin)
             ->test('community-stats')
-            ->assertSee('No community goal set for 2026');
+            ->assertSee('Showing the default')
+            ->assertSee('set a 2026 goal in Settings');
     }
 
-    public function test_guests_do_not_see_set_goal_hint(): void
+    public function test_award_admins_do_not_see_default_goal_hint(): void
+    {
+        $awardAdmin = User::factory()->create(['is_admin' => true, 'is_super_admin' => false]);
+        Flash::factory()->forUser($awardAdmin)->sailing()->onDate('2026-05-01')->create();
+
+        Livewire::actingAs($awardAdmin)
+            ->test('community-stats')
+            ->assertDontSee('Showing the default');
+    }
+
+    public function test_guests_do_not_see_default_goal_hint(): void
     {
         $user = User::factory()->create();
         Flash::factory()->forUser($user)->sailing()->onDate('2026-05-01')->create();
 
         Livewire::test('community-stats')
-            ->assertDontSee('No community goal set for 2026');
+            ->assertDontSee('Showing the default');
     }
 
     public function test_year_change_dispatches_chart_update_event(): void

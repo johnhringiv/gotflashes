@@ -12,20 +12,31 @@ return [
     | manual process and are used for the prior-year benchmark on the /stats
     | hero and to inform the annual goal. They are NOT selectable years.
     |
-    | 2025: 1431 distinct sailor-days across 127 sailors (season 2025-02-13 to
-    | 2025-11-09). Source: 2025 season report (Report 12-10-25.xlsx), counted as
-    | distinct (credited sailor, activity date) pairs from the per-activity rows —
-    | the report credits the sailor who sailed, not the submitting account. The
-    | activity date is "Date 2"; a March 17–26 batch (140 rows) predates that
-    | field, so those fall back to the submission timestamp. No activity-type
-    | split in the old data, so all count as sailing days.
-    | (The prior 696 came from using the submission timestamp for every row,
-    | which collapsed batch-logged days.)
+    | 2025: 1550 logged sailor-days across 127 sailors (season 2025-02-13 to
+    | 2025-11-09). Source: 2025 season report (Report 12-10-25.xlsx) — one row per
+    | logged activity, crediting the sailor who sailed (not the submitting account).
+    | Every row is counted: last year's collection was messy but the rows are not
+    | true same-day duplicates, so they are NOT deduplicated. No activity-type split
+    | in the old data, so all count as sailing days.
+    | (The prior 696 came from collapsing rows by submission timestamp.)
     |
     */
 
     'historical_totals' => [
-        2025 => 1431,
+        2025 => 1550,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default community goal
+    |--------------------------------------------------------------------------
+    |
+    | Fallback annual qualifying-days goal shown on /stats when no year-specific
+    | goal has been set in the settings table, so a fresh deploy shows a target
+    | out of the box. A site admin can override per year at /admin/settings.
+    |
+    */
+
+    'default_goal' => 2500,
 
 ];

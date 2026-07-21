@@ -63,6 +63,7 @@ class CommunityStats extends Component
             'priorTotal' => $priorTotal,
             // Prior-year total as a fraction of the goal, for the benchmark line
             'priorPercent' => ($goal && $priorTotal > 0) ? min(100, $priorTotal / $goal * 100) : null,
+            'goalIsDefault' => $this->goalIsDefault($this->selectedYear),
             'availableYears' => $this->getAvailableYears(),
             'chartJson' => json_encode($this->chartPayload($stats), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),
         ]);
@@ -106,7 +107,19 @@ class CommunityStats extends Component
     {
         $goal = Setting::get("community_goal_{$year}");
 
-        return $goal !== null ? (int) $goal : null;
+        if ($goal !== null) {
+            return (int) $goal;
+        }
+
+        // Fall back to the configured default so a fresh deploy shows a target.
+        $default = config('community.default_goal');
+
+        return $default !== null ? (int) $default : null;
+    }
+
+    private function goalIsDefault(int $year): bool
+    {
+        return Setting::get("community_goal_{$year}") === null;
     }
 
     /**
