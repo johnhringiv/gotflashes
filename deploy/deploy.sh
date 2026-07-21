@@ -58,14 +58,18 @@ for d in "$DATA_DIR/data" "$DATA_DIR/logs" "$DATA_DIR/backup"; do
 done
 
 echo "$(date -u +%FT%TZ) recreating $CONTAINER on :$PORT from $IMAGE"
-# Graceful stop first (SIGTERM -> supervisord clean shutdown) so Synology's
-# Container Manager doesn't report a "stopped unexpectedly" (which a SIGKILL
-# from `rm -f` on a running container triggers). rm -f then just removes the
-# already-stopped container.
-docker stop "$CONTAINER" >/dev/null 2>&1 || true
+# Graceful stop first (SIGTERM -> supervisord shuts its children down and exits
+# 0) so Synology's Container Manager doesn't report "stopped unexpectedly" (a
+# SIGKILL exit, 137). The -t 30 is load-bearing: supervisord's orderly shutdown
+# takes ~2s, but the container's default stop grace is only ~1s, so the stock
+# `docker stop` SIGKILLs it mid-shutdown. rm -f then removes the stopped container.
+docker stop -t 30 "$CONTAINER" >/dev/null 2>&1 || true
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 docker run -d --name "$CONTAINER" --restart unless-stopped \
     `# no --cpus: DSM kernels lack the CFS scheduler` \
+    `# --stop-timeout 30: bake the grace into the container so a stop from the` \
+    `# Synology GUI (or any bare 'docker stop') also gets a clean exit 0, not 137` \
+    --stop-timeout 30 \
     -p "$PORT:8080" \
     -v "$DATA_DIR/data:/var/www/html/database/data" \
     -v "$DATA_DIR/logs:/var/www/html/storage/logs" \
