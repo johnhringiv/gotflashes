@@ -69,7 +69,18 @@ class User extends Authenticatable
             'password' => 'hashed',
             'date_of_birth' => 'date',
             'email_verification_expires_at' => 'datetime',
+            'is_admin' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Site-operator tier (site settings and operational views), above the
+     * award-admin `is_admin`. Not guarded/fillable — set deliberately.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
     }
 
     /**

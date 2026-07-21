@@ -94,7 +94,8 @@ Users can export their complete profile and activity history:
 
 ### 1.5 User Roles
 - **Regular Users**: Can track their own activities and view their progress
-- **Award Administrators**: Responsible for viewing award eligibility and mailing physical awards to participants
+- **Award Administrators** (`is_admin`): View award eligibility and mail physical awards; access the award-fulfillment and sailor-logs dashboards
+- **Site Administrators** (`is_super_admin`): Elevated site-operator tier above award admin; access site configuration (the community goal at `/admin/settings`, and future operational views). Independent of the award-admin flag — a user may hold either or both
 
 ---
 
@@ -259,7 +260,38 @@ Public leaderboards to encourage friendly competition and community engagement.
 
 ---
 
-## 5. Award Fulfillment
+## 5. Community Statistics
+
+A public page (`/stats`) that celebrates class-wide participation and motivates sailors toward the annual community goal. All figures are community-level aggregates — no individual sailor is identifiable beyond the opt-in fun facts.
+
+**Community Goal Progress:**
+- A "lightning fill-up" hero animates a Lightning silhouette filling toward the year's community sailing-days goal
+- The goal defaults to a configured value (so a fresh deploy shows a target out of the box) and can be overridden per year by a site administrator at `/admin/settings` (stored in the `settings` table)
+- A benchmark line marks the prior year's final total, so progress is framed against last season
+
+**Key Counters:**
+- Headline totals for the year (e.g. qualifying days logged, active sailors, registered sailors, awards earned)
+
+**Charts** (all server-rendered with self-hosted D3 — no CDN — and each paired with an accessible, hover-free data-table twin):
+1. **When the community sails**: a day-by-day activity heatmap for the year, with the busiest day called out in a caption
+2. **Flashes over the season**: a running total of every flash, filterable by activity type, gender, and age group, and switchable between count and share (%)
+3. **Community growth**: a running total of registered sailors, stacked by age division or gender, count or share
+4. **Sailor ages**: active sailors grouped by Lightning Class age division and gender
+5. **From sign-up to award**: an award funnel from registered → active → each award tier
+
+**Fun Facts:**
+- Rotating human-interest highlights derived from the year's data (e.g. season opener, longest sailing streak, most flashes logged at once, the 50+ club); all tied sailors are credited
+
+**Age Divisions & Privacy:**
+- Age uses **calendar-year age** (the age a sailor reaches by Dec 31 of the stats year), matching how one-design age divisions are defined: Youth (≤20), U32 (≤32), Mid (≤54), Masters (55+). Babies and young children are legitimate crew and count as Youth (no lower age floor)
+- Undisclosed gender and unknown age (missing or implausible birth dates) are **redistributed** proportionally into the displayed groups, so the charts carry no Unknown/Undisclosed series and members who opted out of stating gender cannot be singled out from a small per-day cell — every sailor is still counted in the totals
+
+**Performance & Freshness:**
+- The full aggregate bundle is cached per year for 15 minutes (database cache store); saving a new community goal clears that year's cache immediately
+
+---
+
+## 6. Award Fulfillment
 
 The award fulfillment system provides administrators with tools to manage the physical award mailing process:
 
@@ -294,7 +326,7 @@ All admin status changes are logged to a dedicated admin log channel with user i
 
 ---
 
-## 6. Sailor Activity Logs (Admin)
+## 7. Sailor Activity Logs (Admin)
 
 Shows all sailor log entries across the program with filtering and export capabilities.
 
@@ -315,7 +347,7 @@ Admin users only.
 
 ---
 
-## 7. System Requirements
+## 8. System Requirements
 
 ### 7.1 Platform
 - Web-based application accessible on desktop and mobile devices
@@ -355,7 +387,7 @@ Admin users only.
 
 ---
 
-## 8. Future Considerations
+## 9. Future Considerations
 
 ### Potential Enhancements (Out of Scope for Initial Release)
 - Email notifications to award administrators when users reach award thresholds
@@ -365,7 +397,7 @@ Admin users only.
 - **Branding**: U32 image + transparent images without the barcode
 ---
 
-## 9. Success Metrics
+## 10. Success Metrics
 
 ### Key Performance Indicators
 - Number of registered participants year-over-year
@@ -391,4 +423,4 @@ Admin users only.
 
 ## Document Control
 
-**Last Updated**: June 1, 2026
+**Last Updated**: July 21, 2026
