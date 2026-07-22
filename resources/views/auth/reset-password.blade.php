@@ -20,18 +20,18 @@
                         <input type="hidden" name="email" value="{{ request('email') }}">
 
                         <!-- Password -->
-                        <div class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <x-password-input name="password" id="password" autofocus />
-                            <span>New Password</span>
+                            <label>New Password</label>
                         </div>
                         <div id="password-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
                         </div>
 
                         <!-- Password Confirmation -->
-                        <div class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <x-password-input name="password_confirmation" id="password_confirmation" />
-                            <span>Confirm Password</span>
+                            <label>Confirm Password</label>
                         </div>
                         <div id="password-confirmation-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>

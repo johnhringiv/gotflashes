@@ -16,17 +16,17 @@
                         @csrf
 
                         <!-- Email -->
-                        <label class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <input type="email"
                                    id="email"
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered"
+                                   class="input input-bordered w-full"
                                    required
                                    autofocus>
-                            <span>Email</span>
-                        </label>
+                            <label>Email</label>
+                        </div>
                         <div id="email-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
                         </div>

@@ -13,7 +13,7 @@
                         @csrf
 
                         <!-- Email -->
-                        <label class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <input type="email"
                                    name="email"
                                    placeholder="mail@example.com"
@@ -21,24 +21,24 @@
                                    class="input input-bordered w-full @error('email') input-error @enderror"
                                    required
                                    autofocus>
-                            <span>Email</span>
-                        </label>
-                        @error('email')
-                            <div class="label -mt-4 mb-2">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </div>
-                        @enderror
+                            <label>Email</label>
+                            @error('email')
+                                <div class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </div>
+                            @enderror
+                        </div>
 
                         <!-- Password -->
-                        <div class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <x-password-input name="password" :class="$errors->has('password') ? 'input-error' : ''" />
-                            <span>Password</span>
+                            <label>Password</label>
+                            @error('password')
+                                <div class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
-                        @error('password')
-                            <div class="label -mt-4 mb-2">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </div>
-                        @enderror
 
                         <!-- Remember Me & Forgot Password -->
                         <div class="form-control mt-4">
