@@ -46,7 +46,7 @@
                                 <label class="label cursor-pointer justify-start p-0">
                                     <input type="checkbox"
                                            name="remember"
-                                           class="checkbox">
+                                           class="checkbox checkbox-primary">
                                     <span class="label-text ml-2">Remember me</span>
                                 </label>
                                 <a href="{{ route('password.request') }}" class="link link-primary text-sm">
