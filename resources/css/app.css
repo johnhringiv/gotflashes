@@ -8,10 +8,13 @@
  * components without !important):
  *   reset       — modern box-sizing + element normalization
  *   base        — element defaults (typography, forms, links)
- *   components   — the DaisyUI-derived component classes the markup uses
- *   utilities    — the atomic helpers the markup uses (flex, spacing, colour…)
- *   (unlayered)  — project custom CSS (floating labels, tom-select/flatpickr
- *                  theming, leaderboard table, lightning-fill hero, /stats)
+ *   components  — component classes + all project CSS (floating labels, focus
+ *                 rings, leaderboard table, lightning-fill hero, /stats charts)
+ *   utilities   — the atomic helpers the markup uses (flex, spacing, colour…)
+ *   (unlayered) — ONLY third-party widget overrides (tom-select / flatpickr):
+ *                 they must outrank the unlayered vendor CSS imported below, and
+ *                 the !important cascade reverses across layers, so they cannot
+ *                 safely be layered. See the block at the end of this file.
  *
  * Design tokens live in :root. Colours are OKLCH (Lightning Class brand).
  */
@@ -993,128 +996,622 @@
     .modal-backdrop { position: fixed; inset: 0; z-index: -1; }
 }
 
+
 /* ==========================================================================
-   Project custom CSS
+   Project components (@layer components — so utilities still win predictably,
+   and these never silently outrank a component/utility as unlayered rules did)
    ========================================================================== */
+@layer components {
 
-/* Tooltip custom colors - Lighter blue */
-.tooltip::before,
-.tooltip-top::before,
-.tooltip-bottom::before,
-.tooltip-left::before,
-.tooltip-right::before {
-    background-color: oklch(55% 0.12 240deg) !important; /* Secondary blue - lighter */
-    color: oklch(100% 0 0deg) !important; /* White text */
+    /* Password toggle visibility - ensure eye icon is always visible */
+    .password-input-wrapper {
+        position: relative;
+    }
+
+    .password-input-wrapper .password-toggle-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+    }
+
+    .password-toggle-btn svg.hidden {
+        display: none !important;
+    }
+
+    /* Hide browser's native password reveal icon */
+    .hide-password-reveal::-ms-reveal,
+    .hide-password-reveal::-ms-clear {
+        display: none;
+    }
+
+    .hide-password-reveal::-webkit-credentials-auto-fill-button,
+    .hide-password-reveal::-webkit-textfield-decoration-container {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* Floating Label - Always Visible (on border) */
+    .floating-label-visible {
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .floating-label-visible input,
+    .floating-label-visible select,
+    .floating-label-visible textarea {
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    /* Native selects keep DaisyUI's fixed height, so the 0.75rem vertical padding
+       above shrinks the text box below the line-height and clips descenders (the
+       "g" in "Select gender"). Trim the vertical padding so the glyph fits. */
+    .floating-label-visible select {
+        padding-block: 0.5rem;
+    }
+
+    .floating-label-visible label {
+        position: absolute;
+        left: 0.75rem;
+        top: -0.5rem;
+        font-size: 0.875rem;
+        color: oklch(60% 0.01 245deg);
+        pointer-events: none;
+        background: oklch(96% 0.003 245deg);
+        padding: 0 0.25rem;
+        z-index: 10;
+    }
+
+    /* Keep a disabled floating-label control light (not DaisyUI's grey fill) so its
+       label — which straddles the field's top edge — blends on both sides instead
+       of showing a box (grey over the card, or white over a grey fill). The dimmed
+       placeholder + not-allowed cursor still signal the disabled state, and it keeps
+       Sailing Type looking like Activity Type when it's inactive. */
+    .floating-label-visible :is(input, select, textarea):disabled {
+        background-color: var(--color-base-100);
+        border-color: var(--color-base-300);
+    }
+
+    /* DaisyUI's .label (used for @error field messages) is inline-flex with
+       white-space: nowrap, so a long validation message stays on one line and
+       overflows into the neighbouring grid column — visible on the two-up
+       Date of Birth / Gender row, where the DOB error collided with the Gender
+       error. Render the field error as a normal wrapping block within its field. */
+    .floating-label-visible > .label {
+        display: block;
+        white-space: normal;
+    }
+
+    /* Tooltip inside a floating label (district/fleet) must stay hoverable. */
+    .floating-label-visible label .tooltip {
+        pointer-events: auto;
+    }
+
+    /* Cap specific tooltip-right hints that would otherwise run off the right edge
+       on a narrow mobile viewport (district/fleet fields + any element marked
+       .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
+       Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
+    .floating-label-visible label .tooltip::before,
+    .tooltip-clamp::before {
+        max-width: 12rem;
+    }
+
+    /* While a field's tooltip is hovered, lift the whole field above its grid
+       neighbor so the tooltip isn't covered by the adjacent field's label. */
+    .floating-label-visible:has(.tooltip:hover) {
+        z-index: 60;
+    }
+
+    /* Hide these tooltips instantly rather than fading: the z-index lift above
+       drops the moment the hover ends, so a fading tooltip would briefly show
+       the neighbor field painted over it. */
+    .floating-label-visible label .tooltip::before {
+        transition: none;
+    }
+
+    /* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
+       focus outline is base-content, which reads as black). Secondary, not
+       primary: thin strokes lose perceived hue, so the dark primary navy also
+       read near-black at 2px — and secondary is already the interaction color
+       (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
+       underline. */
+    .input:focus,
+    .input:focus-within,
+    .select:focus,
+    .select:focus-within,
+    .textarea:focus,
+    .textarea:focus-within {
+        --input-color: var(--color-secondary);
+
+        outline-color: var(--color-secondary);
+    }
+
+    /* Error-state fields keep an error-colored focus, mirroring
+       .ts-has-error .ts-wrapper.select.focus above. */
+    .input-error:focus,
+    .input-error:focus-within,
+    .select-error:focus,
+    .select-error:focus-within,
+    .textarea-error:focus,
+    .textarea-error:focus-within {
+        --input-color: var(--color-error);
+
+        outline-color: var(--color-error);
+    }
+
+    /* A select still showing its empty-value placeholder option ("Select activity
+       type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
+       currentcolor at 50%) so it can't be mistaken for a real selection. */
+    .select:has(option[value='']:checked) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+    }
+
+    /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
+       the OS picker regardless): selection is marked by the picker's own checkmark
+       only — no fill (DaisyUI paints the checked row base-content, which also lit
+       up the disabled "Select activity/sailing type" placeholders). Gray is the
+       only filled state: DaisyUI's hover, extended here to mousedown-hold, which
+       DaisyUI paints neutral (near-black) with a pressed shadow. */
+    :is(.select, .select select) option:checked {
+        background-color: transparent;
+        color: var(--color-base-content);
+    }
+
+    :is(.select, .select select) option:not(:disabled):active {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+        color: var(--color-base-content);
+        box-shadow: none;
+    }
+
+    /* Placeholder dimming targets the closed control's displayed text; option rows
+       in the open picker inherit the select's color in Chromium, so restore full
+       contrast for the actual choices. */
+    .select:has(option[value='']:checked) option {
+        color: var(--color-base-content);
+    }
+
+    /* Leaderboard table styling */
+
+    /* Alternating row colors (primary blue with transparency) */
+    .table tbody tr:nth-child(even):not(.current-user-row) {
+        background-color: oklch(from var(--color-primary) l c h / 10%);
+    }
+
+    /* Current user/fleet/district highlighting */
+    .current-user-row {
+        background-color: oklch(from var(--color-accent) l c h / 15%);
+    }
+
+    /* Red indicator bar on left side of current user row */
+    .current-user-row td:first-child {
+        position: relative;
+    }
+
+    .current-user-row td:first-child::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background-color: var(--color-accent);
+    }
+
+    /* Accent badge styling (red) */
+    .badge-accent {
+        background-color: var(--color-accent);
+        color: var(--color-accent-content);
+        border-color: var(--color-accent);
+    }
+
+    /* ============================================================
+       Community Stats page (/stats)
+       ============================================================ */
+
+    /* Lightning fill-up hero — a "thermometer" in the Lightning Class bolt insignia.
+       The bolt shape comes from the class logo PNG used as an alpha mask; a gradient
+       layer rises inside it toward the community goal, with a benchmark line marking
+       the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
+       so fill/benchmark heights map to that central 70% band. */
+    .lightning-fill {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .lightning-fill-goal {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-base-content);
+        opacity: 0.6;
+    }
+
+    .lightning-fill-goal span {
+        font-weight: 400;
+    }
+
+    .lightning-fill-circle {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        background: oklch(100% 0 0deg);
+        border: 5px solid var(--color-primary);
+        overflow: hidden;
+    }
+
+    .lightning-fill-bolt {
+        position: absolute;
+        inset: 15%;
+
+        /* The Lightning Class bolt insignia, as an alpha mask over the fill layers */
+        mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+    }
+
+    .lightning-fill-track {
+        position: absolute;
+        inset: 0;
+        background: var(--color-base-300);
+    }
+
+    .lightning-fill-rise {
+        position: absolute;
+        inset: 0;
+
+        /* The Lightning Class bolt is red; it fills in its own colour */
+        background: linear-gradient(to top, var(--color-accent), oklch(58% 0.19 29deg));
+        clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
+        animation: lightning-fill-rise 1.5s ease-out;
+    }
+
+    @keyframes lightning-fill-rise {
+        from {
+            clip-path: inset(100% 0 0 0);
+        }
+    }
+
+    /* Prior-year benchmark. Two parts: a solid line across the bolt (masked to the
+       bolt so it spans exactly the red at that height and never overhangs), and a
+       dashed leader running right to the year chip. */
+    .lightning-fill-prior-solid {
+        position: absolute;
+        inset: 15%;
+        pointer-events: none;
+        mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+    }
+
+    .lightning-fill-prior-solid::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--lf-prior, 0) * 100%);
+
+        /* Dark blue reads clearly over the red bolt fill */
+        border-top: 1.5px solid var(--color-primary);
+    }
+
+    .lightning-fill-prior-leader {
+        position: absolute;
+
+        /* Starts just past the bolt's right edge at the benchmark height, so the
+           dashes sit on the white only — the solid part carries it across the bolt. */
+        left: 61%;
+        right: 13%;
+        bottom: calc(15% + var(--lf-prior, 0) * 70%);
+        border-top: 1px dashed var(--color-secondary);
+        pointer-events: none;
+    }
+
+    .lightning-fill-prior-chip {
+        position: absolute;
+        right: 11%;
+        bottom: calc(15% + var(--lf-prior, 0) * 70%);
+        transform: translateY(50%);
+        font-size: 0.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 0 0.25rem;
+        border-radius: 3px;
+        color: var(--color-secondary);
+        background: oklch(100% 0 0deg / 88%);
+    }
+
+    /* Goal reached: gentle glow pulse after the fill animation lands */
+    .lightning-fill-complete .lightning-fill-circle {
+        animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
+    }
+
+    @keyframes lightning-glow-pulse {
+        0%,
+        100% {
+            box-shadow: 0 0 4px oklch(55% 0.12 240deg / 45%);
+        }
+
+        50% {
+            box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
+        }
+    }
+
+    /* Respect reduced-motion: the fill and glow settle straight to their resting
+       state (the clip-path level is applied regardless — only the animation drops). */
+    @media (prefers-reduced-motion: reduce) {
+        .lightning-fill-rise,
+        .lightning-fill-complete .lightning-fill-circle {
+            animation: none;
+        }
+    }
+
+    /* D3 chart containers */
+    .stats-chart {
+        position: relative;
+        width: 100%;
+    }
+
+    .stats-chart svg {
+        display: block;
+        max-width: 100%;
+    }
+
+    /* Wide charts (heatmap) scroll inside their own container only when they
+       overflow; JS centres them and switches off the scrollbar when they fit. */
+    .stats-chart .chart-scroll {
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .stats-chart .chart-scroll svg {
+        max-width: none;
+    }
+
+    /* Filterable cumulative-flashes chart: toggle chips grouped by dimension */
+    .stats-chart .flash-filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .stats-chart .flash-filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .stats-chart .ff-group-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        opacity: 0.55;
+        margin-right: 0.15rem;
+    }
+
+    /* Multi-select toggle pill — pressed/unpressed states so it reads as a control,
+       not a legend swatch. */
+    .stats-chart .ff-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        padding: 0.16rem 0.6rem;
+        border-radius: 9999px;
+        border: 1px solid var(--color-base-300);
+        background: var(--color-base-100);
+        color: var(--color-base-content);
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    }
+
+    .stats-chart .ff-chip:hover {
+        background: var(--color-base-200);
+        border-color: var(--color-base-content);
+    }
+
+    .stats-chart .ff-chip:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+    }
+
+    /* On = included: clean neutral pill — colour lives in the swatch, not a fill,
+       so an all-on row stays calm. The swatch + hover carry the affordance. */
+    .stats-chart .ff-chip[data-on='1'] {
+        border-color: var(--color-base-300);
+        background: var(--color-base-100);
+    }
+
+    /* Off = excluded: faded + struck through, an unambiguous "removed" signal. */
+    .stats-chart .ff-chip[data-on='0'] {
+        opacity: 0.5;
+        background: transparent;
+        text-decoration: line-through;
+    }
+
+    .stats-chart .ff-chip .ff-swatch {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .stats-chart .ff-chip[data-on='0'] .ff-swatch {
+        opacity: 0.35;
+    }
+
+    /* Pick-one segmented control (Stack by / Show) — a connected pill with a filled
+       active segment; unmistakably a toggle, unlike faded text. */
+    .stats-chart .ff-segmented {
+        display: inline-flex;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 9999px;
+        background: var(--color-base-200);
+        border: 1px solid var(--color-base-300);
+    }
+
+    .stats-chart .ff-seg {
+        border: none;
+        background: transparent;
+        color: var(--color-base-content);
+        font-size: 0.72rem;
+        line-height: 1.4;
+        padding: 0.14rem 0.7rem;
+        border-radius: 9999px;
+        cursor: pointer;
+        opacity: 0.65;
+        transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+    }
+
+    .stats-chart .ff-seg:hover {
+        opacity: 1;
+    }
+
+    .stats-chart .ff-seg[data-on='1'] {
+        background: var(--color-primary);
+        color: var(--color-primary-content);
+        opacity: 1;
+        font-weight: 600;
+    }
+
+    .stats-chart .ff-seg:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+    }
+
+    /* Side-by-side charts (Sailor ages / award funnel): reserve a common chart
+       height so the two cards line up at the bottom (items-start keeps a data-table
+       expansion from shoving its neighbour). */
+    .stats-duo .stats-chart {
+        min-height: 280px;
+    }
+
+    /* Single "Reset" control, top-right of a toggleable chart's card. Muted text
+       button that restores all filters (and stack/mode) to their defaults. */
+    .stats-reset {
+        position: absolute;
+        top: 1.15rem;
+        right: 1.4rem;
+        z-index: 2;
+        padding: 0.15rem 0.3rem;
+        font-size: 0.72rem;
+        line-height: 1;
+        color: var(--color-base-content);
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity 0.12s ease;
+    }
+
+    .stats-reset:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+
+    .stats-reset:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+        opacity: 1;
+    }
+
+    /* Filters applied → the reset is actionable, so surface it. */
+    .stats-reset[data-active='1'] {
+        opacity: 1;
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+    /* Heatmap "Less → More" scale — a centred row under the grid */
+    .stats-chart .chart-heat-legend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: var(--color-base-content);
+        opacity: 0.7;
+    }
+
+    .stats-chart .chart-heat-legend .heat-swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 2px;
+    }
+
+    .stats-chart .chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        z-index: 10;
+        background: var(--color-neutral);
+        color: var(--color-neutral-content);
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        max-width: 16rem;
+        white-space: nowrap;
+    }
+
+    .stats-chart .chart-tooltip.visible {
+        opacity: 1;
+    }
+
+    .stats-chart .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem 1rem;
+        font-size: 0.75rem;
+        color: var(--color-base-content);
+        margin-bottom: 0.375rem;
+    }
+
+    .stats-chart .chart-legend .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .stats-chart .chart-legend .legend-swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 0.125rem;
+        flex-shrink: 0;
+    }
+
+    .stats-chart .chart-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--color-base-content);
+        opacity: 0.6;
+    }
 }
 
-/* Password toggle visibility - ensure eye icon is always visible */
-.password-input-wrapper {
-    position: relative;
-}
+/* ==========================================================================
+   Third-party widget overrides — INTENTIONALLY UNLAYERED.
 
-.password-input-wrapper .password-toggle-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 20;
-}
-
-.password-toggle-btn svg.hidden {
-    display: none !important;
-}
-
-/* Hide browser's native password reveal icon */
-.hide-password-reveal::-ms-reveal,
-.hide-password-reveal::-ms-clear {
-    display: none;
-}
-
-.hide-password-reveal::-webkit-credentials-auto-fill-button,
-.hide-password-reveal::-webkit-textfield-decoration-container {
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Floating Label - Always Visible (on border) */
-.floating-label-visible {
-    position: relative;
-    display: block;
-    width: 100%;
-}
-
-.floating-label-visible input,
-.floating-label-visible select,
-.floating-label-visible textarea {
-    width: 100%;
-    padding: 0.75rem;
-}
-
-/* Native selects keep DaisyUI's fixed height, so the 0.75rem vertical padding
-   above shrinks the text box below the line-height and clips descenders (the
-   "g" in "Select gender"). Trim the vertical padding so the glyph fits. */
-.floating-label-visible select {
-    padding-block: 0.5rem;
-}
-
-.floating-label-visible label {
-    position: absolute;
-    left: 0.75rem;
-    top: -0.5rem;
-    font-size: 0.875rem;
-    color: oklch(60% 0.01 245deg);
-    pointer-events: none;
-    background: oklch(96% 0.003 245deg);
-    padding: 0 0.25rem;
-    z-index: 10;
-}
-
-/* Keep a disabled floating-label control light (not DaisyUI's grey fill) so its
-   label — which straddles the field's top edge — blends on both sides instead
-   of showing a box (grey over the card, or white over a grey fill). The dimmed
-   placeholder + not-allowed cursor still signal the disabled state, and it keeps
-   Sailing Type looking like Activity Type when it's inactive. */
-.floating-label-visible :is(input, select, textarea):disabled {
-    background-color: var(--color-base-100);
-    border-color: var(--color-base-300);
-}
-
-/* DaisyUI's .label (used for @error field messages) is inline-flex with
-   white-space: nowrap, so a long validation message stays on one line and
-   overflows into the neighbouring grid column — visible on the two-up
-   Date of Birth / Gender row, where the DOB error collided with the Gender
-   error. Render the field error as a normal wrapping block within its field. */
-.floating-label-visible > .label {
-    display: block;
-    white-space: normal;
-}
-
-/* Tooltip inside a floating label (district/fleet) must stay hoverable. */
-.floating-label-visible label .tooltip {
-    pointer-events: auto;
-}
-
-/* Cap specific tooltip-right hints that would otherwise run off the right edge
-   on a narrow mobile viewport (district/fleet fields + any element marked
-   .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
-   Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
-.floating-label-visible label .tooltip::before,
-.tooltip-clamp::before {
-    max-width: 12rem;
-}
-
-/* While a field's tooltip is hovered, lift the whole field above its grid
-   neighbor so the tooltip isn't covered by the adjacent field's label. */
-.floating-label-visible:has(.tooltip:hover) {
-    z-index: 60;
-}
-
-/* Hide these tooltips instantly rather than fading: the z-index lift above
-   drops the moment the hover ends, so a fading tooltip would briefly show
-   the neighbor field painted over it. */
-.floating-label-visible label .tooltip::before {
-    transition: none;
-}
+   tom-select and flatpickr ship their own CSS (imported unlayered at the top
+   of this file). Unlayered normal declarations outrank every @layer, so these
+   overrides must also stay unlayered to win. Pulling the vendor CSS into a
+   layer is not safe either: the !important cascade REVERSES across layers
+   (an earlier layer's !important beats a later one's), and both vendors ship
+   !important on properties we override (background/color/box-shadow/outline/
+   cursor), so a layered vendor could beat us. These rules only ever target
+   .ts-* / .flatpickr-* widgets, never our own elements, so being unlayered
+   cannot shadow a component/utility by surprise. This is the one exception.
+   ========================================================================== */
 
 /* TomSelect customization with Lightning Class theme colors */
 .ts-dropdown {
@@ -1211,67 +1708,6 @@
     outline: 1px auto var(--color-secondary);
     outline-offset: 1px;
     background: var(--color-base-100) !important;
-}
-
-/* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
-   focus outline is base-content, which reads as black). Secondary, not
-   primary: thin strokes lose perceived hue, so the dark primary navy also
-   read near-black at 2px — and secondary is already the interaction color
-   (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
-   underline. */
-.input:focus,
-.input:focus-within,
-.select:focus,
-.select:focus-within,
-.textarea:focus,
-.textarea:focus-within {
-    --input-color: var(--color-secondary);
-
-    outline-color: var(--color-secondary);
-}
-
-/* Error-state fields keep an error-colored focus, mirroring
-   .ts-has-error .ts-wrapper.select.focus above. */
-.input-error:focus,
-.input-error:focus-within,
-.select-error:focus,
-.select-error:focus-within,
-.textarea-error:focus,
-.textarea-error:focus-within {
-    --input-color: var(--color-error);
-
-    outline-color: var(--color-error);
-}
-
-/* A select still showing its empty-value placeholder option ("Select activity
-   type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
-   currentcolor at 50%) so it can't be mistaken for a real selection. */
-.select:has(option[value='']:checked) {
-    color: color-mix(in oklab, currentcolor 50%, transparent);
-}
-
-/* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
-   the OS picker regardless): selection is marked by the picker's own checkmark
-   only — no fill (DaisyUI paints the checked row base-content, which also lit
-   up the disabled "Select activity/sailing type" placeholders). Gray is the
-   only filled state: DaisyUI's hover, extended here to mousedown-hold, which
-   DaisyUI paints neutral (near-black) with a pressed shadow. */
-:is(.select, .select select) option:checked {
-    background-color: transparent;
-    color: var(--color-base-content);
-}
-
-:is(.select, .select select) option:not(:disabled):active {
-    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
-    color: var(--color-base-content);
-    box-shadow: none;
-}
-
-/* Placeholder dimming targets the closed control's displayed text; option rows
-   in the open picker inherit the select's color in Chromium, so restore full
-   contrast for the actual choices. */
-.select:has(option[value='']:checked) option {
-    color: var(--color-base-content);
 }
 
 .ts-wrapper.disabled .ts-control,
@@ -1458,429 +1894,4 @@ span.flatpickr-weekday {
     background-color: oklch(92% 0.005 245deg) !important;
     border: 2px solid oklch(44% 0.21 29deg) !important;
     color: transparent !important;
-}
-
-/* Leaderboard table styling */
-
-/* Alternating row colors (primary blue with transparency) */
-.table tbody tr:nth-child(even):not(.current-user-row) {
-    background-color: oklch(from var(--color-primary) l c h / 10%);
-}
-
-/* Current user/fleet/district highlighting */
-.current-user-row {
-    background-color: oklch(from var(--color-accent) l c h / 15%);
-}
-
-/* Red indicator bar on left side of current user row */
-.current-user-row td:first-child {
-    position: relative;
-}
-
-.current-user-row td:first-child::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var(--color-accent);
-}
-
-/* Accent badge styling (red) */
-.badge-accent {
-    background-color: var(--color-accent);
-    color: var(--color-accent-content);
-    border-color: var(--color-accent);
-}
-
-/* ============================================================
-   Community Stats page (/stats)
-   ============================================================ */
-
-/* Lightning fill-up hero — a "thermometer" in the Lightning Class bolt insignia.
-   The bolt shape comes from the class logo PNG used as an alpha mask; a gradient
-   layer rises inside it toward the community goal, with a benchmark line marking
-   the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
-   so fill/benchmark heights map to that central 70% band. */
-.lightning-fill {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.lightning-fill-goal {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-base-content);
-    opacity: 0.6;
-}
-
-.lightning-fill-goal span {
-    font-weight: 400;
-}
-
-.lightning-fill-circle {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    background: oklch(100% 0 0deg);
-    border: 5px solid var(--color-primary);
-    overflow: hidden;
-}
-
-.lightning-fill-bolt {
-    position: absolute;
-    inset: 15%;
-
-    /* The Lightning Class bolt insignia, as an alpha mask over the fill layers */
-    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
-}
-
-.lightning-fill-track {
-    position: absolute;
-    inset: 0;
-    background: var(--color-base-300);
-}
-
-.lightning-fill-rise {
-    position: absolute;
-    inset: 0;
-
-    /* The Lightning Class bolt is red; it fills in its own colour */
-    background: linear-gradient(to top, var(--color-accent), oklch(58% 0.19 29deg));
-    clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
-    animation: lightning-fill-rise 1.5s ease-out;
-}
-
-@keyframes lightning-fill-rise {
-    from {
-        clip-path: inset(100% 0 0 0);
-    }
-}
-
-/* Prior-year benchmark. Two parts: a solid line across the bolt (masked to the
-   bolt so it spans exactly the red at that height and never overhangs), and a
-   dashed leader running right to the year chip. */
-.lightning-fill-prior-solid {
-    position: absolute;
-    inset: 15%;
-    pointer-events: none;
-    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
-}
-
-.lightning-fill-prior-solid::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--lf-prior, 0) * 100%);
-
-    /* Dark blue reads clearly over the red bolt fill */
-    border-top: 1.5px solid var(--color-primary);
-}
-
-.lightning-fill-prior-leader {
-    position: absolute;
-
-    /* Starts just past the bolt's right edge at the benchmark height, so the
-       dashes sit on the white only — the solid part carries it across the bolt. */
-    left: 61%;
-    right: 13%;
-    bottom: calc(15% + var(--lf-prior, 0) * 70%);
-    border-top: 1px dashed var(--color-secondary);
-    pointer-events: none;
-}
-
-.lightning-fill-prior-chip {
-    position: absolute;
-    right: 11%;
-    bottom: calc(15% + var(--lf-prior, 0) * 70%);
-    transform: translateY(50%);
-    font-size: 0.6rem;
-    font-weight: 700;
-    line-height: 1.2;
-    padding: 0 0.25rem;
-    border-radius: 3px;
-    color: var(--color-secondary);
-    background: oklch(100% 0 0deg / 88%);
-}
-
-/* Goal reached: gentle glow pulse after the fill animation lands */
-.lightning-fill-complete .lightning-fill-circle {
-    animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
-}
-
-@keyframes lightning-glow-pulse {
-    0%,
-    100% {
-        box-shadow: 0 0 4px oklch(55% 0.12 240deg / 45%);
-    }
-
-    50% {
-        box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
-    }
-}
-
-/* Respect reduced-motion: the fill and glow settle straight to their resting
-   state (the clip-path level is applied regardless — only the animation drops). */
-@media (prefers-reduced-motion: reduce) {
-    .lightning-fill-rise,
-    .lightning-fill-complete .lightning-fill-circle {
-        animation: none;
-    }
-}
-
-/* D3 chart containers */
-.stats-chart {
-    position: relative;
-    width: 100%;
-}
-
-.stats-chart svg {
-    display: block;
-    max-width: 100%;
-}
-
-/* Wide charts (heatmap) scroll inside their own container only when they
-   overflow; JS centres them and switches off the scrollbar when they fit. */
-.stats-chart .chart-scroll {
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-}
-
-.stats-chart .chart-scroll svg {
-    max-width: none;
-}
-
-/* Filterable cumulative-flashes chart: toggle chips grouped by dimension */
-.stats-chart .flash-filter-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.stats-chart .flash-filter-group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.stats-chart .ff-group-label {
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.55;
-    margin-right: 0.15rem;
-}
-
-/* Multi-select toggle pill — pressed/unpressed states so it reads as a control,
-   not a legend swatch. */
-.stats-chart .ff-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    line-height: 1.4;
-    padding: 0.16rem 0.6rem;
-    border-radius: 9999px;
-    border: 1px solid var(--color-base-300);
-    background: var(--color-base-100);
-    color: var(--color-base-content);
-    cursor: pointer;
-    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
-}
-
-.stats-chart .ff-chip:hover {
-    background: var(--color-base-200);
-    border-color: var(--color-base-content);
-}
-
-.stats-chart .ff-chip:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-}
-
-/* On = included: clean neutral pill — colour lives in the swatch, not a fill,
-   so an all-on row stays calm. The swatch + hover carry the affordance. */
-.stats-chart .ff-chip[data-on='1'] {
-    border-color: var(--color-base-300);
-    background: var(--color-base-100);
-}
-
-/* Off = excluded: faded + struck through, an unambiguous "removed" signal. */
-.stats-chart .ff-chip[data-on='0'] {
-    opacity: 0.5;
-    background: transparent;
-    text-decoration: line-through;
-}
-
-.stats-chart .ff-chip .ff-swatch {
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-
-.stats-chart .ff-chip[data-on='0'] .ff-swatch {
-    opacity: 0.35;
-}
-
-/* Pick-one segmented control (Stack by / Show) — a connected pill with a filled
-   active segment; unmistakably a toggle, unlike faded text. */
-.stats-chart .ff-segmented {
-    display: inline-flex;
-    gap: 2px;
-    padding: 2px;
-    border-radius: 9999px;
-    background: var(--color-base-200);
-    border: 1px solid var(--color-base-300);
-}
-
-.stats-chart .ff-seg {
-    border: none;
-    background: transparent;
-    color: var(--color-base-content);
-    font-size: 0.72rem;
-    line-height: 1.4;
-    padding: 0.14rem 0.7rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    opacity: 0.65;
-    transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
-}
-
-.stats-chart .ff-seg:hover {
-    opacity: 1;
-}
-
-.stats-chart .ff-seg[data-on='1'] {
-    background: var(--color-primary);
-    color: var(--color-primary-content);
-    opacity: 1;
-    font-weight: 600;
-}
-
-.stats-chart .ff-seg:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-}
-
-/* Side-by-side charts (Sailor ages / award funnel): reserve a common chart
-   height so the two cards line up at the bottom (items-start keeps a data-table
-   expansion from shoving its neighbour). */
-.stats-duo .stats-chart {
-    min-height: 280px;
-}
-
-/* Single "Reset" control, top-right of a toggleable chart's card. Muted text
-   button that restores all filters (and stack/mode) to their defaults. */
-.stats-reset {
-    position: absolute;
-    top: 1.15rem;
-    right: 1.4rem;
-    z-index: 2;
-    padding: 0.15rem 0.3rem;
-    font-size: 0.72rem;
-    line-height: 1;
-    color: var(--color-base-content);
-    background: none;
-    border: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.12s ease;
-}
-
-.stats-reset:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-.stats-reset:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-    opacity: 1;
-}
-
-/* Filters applied → the reset is actionable, so surface it. */
-.stats-reset[data-active='1'] {
-    opacity: 1;
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
-/* Heatmap "Less → More" scale — a centred row under the grid */
-.stats-chart .chart-heat-legend {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    margin-top: 0.5rem;
-    font-size: 0.7rem;
-    color: var(--color-base-content);
-    opacity: 0.7;
-}
-
-.stats-chart .chart-heat-legend .heat-swatch {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 2px;
-}
-
-.stats-chart .chart-tooltip {
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    background: var(--color-neutral);
-    color: var(--color-neutral-content);
-    border-radius: 0.375rem;
-    padding: 0.375rem 0.625rem;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    opacity: 0;
-    transition: opacity 0.1s ease;
-    max-width: 16rem;
-    white-space: nowrap;
-}
-
-.stats-chart .chart-tooltip.visible {
-    opacity: 1;
-}
-
-.stats-chart .chart-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem 1rem;
-    font-size: 0.75rem;
-    color: var(--color-base-content);
-    margin-bottom: 0.375rem;
-}
-
-.stats-chart .chart-legend .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.stats-chart .chart-legend .legend-swatch {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 0.125rem;
-    flex-shrink: 0;
-}
-
-.stats-chart .chart-empty {
-    padding: 2.5rem 1rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--color-base-content);
-    opacity: 0.6;
 }
