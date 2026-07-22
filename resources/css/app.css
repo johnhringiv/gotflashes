@@ -1087,13 +1087,14 @@
     z-index: 10;
 }
 
-/* When the field itself is disabled it fills base-200 (grey); match the floating
-   label's knock-out background so it doesn't read as a white box over the grey
-   control (e.g. Sailing Type when Activity Type isn't "Sailing"). Scope to the
-   control — a bare :disabled would also match a select's disabled placeholder
-   <option>, wrongly greying the label of every enabled select. */
-.floating-label-visible:has(:is(input, select, textarea):disabled) label {
-    background: var(--color-base-200);
+/* Keep a disabled floating-label control light (not DaisyUI's grey fill) so its
+   label — which straddles the field's top edge — blends on both sides instead
+   of showing a box (grey over the card, or white over a grey fill). The dimmed
+   placeholder + not-allowed cursor still signal the disabled state, and it keeps
+   Sailing Type looking like Activity Type when it's inactive. */
+.floating-label-visible :is(input, select, textarea):disabled {
+    background-color: var(--color-base-100);
+    border-color: var(--color-base-300);
 }
 
 /* DaisyUI's .label (used for @error field messages) is inline-flex with
