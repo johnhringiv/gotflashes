@@ -606,7 +606,15 @@
 
     /* --- Dropdown --------------------------------------------------------- */
     .dropdown { position: relative; display: inline-block; }
-    .dropdown-content { position: absolute; }
+
+    /* Collapsed until the trigger (a focusable [tabindex] child — e.g. the
+       mobile nav hamburger) gains focus. While open, the trigger is given
+       pointer-events: none so a second tap on it falls through and blurs it,
+       dropping :focus-within and closing the menu; without this the hamburger
+       can only be dismissed by tapping elsewhere. Mirrors DaisyUI's dropdown. */
+    .dropdown-content { position: absolute; display: none; }
+    .dropdown:focus-within > .dropdown-content { display: flex; }
+    .dropdown:focus-within > [tabindex]:first-child { pointer-events: none; }
 
     /* --- Footer ----------------------------------------------------------- */
     .footer { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; font-size: 0.875rem; }
