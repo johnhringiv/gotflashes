@@ -704,6 +704,34 @@
         background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
         outline: none;
     }
+
+    /* Chrome customizable <select> (Chrome 130+, appearance: base-select):
+       render the native dropdown as a styled popup — rounded, padded, shadowed
+       — so the gender dropdown matches the tom-select ones. The @supports guard
+       degrades to the OS popup on browsers without it (Safari/Firefox). */
+    @supports (appearance: base-select) {
+        :is(.select, .select select) { appearance: base-select; }
+        :is(.select, .select select)::picker(select) {
+            appearance: base-select;
+            color: inherit;
+            border: var(--border) solid var(--color-base-200);
+            border-radius: var(--radius-box);
+            background-color: var(--color-base-100);
+            max-height: min(24rem, 70dvh);
+            box-shadow: 0 20px 25px -5px oklch(0% 0 0 / 0.1), 0 8px 10px -6px oklch(0% 0 0 / 0.1);
+            margin-block: 0.5rem;
+            margin-inline: 0.5rem;
+            padding: 0.5rem;
+            translate: -0.5rem;
+        }
+        :is(.select, .select select)::picker-icon { display: none; }
+        :is(.select, .select select) selectedcontent {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+    }
     .input-error, .select-error, .textarea-error { border-color: var(--color-error); }
     .select-disabled, .input:disabled, .select:disabled, .textarea:disabled {
         border-color: var(--color-base-200);
