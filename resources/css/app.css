@@ -209,6 +209,7 @@
     /* Margin */
     .mx-auto { margin-inline: auto; }
     .-mt-1 { margin-top: -0.25rem; }
+    .-mt-2\.5 { margin-top: -0.625rem; }
     .-mt-4 { margin-top: -1rem; }
     .mt-1 { margin-top: 0.25rem; }
     .mt-2 { margin-top: 0.5rem; }
@@ -358,6 +359,7 @@
     .border-b-2 { border-bottom-width: 2px; }
     .border-t-2 { border-top-width: 2px; }
     .border-base-300 { border-color: var(--color-base-300); }
+    .border-primary { border-color: var(--color-primary); }
     .border-primary\/20 { border-color: color-mix(in oklab, var(--color-primary) 20%, transparent); }
     .border-base-content\/20 { border-color: color-mix(in oklab, var(--color-base-content) 20%, transparent); }
     .border-base-content\/50 { border-color: color-mix(in oklab, var(--color-base-content) 50%, transparent); }
@@ -935,19 +937,23 @@
     .stat-desc { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
 
     /* --- Progress --------------------------------------------------------- */
+    /* DaisyUI drives both the filled value and the track from `color` via
+       currentcolor: the track is that colour at 20%. So .progress-primary makes
+       the value primary AND the unmet track primary/20 (light blue), not gray. */
     .progress {
         appearance: none;
+        display: block;
         width: 100%;
         height: 0.5rem;
         border-radius: var(--radius-box);
-        background-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+        color: var(--color-base-content);
+        background-color: color-mix(in oklab, currentcolor 20%, transparent);
         overflow: hidden;
     }
     .progress::-webkit-progress-bar { background-color: transparent; }
-    .progress::-webkit-progress-value { background-color: var(--color-base-content); }
-    .progress::-moz-progress-bar { background-color: var(--color-base-content); }
-    .progress-primary::-webkit-progress-value { background-color: var(--color-primary); }
-    .progress-primary::-moz-progress-bar { background-color: var(--color-primary); }
+    .progress::-webkit-progress-value { background-color: currentcolor; border-radius: var(--radius-box); }
+    .progress::-moz-progress-bar { background-color: currentcolor; border-radius: var(--radius-box); }
+    .progress-primary { color: var(--color-primary); }
 
     /* --- Join ------------------------------------------------------------- */
     .join { display: inline-flex; align-items: stretch; }

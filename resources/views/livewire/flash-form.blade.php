@@ -46,68 +46,54 @@
             </div>
 
             <!-- Activity Type - order-2 on mobile, col 1 on desktop -->
-            <div class="mb-6 order-2 md:order-3">
-                {{-- Wrapper is a <div>, not a <label>: DaisyUI's .label markup uses <div>
-                     children, which are invalid inside <label>. The visible field label is a
-                     proper <label for> below, so control association is preserved. --}}
-                <div class="form-control w-full">
+            <div class="mb-6 floating-label-visible order-2 md:order-3">
+                {{-- .live (not .defer): syncs on change so updated() can clear this field's
+                     validation error in real time. Worth the per-change render() since the
+                     existingDates query it triggers is cached per request. --}}
+                <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered w-full @error('activity_type') select-error @enderror" required>
+                    {{-- hidden: placeholder text shows in the closed control but never
+                         as a (checkmarked) row in the open picker --}}
+                    <option value="" disabled hidden {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
+                    <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
+                    <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
+                    <option value="race_committee" {{ $activity_type == 'race_committee' ? 'selected' : '' }}>Race Committee Work</option>
+                </select>
+                <label for="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}">Activity Type</label>
+                @error('activity_type')
                     <div class="label">
-                        <label class="label-text" for="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}">Activity Type</label>
+                        <span class="label-text-alt text-error">{{ $message }}</span>
                     </div>
-                    {{-- .live (not .defer): syncs on change so updated() can clear this field's
-                         validation error in real time. Worth the per-change render() since the
-                         existingDates query it triggers is cached per request. --}}
-                    <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered @error('activity_type') select-error @enderror" required>
-                        {{-- hidden: placeholder text shows in the closed control but never
-                             as a (checkmarked) row in the open picker --}}
-                        <option value="" disabled hidden {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
-                        <option value="sailing" {{ $activity_type == 'sailing' ? 'selected' : '' }}>Sailing</option>
-                        <option value="maintenance" {{ $activity_type == 'maintenance' ? 'selected' : '' }}>Boat/Trailer Maintenance</option>
-                        <option value="race_committee" {{ $activity_type == 'race_committee' ? 'selected' : '' }}>Race Committee Work</option>
-                    </select>
-                    @error('activity_type')
-                        <div class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
-                        </div>
-                    @enderror
-                </div>
+                @enderror
             </div>
 
-            <!-- Sailing Type - order-3 on mobile, spans both cols on desktop -->
-            <div class="mb-6 md:col-span-2 order-3 md:order-5">
-                {{-- Wrapper is a <div>, not a <label>: DaisyUI's .label markup uses <div>
-                     children, which are invalid inside <label>. The visible field label is a
-                     proper <label for> (the tooltip <span> is phrasing content, so it may
-                     live inside it), which also restores click-to-focus. --}}
-                <div class="form-control w-full">
+            <!-- Sailing Type - order-3 on mobile, col 1 on desktop -->
+            <div class="mb-6 floating-label-visible order-3 md:order-5">
+                <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
+                        class="select select-bordered w-full @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
+                        {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
+                    {{-- hidden: same placeholder pattern as activity type above --}}
+                    <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
+                        {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
+                    </option>
+                    <option value="regatta" {{ $event_type == 'regatta' ? 'selected' : '' }}>Regatta</option>
+                    <option value="club_race" {{ $event_type == 'club_race' ? 'selected' : '' }}>Club Race</option>
+                    <option value="practice" {{ $event_type == 'practice' ? 'selected' : '' }}>Practice</option>
+                    <option value="leisure" {{ $event_type == 'leisure' ? 'selected' : '' }}>Day Sailing</option>
+                </select>
+                {{-- The tooltip <span> is phrasing content, so it may live inside the <label>. --}}
+                <label for="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}" class="flex items-center gap-1">
+                    Sailing Type
+                    <span class="tooltip tooltip-right tooltip-clamp" data-tip="Helps the Class understand our constituents">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                </label>
+                @error('event_type')
                     <div class="label">
-                        <label class="label-text flex items-center gap-1" for="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}">
-                            Sailing Type
-                            <span class="tooltip tooltip-right tooltip-clamp" data-tip="Helps the Class understand our constituents">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </label>
+                        <span class="label-text-alt text-error">{{ $message }}</span>
                     </div>
-                    <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
-                            class="select select-bordered @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
-                            {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
-                        {{-- hidden: same placeholder pattern as activity type above --}}
-                        <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
-                            {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
-                        </option>
-                        <option value="regatta" {{ $event_type == 'regatta' ? 'selected' : '' }}>Regatta</option>
-                        <option value="club_race" {{ $event_type == 'club_race' ? 'selected' : '' }}>Club Race</option>
-                        <option value="practice" {{ $event_type == 'practice' ? 'selected' : '' }}>Practice</option>
-                        <option value="leisure" {{ $event_type == 'leisure' ? 'selected' : '' }}>Day Sailing</option>
-                    </select>
-                    @error('event_type')
-                        <div class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
-                        </div>
-                    @enderror
-                </div>
+                @enderror
             </div>
 
             <!-- Location - order-4 on mobile, col 2 on desktop -->
