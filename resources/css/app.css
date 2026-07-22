@@ -1158,10 +1158,12 @@
 }
 
 .ts-wrapper.focus .ts-control {
-    /* Secondary to match the native focus rings (see the .input:focus block) */
-    border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px oklch(from var(--color-secondary) l c h / 20%);
-    outline: none;
+    /* Match the crisp secondary auto focus ring the native inputs get
+       (.input:focus below): keep the base border, no soft glow — an auto
+       outline in the brand secondary. */
+    box-shadow: none;
+    outline: 1px auto var(--color-secondary);
+    outline-offset: 1px;
     background: var(--color-base-100) !important;
 }
 
