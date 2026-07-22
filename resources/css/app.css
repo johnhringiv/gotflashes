@@ -390,6 +390,10 @@
     .list-disc { list-style-type: disc; }
     .list-inside { list-style-position: inside; }
 
+    /* SVG paint (icons use stroke-based paths coloured by currentColor) */
+    .stroke-current { stroke: currentColor; }
+    .fill-current { fill: currentColor; }
+
     .container {
         width: 100%;
         margin-inline: auto;
@@ -522,7 +526,12 @@
         box-shadow: none;
         text-shadow: none;
     }
-    .btn-ghost:hover { background-color: color-mix(in oklab, var(--color-base-content) 10%, #0000); border-color: #0000; }
+    .btn-ghost:hover {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, #0000);
+        /* DaisyUI derives a faint light border on ghost hover (visible on dark
+           surfaces like the navbar, subtle on light ones). */
+        border-color: color-mix(in oklab, var(--color-base-200), #000 12%);
+    }
 
     .btn-outline {
         color: var(--btn-color, var(--color-base-content));
@@ -580,7 +589,7 @@
     /* --- Footer ----------------------------------------------------------- */
     .footer { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; font-size: 0.875rem; }
     .footer-center { align-items: center; justify-content: center; text-align: center; }
-    .footer-center > * { display: flex; flex-direction: column; align-items: center; }
+    .footer-center > * { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 
     /* --- Card ------------------------------------------------------------- */
     .card { position: relative; display: flex; flex-direction: column; border-radius: var(--radius-box); }
