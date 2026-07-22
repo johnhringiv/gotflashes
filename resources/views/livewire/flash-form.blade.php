@@ -46,7 +46,7 @@
             </div>
 
             <!-- Activity Type - order-2 on mobile, col 1 on desktop -->
-            <div class="mb-6 floating-label-visible order-2 md:order-3">
+            <div class="mb-6 floating-label-visible order-2 md:order-3 md:max-w-xs">
                 {{-- .live (not .defer): syncs on change so updated() can clear this field's
                      validation error in real time. Worth the per-change render() since the
                      existingDates query it triggers is cached per request. --}}
@@ -67,7 +67,7 @@
             </div>
 
             <!-- Sailing Type - order-3 on mobile, col 1 on desktop -->
-            <div class="mb-6 floating-label-visible order-3 md:order-5">
+            <div class="mb-6 floating-label-visible order-3 md:order-5 md:max-w-xs">
                 <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
                         class="select select-bordered w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}"
                         {{ $activity_type === 'sailing' ? 'required' : 'disabled' }}>
