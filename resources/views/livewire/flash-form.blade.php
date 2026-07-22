@@ -69,8 +69,8 @@
             <!-- Sailing Type - order-3 on mobile, col 1 on desktop -->
             <div class="mb-6 floating-label-visible order-3 md:order-5">
                 <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
-                        class="select select-bordered w-full @error('event_type') select-error @enderror {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'select-disabled' : '' }}"
-                        {{ in_array($activity_type, ['maintenance', 'race_committee']) ? 'disabled' : 'required' }}>
+                        class="select select-bordered w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}"
+                        {{ $activity_type === 'sailing' ? 'required' : 'disabled' }}>
                     {{-- hidden: same placeholder pattern as activity type above --}}
                     <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
                         {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
