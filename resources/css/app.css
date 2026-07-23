@@ -465,6 +465,7 @@
     @media (min-width: 1024px) {
         .lg\:flex { display: flex; }
         .lg\:hidden { display: none; }
+        .lg\:stats-horizontal { grid-auto-flow: column; }
         .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     }
@@ -924,8 +925,9 @@
     .tab.tab-active, .tab[aria-selected='true'] { color: var(--color-base-content); }
 
     /* --- Stats ------------------------------------------------------------ */
-    .stats { display: inline-grid; border-radius: var(--radius-box); }
+    .stats { display: inline-grid; grid-auto-flow: column; position: relative; overflow-x: auto; border-radius: var(--radius-box); }
     .stats-vertical { grid-auto-flow: row; }
+    .stats-horizontal { grid-auto-flow: column; }
     .stat {
         display: inline-grid;
         grid-template-columns: repeat(1, 1fr);
@@ -1676,7 +1678,10 @@
 }
 
 .ts-control {
-    min-height: 3rem;
+    /* Match the native .select height (2.5rem) so a TomSelect-ified field lines
+       up with the plain selects beside it — e.g. the sailor-logs / fulfillment
+       filter rows, where a 3rem control stood taller than the year select. */
+    min-height: 2.5rem;
     display: flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
