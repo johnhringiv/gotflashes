@@ -87,10 +87,13 @@
         line-height: 1.5;
         font-family: var(--font-sans);
 
-        /* Always reserve the scrollbar gutter so the layout width stays constant
-           between pages that scroll and pages that don't — no horizontal shift,
-           and filter rows / cards keep the same width app-wide. */
-        scrollbar-gutter: stable;
+        /* Deliberately NO scrollbar-gutter/overflow-y tweak (tried and reverted):
+           a reserved-but-empty gutter paints as a blank strip beside the dark
+           navbar and gray footer on short pages (Chromium won't reliably paint
+           root background *images* into the gutter, so it can't be band-filled),
+           and overflow-y: scroll shows a dead track on short pages. Like prod,
+           we accept the small centering shift between pages that scroll and
+           pages that don't. */
     }
 
     body {
@@ -480,6 +483,11 @@
         display: inline-flex;
         flex-wrap: nowrap;
         flex-shrink: 0;
+
+        /* A button label never breaks (DaisyUI behaviour) — when a container
+           squeezes below one-line width (fulfillment's w-24 Select All column)
+           the button overflows instead of wrapping to two lines. */
+        white-space: nowrap;
         align-items: center;
         justify-content: center;
         gap: 0.375rem;
@@ -576,6 +584,13 @@
     .navbar-center { display: inline-flex; align-items: center; }
     .navbar-end { display: inline-flex; align-items: center; flex: 1; justify-content: flex-end; }
 
+    /* Desktop: breathing room between the auth cluster (Logout) and the viewport
+       edge, matching the logo's effective 16px on the left (navbar 8px + the
+       logo link's own px-2). Mobile keeps the tighter 8px for the hamburger. */
+    @media (min-width: 1024px) {
+        .navbar { padding-inline-end: 1rem; }
+    }
+
     /* --- Menu ------------------------------------------------------------- */
     .menu {
         display: flex;
@@ -588,7 +603,12 @@
     .menu-horizontal { flex-direction: row; align-items: center; }
     .menu :where(li) { display: flex; flex-direction: column; flex-shrink: 0; }
     .menu-horizontal > li { flex-direction: row; }
-    .menu :where(li) > :where(a, button, .menu-item) {
+    /* The `form > button` arm covers rows whose action needs a CSRF form (the
+       mobile menu's Logout): the button is a grandchild of the li, so the plain
+       child selector misses it and it sat at the UA-default indent instead of
+       lining up with its sibling links. */
+    .menu :where(li) > :where(a, button, .menu-item),
+    .menu :where(li) > form > button {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -596,7 +616,8 @@
         border-radius: var(--radius-field);
         text-align: start;
     }
-    .menu :where(li) > :where(a, button):not(.btn):hover {
+    .menu :where(li) > :where(a, button):not(.btn):hover,
+    .menu :where(li) > form > button:not(.btn):hover {
         background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
     }
     .menu-title { padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
@@ -674,6 +695,12 @@
     .hero { display: grid; width: 100%; place-items: center; background-size: cover; background-position: center; }
     .hero-content { display: flex; align-items: center; justify-content: center; max-width: 80rem; gap: 1rem; padding: 1rem; }
 
+    /* Fill the viewport minus ~16rem of page chrome (navbar + footer + margins)
+       so the hero's place-items centering vertically centers its card — the
+       auth pages. Replaces Tailwind's arbitrary-value min-h-[calc(100vh-16rem)],
+       which has no rule without the JIT. */
+    .hero-fill { min-height: calc(100vh - 16rem); }
+
     /* --- Links ------------------------------------------------------------ */
     .link { cursor: pointer; text-decoration: underline; }
     .link-hover { text-decoration: none; }
@@ -683,7 +710,10 @@
 
     /* --- Form controls ---------------------------------------------------- */
     .form-control { display: flex; flex-direction: column; }
-    .label { display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0; }
+
+    /* No vertical padding — DaisyUI 5 (the visual reference) dropped it; with it,
+       every labelled field (e.g. the admin filter cards) runs 8px taller than prod. */
+    .label { display: flex; align-items: center; justify-content: space-between; }
     .label-text { font-size: 0.875rem; color: var(--color-base-content); }
     .label-text-alt { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
@@ -782,27 +812,37 @@
     }
 
     /* --- Checkbox --------------------------------------------------------- */
+    /* A colour variant (.checkbox-primary etc.) tints the border even when
+       unchecked, like DaisyUI 5; the plain .checkbox keeps the faint border. */
     .checkbox {
         appearance: none;
         flex-shrink: 0;
         width: 1.5rem;
         height: 1.5rem;
-        border: var(--border) solid color-mix(in oklab, var(--color-base-content) 20%, transparent);
+        border: var(--border) solid var(--checkbox-color, color-mix(in oklab, var(--color-base-content) 20%, transparent));
         border-radius: var(--radius-selector);
         cursor: pointer;
         vertical-align: middle;
         position: relative;
     }
     .checkbox-sm { width: 1.25rem; height: 1.25rem; }
+
+    /* Checked: solid fill in the variant colour, the checkmark knocked out in
+       base-100 by DaisyUI's stacked-gradient trick. --chk-bg is the FILL and
+       --chk-fg the CHECK — swapping them renders a white box with a coloured
+       tick instead. */
     .checkbox:checked, .checkbox[aria-checked='true'] {
-        background-color: var(--checkbox-color, var(--color-base-content));
-        border-color: var(--checkbox-color, var(--color-base-content));
+        --chk-bg: var(--checkbox-color, var(--color-base-content));
+        --chk-fg: var(--color-base-100);
+
+        background-color: var(--chk-bg);
+        border-color: var(--chk-bg);
         background-image:
-            linear-gradient(-45deg, transparent 65%, var(--color-base-100) 65.99%),
-            linear-gradient(45deg, transparent 75%, var(--color-base-100) 75.99%),
-            linear-gradient(-45deg, var(--color-base-100) 40%, transparent 40.99%),
-            linear-gradient(45deg, var(--color-base-100) 30%, var(--checkbox-color, var(--color-base-content)) 30.99%, var(--checkbox-color, var(--color-base-content)) 40%, transparent 40.99%),
-            linear-gradient(-45deg, var(--checkbox-color, var(--color-base-content)) 50%, var(--color-base-100) 50.99%);
+            linear-gradient(-45deg, transparent 65%, var(--chk-bg) 65.99%),
+            linear-gradient(45deg, transparent 75%, var(--chk-bg) 75.99%),
+            linear-gradient(-45deg, var(--chk-bg) 40%, transparent 40.99%),
+            linear-gradient(45deg, var(--chk-bg) 30%, var(--chk-fg) 30.99%, var(--chk-fg) 40%, transparent 40.99%),
+            linear-gradient(-45deg, var(--chk-fg) 50%, var(--chk-bg) 50.99%);
     }
     .checkbox-primary { --checkbox-color: var(--color-primary); }
     .checkbox-warning { --checkbox-color: var(--color-warning); }
@@ -990,6 +1030,11 @@
     }
     .modal.modal-open, .modal[open], .modal:target { opacity: 1; visibility: visible; }
     .modal-box {
+        /* Positioning context for the dialog's absolute ✕ close button — without
+           this it resolves against the fixed .modal overlay and lands in the
+           viewport corner. */
+        position: relative;
+
         /* Fixed width (91.67% capped at max-width) so the box does not shrink to
            fit its content — otherwise the edit dialog resizes as fields change. */
         width: 91.6667%;

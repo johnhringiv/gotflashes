@@ -52,6 +52,14 @@ const CLASS_ATTR_PATTERNS = [
  */
 function looksLikeClassToken(token) {
     if (!token || token.endsWith('-')) return false;
+
+    // Tailwind arbitrary-value classes (w-[13px], min-h-[calc(100vh-16rem)]):
+    // without the JIT no rule exists for these, so they are always bugs. Accept
+    // the token here so it surfaces as used-but-undefined, instead of being
+    // silently dropped by the parenthesis filter below (which is how a
+    // min-h-[calc(...)] on the auth pages went unnoticed).
+    if (/^-?[a-zA-Z][a-zA-Z0-9:-]*-\[[^\s{}$@<>"'`?=|&!]+\]$/.test(token)) return true;
+
     if (/[{}$@<>()"'`?=|&!]/.test(token)) return false;
     return /^-?[a-zA-Z_][a-zA-Z0-9_:/.-]*$/.test(token);
 }
