@@ -42,7 +42,7 @@
     @livewireStyles(['nonce' => app('csp-nonce')])
 </head>
 <body class="min-h-screen flex flex-col bg-base-200 font-sans">
-<nav class="navbar shadow-md" style="background-color: var(--color-primary); color: var(--color-primary-content);">
+<nav class="navbar shadow-md">
     <div class="navbar-start">
         <!-- Mobile menu dropdown -->
         <div class="dropdown lg:hidden">
@@ -149,7 +149,7 @@
     </noscript>
 
     <!-- Toast Container (for both session and Livewire toasts) -->
-    <div id="toast-container" class="toast toast-top toast-center z-50" style="top: 5rem;"></div>
+    <div id="toast-container" class="toast toast-top toast-center z-50 top-20"></div>
 
     <!-- Success Toast (Session-based - for page reloads) -->
     @if (session('success'))

@@ -392,6 +392,7 @@
     .static { position: static; }
     .top-0 { top: 0; }
     .top-2 { top: 0.5rem; }
+    .top-20 { top: 5rem; }
     .bottom-0 { bottom: 0; }
     .left-0 { left: 0; }
     .right-0 { right: 0; }
@@ -575,6 +576,8 @@
         width: 100%;
         min-height: 4rem;
         padding: 0.5rem;
+        background-color: var(--color-primary);
+        color: var(--color-primary-content);
     }
     .navbar-start { display: inline-flex; align-items: center; flex: 1; justify-content: flex-start; }
     .navbar-center { display: inline-flex; align-items: center; }
@@ -1230,6 +1233,13 @@
        the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
        so fill/benchmark heights map to that central 70% band. */
     .lightning-fill {
+        /* Defaults for the two vars the Blade component sets inline per render
+           (--lf-fill: fill %, --lf-prior: prior-year fraction). Declaring them
+           here gives descendants a value to inherit and lets tooling resolve the
+           var() references; the inline style overrides these at runtime. */
+        --lf-fill: 0%;
+        --lf-prior: 0;
+
         position: relative;
         display: flex;
         flex-direction: column;
