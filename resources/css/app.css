@@ -742,7 +742,10 @@
        — so the gender dropdown matches the tom-select ones. The @supports guard
        degrades to the OS popup on browsers without it (Safari/Firefox). */
     @supports (appearance: base-select) {
-        :is(.select, .select select) { appearance: base-select; }
+        /* align-items: center — a base-select control is display:flex with the
+           UA default align-items:normal (stretch), which floats the value's text
+           to the top of the box. Centre it vertically like a normal select. */
+        :is(.select, .select select) { appearance: base-select; align-items: center; }
         :is(.select, .select select)::picker(select) {
             appearance: base-select;
             color: inherit;
@@ -1685,6 +1688,17 @@
     display: flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
+
+    /* Dropdown caret, matching the native .select. TomSelect's own arrow lives
+       on the .select-classed wrapper, which we suppress (.ts-wrapper.select), so
+       re-add it here; the right-padding that clears it lives on
+       .ts-wrapper.single .ts-control (it can out-specify TomSelect's own rule). */
+    background-image:
+        linear-gradient(45deg, transparent 50%, currentcolor 50%),
+        linear-gradient(135deg, currentcolor 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
 }
 
 .ts-wrapper .item {
@@ -1697,10 +1711,15 @@
 }
 
 .ts-wrapper.single .ts-control {
-    background: var(--color-base-100) !important;
+    background-color: var(--color-base-100) !important;
     border: 1px solid var(--color-base-300);
     border-radius: var(--radius-selector);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    /* Clear the caret added on .ts-control. This selector matches TomSelect's own
+       `.ts-control:not(.rtl){padding-right:… !important}` specificity (0,2,0) and
+       comes later, so our padding wins. */
+    padding-inline-end: 1.75rem !important;
 
     /* Keep the selected item and the search input on one line. Without this,
        focusing an already-selected single select on a narrow (mobile) viewport
@@ -1720,7 +1739,7 @@
     box-shadow: none;
     outline: 1px auto var(--color-secondary);
     outline-offset: 1px;
-    background: var(--color-base-100) !important;
+    background-color: var(--color-base-100) !important;
 }
 
 .ts-wrapper.disabled .ts-control,
