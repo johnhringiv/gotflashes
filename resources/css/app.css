@@ -5,7 +5,9 @@
  * style. Vite bundles this file and the JS; there is no CSS framework.
  *
  * Architecture (via @layer for predictable specificity — utilities win over
- * components without !important):
+ * components without !important; precedence comes from the @layer statement
+ * below, not source order, so the utilities block sitting before components
+ * in this file changes nothing):
  *   reset       — modern box-sizing + element normalization
  *   base        — element defaults (typography, forms, links)
  *   components  — component classes + all project CSS (floating labels, focus
@@ -66,11 +68,6 @@
         "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
-}
-
-@keyframes fade-out {
-    0%, 70% { opacity: 1; }
-    100% { opacity: 0; pointer-events: none; }
 }
 
 /* ==========================================================================
@@ -307,7 +304,6 @@
     .font-medium { font-weight: 500; }
     .font-semibold { font-weight: 600; }
     .font-bold { font-weight: 700; }
-    .\!font-bold { font-weight: 700 !important; }
     .font-sans { font-family: var(--font-sans); }
     .font-mono { font-family: var(--font-mono); }
     .text-left { text-align: left; }
@@ -325,7 +321,6 @@
 
     /* Colours — text */
     .text-white { color: #fff; }
-    .\!text-white { color: #fff !important; }
     .text-base-content { color: var(--color-base-content); }
     .text-primary { color: var(--color-primary); }
     .text-secondary { color: var(--color-secondary); }
@@ -350,12 +345,12 @@
     .bg-white\/10 { background-color: oklch(100% 0 0deg / 0.1); }
 
     /* Gradients (Tailwind-style from/to stops) */
-    .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops, transparent, transparent)); }
+    .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--gradient-stops, transparent, transparent)); }
     .from-primary\/10 {
-        --tw-gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);
-        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+        --gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);
+        --gradient-stops: var(--gradient-from), var(--gradient-to, transparent);
     }
-    .to-secondary\/10 { --tw-gradient-to: color-mix(in oklab, var(--color-secondary) 10%, transparent); }
+    .to-secondary\/10 { --gradient-to: color-mix(in oklab, var(--color-secondary) 10%, transparent); }
 
     /* Borders */
     .border { border-width: 1px; }
@@ -389,7 +384,6 @@
     .relative { position: relative; }
     .absolute { position: absolute; }
     .fixed { position: fixed; }
-    .static { position: static; }
     .top-0 { top: 0; }
     .top-2 { top: 0.5rem; }
     .top-20 { top: 5rem; }
@@ -408,7 +402,6 @@
     .cursor-not-allowed { cursor: not-allowed; }
     .pointer-events-none { pointer-events: none; }
     .select-none { user-select: none; }
-    .resize { resize: both; }
     .transition-colors { transition-property: color, background-color, border-color; transition-duration: 0.15s; }
     .transition-opacity { transition-property: opacity; transition-duration: 0.15s; }
     .list-disc { list-style-type: disc; }
@@ -1076,7 +1069,9 @@
         font-size: 0.875rem;
         color: oklch(60% 0.01 245deg);
         pointer-events: none;
-        background: oklch(96% 0.003 245deg);
+
+        /* Must match the page surface — the label straddles the field's border */
+        background: var(--color-base-100);
         padding: 0 0.25rem;
         z-index: 10;
     }
@@ -1128,33 +1123,27 @@
         transition: none;
     }
 
-    /* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
-       focus outline is base-content, which reads as black). Secondary, not
-       primary: thin strokes lose perceived hue, so the dark primary navy also
-       read near-black at 2px — and secondary is already the interaction color
-       (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
-       underline. */
+    /* Brand-blue focus ring on native form controls: the browser's automatic
+       focus outline is kept and only recoloured. Secondary, not primary: thin
+       strokes lose perceived hue, so the dark primary navy read near-black at
+       2px — and secondary is already the interaction color (links, tooltips). */
     .input:focus,
     .input:focus-within,
     .select:focus,
     .select:focus-within,
     .textarea:focus,
     .textarea:focus-within {
-        --input-color: var(--color-secondary);
-
         outline-color: var(--color-secondary);
     }
 
     /* Error-state fields keep an error-colored focus, mirroring
-       .ts-has-error .ts-wrapper.select.focus above. */
+       .ts-has-error .ts-wrapper.focus .ts-control below. */
     .input-error:focus,
     .input-error:focus-within,
     .select-error:focus,
     .select-error:focus-within,
     .textarea-error:focus,
     .textarea-error:focus-within {
-        --input-color: var(--color-error);
-
         outline-color: var(--color-error);
     }
 
@@ -1194,6 +1183,13 @@
     /* Alternating row colors (primary blue with transparency) */
     .table tbody tr:nth-child(even):not(.current-user-row) {
         background-color: oklch(from var(--color-primary) l c h / 10%);
+    }
+
+    /* Opt-in row hover highlight (<tr class="hover">, e.g. the fulfillment
+       table) — the DaisyUI convention the markup already uses. Placed after the
+       zebra rule (equal specificity) so hovering also reads on even rows. */
+    .table tbody tr.hover:hover {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
     }
 
     /* Current user/fleet/district highlighting */
@@ -1770,16 +1766,16 @@
    .select.select-bordered there, which is full-width and matches the text
    inputs). Its inset box-shadows draw top/bottom lines that hide a plain red
    border, so we replace them with a flat error ring on all four edges. On focus
-   DaisyUI draws a dark 2px outline, so we recolor that to the error color (same
-   as .input-error on the text fields). The inner .ts-control is taller and
-   horizontally inset, so we strip its border/ring to avoid a misaligned double
-   line. */
+   the ring is the 1px auto outline drawn on .ts-control (.ts-wrapper.focus
+   above), so we recolor that to the error color (same as .input-error on the
+   text fields). The inner .ts-control is taller and horizontally inset, so we
+   strip its border/ring to avoid a misaligned double line. */
 .ts-has-error .ts-wrapper.select {
     border-color: var(--color-error);
     box-shadow: 0 0 0 1px var(--color-error);
 }
 
-.ts-has-error .ts-wrapper.select.focus {
+.ts-has-error .ts-wrapper.focus .ts-control {
     outline-color: var(--color-error);
 }
 
@@ -1794,42 +1790,42 @@
 
 /* Calendar container */
 .flatpickr-calendar {
-    background: oklch(96% 0.003 245deg) !important;
-    border: 1px solid oklch(85% 0.008 245deg) !important;
+    background: var(--color-base-100) !important;
+    border: 1px solid var(--color-base-300) !important;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%) !important;
 }
 
 /* Month/Year header */
 .flatpickr-months {
-    background: oklch(38% 0.09 245deg) !important;
+    background: var(--color-primary) !important;
 }
 
 .flatpickr-current-month {
-    color: oklch(100% 0 0deg) !important;
+    color: var(--color-primary-content) !important;
 }
 
 .flatpickr-month,
 /* stylelint-disable-next-line selector-class-pattern */
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-current-month input.cur-year {
-    color: oklch(100% 0 0deg) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Navigation arrows */
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-    fill: oklch(100% 0 0deg) !important;
+    fill: var(--color-primary-content) !important;
 }
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-    fill: oklch(92% 0.005 245deg) !important;
+    fill: var(--color-base-200) !important;
 }
 
 /* Year dropdown styling (custom select element) */
 .flatpickr-current-month select {
-    background: oklch(38% 0.09 245deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    color: var(--color-primary-content) !important;
     border: none !important;
     font-weight: inherit !important;
     cursor: pointer !important;
@@ -1853,61 +1849,61 @@
 
 /* Weekday headers */
 .flatpickr-weekdays {
-    background: oklch(92% 0.005 245deg) !important;
+    background: var(--color-base-200) !important;
 }
 
 span.flatpickr-weekday {
-    color: oklch(38% 0.09 245deg) !important;
+    color: var(--color-primary) !important;
     font-weight: 600 !important;
 }
 
 /* Regular date cells */
 .flatpickr-day {
-    color: oklch(25% 0.02 245deg) !important;
+    color: var(--color-base-content) !important;
     border: 1px solid transparent !important;
 }
 
 .flatpickr-day:hover {
-    background: oklch(92% 0.005 245deg) !important;
-    border-color: oklch(85% 0.008 245deg) !important;
+    background: var(--color-base-200) !important;
+    border-color: var(--color-base-300) !important;
 }
 
 /* Selected dates */
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    background: oklch(38% 0.09 245deg) !important;
-    border-color: oklch(38% 0.09 245deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Today's date - ONLY when not selected */
 .flatpickr-day.today:not(.selected) {
-    border-color: oklch(44% 0.21 29deg) !important;
-    background: oklch(96% 0.003 245deg) !important;
+    border-color: var(--color-accent) !important;
+    background: var(--color-base-100) !important;
 }
 
 .flatpickr-day.today:not(.selected):hover {
-    background: oklch(92% 0.005 245deg) !important;
-    border-color: oklch(44% 0.21 29deg) !important;
+    background: var(--color-base-200) !important;
+    border-color: var(--color-accent) !important;
 }
 
 /* Today's date when selected - blue background with red border */
 .flatpickr-day.today.selected,
 .flatpickr-day.today.selected:hover {
-    background: oklch(38% 0.09 245deg) !important;
-    border-color: oklch(44% 0.21 29deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    border-color: var(--color-accent) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Future dates (disabled) - grayed out */
 .flatpickr-day.flatpickr-disabled:not(.has-entry) {
-    color: oklch(85% 0.008 245deg) !important;
-    background: oklch(96% 0.003 245deg) !important;
+    color: var(--color-base-300) !important;
+    background: var(--color-base-100) !important;
     cursor: not-allowed !important;
 }
 
 .flatpickr-day.flatpickr-disabled:not(.has-entry):hover {
-    background: oklch(96% 0.003 245deg) !important;
+    background: var(--color-base-100) !important;
     border-color: transparent !important;
 }
 
@@ -1918,9 +1914,7 @@ span.flatpickr-weekday {
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
-    background-color: oklch(92% 0.005 245deg) !important;
-
-    /* border: 1px solid oklch(55% 0.12 240deg) !important; */
+    background-color: var(--color-base-200) !important;
     color: transparent !important;
     cursor: not-allowed;
 }
@@ -1933,7 +1927,7 @@ span.flatpickr-weekday {
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
-    background-color: oklch(92% 0.005 245deg) !important;
-    border: 2px solid oklch(44% 0.21 29deg) !important;
+    background-color: var(--color-base-200) !important;
+    border: 2px solid var(--color-accent) !important;
     color: transparent !important;
 }

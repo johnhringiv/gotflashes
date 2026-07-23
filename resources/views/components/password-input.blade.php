@@ -6,7 +6,7 @@
            @if($name) name="{{ $name }}" @endif
            @if($id) id="{{ $id }}" @endif
            placeholder="{{ $placeholder }}"
-           class="input input-bordered w-full pr-10 hide-password-reveal {{ $class }}"
+           class="input w-full pr-10 hide-password-reveal {{ $class }}"
            {{ $attributes->except(['class', 'id', 'name', 'wire-model', 'placeholder', 'required']) }}
            @if($required) required @endif>
     <button type="button"

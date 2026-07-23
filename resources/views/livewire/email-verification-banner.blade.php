@@ -18,7 +18,7 @@
                 <button data-resend-btn wire:click="resendVerification" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="resendVerification" style="{{ $cooldownSeconds > 0 ? 'display: none;' : '' }}">
                     <span wire:loading.remove wire:target="resendVerification">Resend Verification Email</span>
                     <span wire:loading wire:target="resendVerification">
-                        <span class="loading loading-spinner loading-xs"></span>
+                        <span class="loading loading-xs"></span>
                         Sending...
                     </span>
                 </button>

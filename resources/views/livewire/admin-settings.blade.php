@@ -3,7 +3,7 @@
         <h1 class="text-3xl font-bold text-primary">Settings</h1>
         <label class="flex items-center gap-2" for="admin-settings-year">
             <span class="text-sm font-medium">Year</span>
-            <select id="admin-settings-year" wire:model.live="selectedYear" class="select select-bordered select-sm w-28 justify-center text-center">
+            <select id="admin-settings-year" wire:model.live="selectedYear" class="select select-sm w-28 justify-center text-center">
                 @foreach ($availableYears as $year)
                     <option value="{{ $year }}">{{ $year }}</option>
                 @endforeach
@@ -32,7 +32,7 @@
                            max="1000000"
                            step="1"
                            placeholder="e.g. 2000"
-                           class="input input-bordered w-full max-w-xs @error('goal') input-error @enderror">
+                           class="input w-full max-w-xs @error('goal') input-error @enderror">
                     @error('goal')
                         <p class="text-error text-sm mt-1">{{ $message }}</p>
                     @enderror

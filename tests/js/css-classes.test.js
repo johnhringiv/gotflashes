@@ -24,13 +24,6 @@ const IGNORE = new Set([
     // JS-hook classes with no styles of their own (selectors only, toggled by JS)
     'eye-open', 'eye-closed',
 
-    // DaisyUI modifier classes still present in markup but implemented by the base
-    // class in our hand-authored CSS, so they are intentional no-ops (base .input
-    // already draws the border, base .loading already spins, zebra striping is done
-    // with a :nth-child rule, etc.). Harmless; a later pass could strip them.
-    'input-bordered', 'select-bordered', 'textarea-bordered',
-    'loading-spinner', 'table-zebra', 'tabs-boxed', 'hover',
-
     // Built as template strings in JS (toast.js: `alert alert-${type}`)
     'alert-success', 'alert-warning', 'alert-error', 'alert-info',
 

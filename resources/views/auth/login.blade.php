@@ -15,13 +15,14 @@
                         <!-- Email -->
                         <div class="mb-6 floating-label-visible">
                             <input type="email"
+                                   id="email"
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered w-full @error('email') input-error @enderror"
+                                   class="input w-full @error('email') input-error @enderror"
                                    required
                                    autofocus>
-                            <label>Email</label>
+                            <label for="email">Email</label>
                             @error('email')
                                 <div class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>
@@ -31,8 +32,8 @@
 
                         <!-- Password -->
                         <div class="mb-6 floating-label-visible">
-                            <x-password-input name="password" :class="$errors->has('password') ? 'input-error' : ''" />
-                            <label>Password</label>
+                            <x-password-input name="password" id="password" :class="$errors->has('password') ? 'input-error' : ''" />
+                            <label for="password">Password</label>
                             @error('password')
                                 <div class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>

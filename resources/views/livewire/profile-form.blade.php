@@ -20,13 +20,13 @@
                                 <button wire:click="resendEmailVerification" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="resendEmailVerification">
                                     <span wire:loading.remove wire:target="resendEmailVerification">Resend</span>
                                     <span wire:loading wire:target="resendEmailVerification">
-                                        <span class="loading loading-spinner loading-xs"></span>
+                                        <span class="loading loading-xs"></span>
                                     </span>
                                 </button>
                                 <button wire:click="cancelEmailChange" class="btn btn-sm btn-ghost" wire:loading.attr="disabled" wire:target="cancelEmailChange">
                                     <span wire:loading.remove wire:target="cancelEmailChange">Cancel</span>
                                     <span wire:loading wire:target="cancelEmailChange">
-                                        <span class="loading loading-spinner loading-xs"></span>
+                                        <span class="loading loading-xs"></span>
                                     </span>
                                 </button>
                             </div>

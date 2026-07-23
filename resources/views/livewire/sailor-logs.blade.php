@@ -14,7 +14,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Year</span>
                     </label>
-                    <select wire:model.live="selectedYear" class="select select-bordered">
+                    <select wire:model.live="selectedYear" class="select">
                         @foreach($availableYears as $year)
                             <option value="{{ $year }}">{{ $year }}</option>
                         @endforeach
@@ -27,7 +27,7 @@
                         <span class="label-text font-semibold">District <span class="text-xs font-normal text-base-content/50">(clears fleet)</span></span>
                     </label>
                     <select id="sailor-logs-district-select"
-                            class="select select-bordered"
+                            class="select"
                             data-value="{{ $selectedDistrict }}">
                         <option value="">All Districts</option>
                         @foreach($availableDistricts as $district)
@@ -44,7 +44,7 @@
                         <span class="label-text font-semibold">Fleet <span class="text-xs font-normal text-base-content/50">(clears district)</span></span>
                     </label>
                     <select id="sailor-logs-fleet-select"
-                            class="select select-bordered"
+                            class="select"
                             data-value="{{ $selectedFleet }}">
                         <option value="">All Fleets</option>
                         @foreach($availableFleets as $fleet)
@@ -70,7 +70,7 @@
                     <input type="text"
                            wire:model.live.debounce.300ms="searchQuery"
                            placeholder="Name or email..."
-                           class="input input-bordered">
+                           class="input">
                 </div>
             </div>
         </div>
@@ -107,7 +107,7 @@
     <!-- Flashes Table -->
     @if($flashes->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto">
-            <table class="table table-zebra">
+            <table class="table">
                 <thead class="bg-base-300 border-b-2 border-base-content/20">
                     <tr>
                         <th>Date</th>

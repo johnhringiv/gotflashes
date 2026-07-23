@@ -9,7 +9,7 @@
     "prepare": "husky",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint resources/js/**/*.js",
-    "lint:css": "stylelint \"resources/css/**/*.css\" --allow-empty-input",
+    "lint:css": "stylelint \"resources/css/**/*.css\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

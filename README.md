@@ -99,7 +99,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Date Ordering**: Activities ordered by activity date (newest first)
 - **User Highlighting**: Your position highlighted on leaderboards
 - **Leaderboard Tie-Breaking**: Advanced ranking logic (total flashes → sailing days → first entry → alphabetical)
-- **Responsive Design**: Tailwind CSS responsive UI works on desktop and mobile
+- **Responsive Design**: Responsive UI works on desktop and mobile
 - **Self-Hosted**: All assets and dependencies bundled locally (no CDNs)
 - **Production Ready**: Docker containerization with optimized builds and caching
 
@@ -124,8 +124,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Password reset emails
   - 24-hour token expiration for security
 - **Frontend**:
-  - Tailwind CSS v4 (self-hosted, no CDN)
-  - DaisyUI (component library)
+  - Hand-authored vanilla CSS (framework-free, OKLCH design tokens, ~13 kB gzipped)
   - Blade templates
   - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
@@ -324,7 +323,7 @@ gotflashes/
 │   └── build/              # Compiled assets (via Vite)
 ├── resources/
 │   ├── views/              # Blade templates
-│   ├── css/                # Stylesheets (Tailwind CSS)
+│   ├── css/                # Stylesheet (hand-authored vanilla CSS)
 │   └── js/                 # JavaScript files (multi-date-picker, registration, etc.)
 ├── routes/
 │   └── web.php             # Web routes
@@ -431,7 +430,7 @@ Developers interested in contributing should read [CONTRIBUTING.md](docs/CONTRIB
 
 ## Acknowledgments
 
-Built with Laravel, Tailwind CSS, and the Lightning Class sailing community in mind.
+Built with Laravel, hand-authored CSS, and the Lightning Class sailing community in mind.
 
 ---
 

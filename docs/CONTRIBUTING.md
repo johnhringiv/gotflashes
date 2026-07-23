@@ -32,7 +32,7 @@ sudo update-alternatives --set php /usr/bin/php8.5
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.bashrc
-nvm install 20
+nvm install    # reads .nvmrc (Node 24)
 ```
 
 ## Quick Start
@@ -285,6 +285,27 @@ This project uses **Git LFS** for managing binary files:
 - ✅ **Use native browser APIs** - Prefer `fetch()`, Web APIs over libraries when possible
 - ❌ **No CDNs** - Do not add external CDN links (jsdelivr, unpkg, cdnjs, Google Fonts, etc.)
 - ❌ **No external fonts** - Use system fonts or self-hosted font files only
+
+### CSS Strategy (No Framework)
+
+The stylesheet is **hand-authored vanilla CSS** — Tailwind and DaisyUI were removed.
+Markup keeps Tailwind/DaisyUI-style class *names* (`flex`, `mt-4`, `btn`, `card`),
+but every rule lives in `resources/css/app.css` (`@layer reset, base, components,
+utilities`; OKLCH design tokens in `:root`). If you know Tailwind, your instincts
+about class names will feel right — but there is no JIT compiler behind them.
+
+- ✅ **Check `app.css`, not framework docs** - If a class has no rule there, it does nothing
+- ✅ **Add new utilities/components deliberately** - The utility set is closed (no arbitrary values like `w-[13px]`, no variants that aren't authored); define the rule in the appropriate `@layer`
+- ✅ **Use design tokens** - `var(--color-*)` for all brand/surface colors, never hardcoded oklch/hex
+- ✅ **Register runtime-only classes** - Classes applied purely via JS (`classList`, template strings) go in the IGNORE list of `tests/js/css-classes.test.js`
+- ❌ **Don't add a CSS framework** or reach for `!important` - layer order already makes utilities beat components
+- ❌ **Don't add project rules to the unlayered vendor-override section** at the end of `app.css` - it exists only for tom-select/flatpickr (see the comment there for why)
+
+Two things that will save you a confusing afternoon: a class-usage validator runs
+in `composer check` and **fails on any class used in Blade/JS that `app.css`
+doesn't define** (the error names the class); and when the Vite dev server isn't
+running, pages serve the static `public/build/` bundle — run `npm run build` (or
+use `composer dev`) before visually checking a CSS change.
 
 ## Questions?
 

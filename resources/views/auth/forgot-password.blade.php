@@ -22,10 +22,10 @@
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered w-full"
+                                   class="input w-full"
                                    required
                                    autofocus>
-                            <label>Email</label>
+                            <label for="email">Email</label>
                         </div>
                         <div id="email-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
@@ -35,7 +35,7 @@
                         <div class="form-control mt-8">
                             <button type="submit" id="submit-btn" class="btn btn-primary btn-sm w-full">
                                 <span id="submit-text">Send Reset Link</span>
-                                <span id="loading-spinner" class="loading loading-spinner loading-sm hidden"></span>
+                                <span id="loading-spinner" class="loading loading-sm hidden"></span>
                             </button>
                         </div>
                     </form>

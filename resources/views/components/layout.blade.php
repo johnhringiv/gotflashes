@@ -94,19 +94,19 @@
     <!-- Desktop menu (centered) -->
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
-            <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
+            <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
             @auth
-                <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
+                <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
             @endauth
-            <li><a href="/stats" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'stats') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Stats</a></li>
-            <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
+            <li><a href="/stats" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'stats') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Stats</a></li>
+            <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
             @auth
                 @if(auth()->user()->is_admin)
-                    <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
-                    <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
+                    <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
+                    <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
                 @endif
                 @if(auth()->user()->isSuperAdmin())
-                    <li><a href="/admin/settings" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/settings') ? '!text-white !font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Settings</a></li>
+                    <li><a href="/admin/settings" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/settings') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Settings</a></li>
                 @endif
             @endauth
         </ul>
@@ -121,8 +121,8 @@
                 <button type="submit" class="btn btn-error btn-sm">Logout</button>
             </form>
         @else
-            <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10 {{ request()->path() === 'login' ? '!font-bold underline decoration-accent decoration-2 underline-offset-4' : '' }}">Sign In</a>
-            <a href="/register" class="btn btn-accent btn-sm {{ request()->path() === 'register' ? '!font-bold underline decoration-white decoration-2 underline-offset-4' : '' }}">Sign Up</a>
+            <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10 {{ request()->path() === 'login' ? 'font-bold underline decoration-accent decoration-2 underline-offset-4' : '' }}">Sign In</a>
+            <a href="/register" class="btn btn-accent btn-sm {{ request()->path() === 'register' ? 'font-bold underline decoration-white decoration-2 underline-offset-4' : '' }}">Sign Up</a>
         @endauth
     </div>
 </nav>

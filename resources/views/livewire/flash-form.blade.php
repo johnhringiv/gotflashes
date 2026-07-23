@@ -15,8 +15,8 @@
                            data-existing-dates="{{ json_encode($existingDates) }}"
                            value="{{ $date }}"
                            placeholder="Select date"
-                           class="input input-bordered w-full @error('date') input-error @enderror" required readonly>
-                    <label>Date</label>
+                           class="input w-full @error('date') input-error @enderror" required readonly>
+                    <label for="date-picker-single">Date</label>
                 @else
                     {{-- Multi-date picker for create mode --}}
                     <input type="text" id="date-picker"
@@ -25,8 +25,8 @@
                            data-min-date="{{ $minDate->format('Y-m-d') }}"
                            data-max-date="{{ $maxDate->format('Y-m-d') }}"
                            placeholder="Select date(s)"
-                           class="input input-bordered w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
-                    <label>Date(s)</label>
+                           class="input w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
+                    <label for="date-picker">Date(s)</label>
                 @endif
                 @error('date')
                     <div class="label">
@@ -50,7 +50,7 @@
                 {{-- .live (not .defer): syncs on change so updated() can clear this field's
                      validation error in real time. Worth the per-change render() since the
                      existingDates query it triggers is cached per request. --}}
-                <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select select-bordered w-full @error('activity_type') select-error @enderror" required>
+                <select wire:model.live="activity_type" id="{{ $mode === 'edit' ? 'activity_type_edit' : 'activity_type' }}" class="select w-full @error('activity_type') select-error @enderror" required>
                     {{-- hidden: placeholder text shows in the closed control but never
                          as a (checkmarked) row in the open picker --}}
                     <option value="" disabled hidden {{ $activity_type ? '' : 'selected' }}>Select activity type</option>
@@ -69,7 +69,7 @@
             <!-- Sailing Type - order-3 on mobile, col 1 on desktop -->
             <div class="mb-6 floating-label-visible order-3 md:order-5 md:max-w-xs">
                 <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
-                        class="select select-bordered w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}"
+                        class="select w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}"
                         {{ $activity_type === 'sailing' ? 'required' : 'disabled' }}>
                     {{-- hidden: same placeholder pattern as activity type above --}}
                     <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
@@ -99,9 +99,10 @@
             <!-- Location - order-4 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-4 md:order-2">
                 <input type="text" wire:model.live.blur="location"
+                       id="{{ $mode === 'edit' ? 'location_edit' : 'location' }}"
                        placeholder="Lake Norman, NC"
-                       class="input input-bordered w-full" maxlength="255">
-                <label>Location (optional)</label>
+                       class="input w-full" maxlength="255">
+                <label for="{{ $mode === 'edit' ? 'location_edit' : 'location' }}">Location (optional)</label>
             </div>
 
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
@@ -109,17 +110,18 @@
                 <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.live.blur="sail_number"
                        id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}"
                        placeholder="15234"
-                       class="input input-bordered w-full">
-                <label>Sail Number (optional)</label>
+                       class="input w-full">
+                <label for="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}">Sail Number (optional)</label>
             </div>
         </div>
 
         <!-- Notes -->
         <div class="mb-6 floating-label-visible">
             <textarea wire:model.live.blur="notes" rows="3"
+                      id="{{ $mode === 'edit' ? 'notes_edit' : 'notes' }}"
                       placeholder="Tell us about your day on the water..."
-                      class="textarea textarea-bordered w-full"></textarea>
-            <label>Notes (optional)</label>
+                      class="textarea w-full"></textarea>
+            <label for="{{ $mode === 'edit' ? 'notes_edit' : 'notes' }}">Notes (optional)</label>
         </div>
 
         <!-- Submit Button -->

@@ -1,6 +1,6 @@
 <div>
     <!-- Tabs -->
-    <div role="tablist" class="tabs tabs-boxed mb-6 w-fit">
+    <div role="tablist" class="tabs mb-6 w-fit">
         <button wire:click="switchTab('sailor')"
                 role="tab"
                 class="tab {{ $tab === 'sailor' ? 'tab-active' : '' }}">
