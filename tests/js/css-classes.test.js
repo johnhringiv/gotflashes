@@ -44,6 +44,14 @@ const IGNORE = new Set([
 
     // applied by our JS at runtime (classList)
     'select-disabled', 'visible',
+
+    // Defined intentionally but not applied in current markup — NOT dead rules:
+    // guard/hook/completeness selectors that would change behaviour if removed.
+    'btn-active', // `.btn:active:not(.btn-active)` escape hatch
+    'menu-item', // `.menu :where(... .menu-item)` extensibility hook
+    'textarea-error', // rides the shared .input-error/.select-error/.textarea-error rule
+    'tooltip-open', // programmatic reveal: `.tooltip.tooltip-open::before`
+    'tooltip-bottom', // completes the tooltip direction set (top/right/left/bottom)
 ]);
 
 function run() {
