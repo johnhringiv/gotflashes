@@ -89,6 +89,11 @@
         tab-size: 4;
         line-height: 1.5;
         font-family: var(--font-sans);
+
+        /* Always reserve the scrollbar gutter so the layout width stays constant
+           between pages that scroll and pages that don't — no horizontal shift,
+           and filter rows / cards keep the same width app-wide. */
+        scrollbar-gutter: stable;
     }
 
     body {
