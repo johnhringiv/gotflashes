@@ -37,6 +37,9 @@ export function extractDefinedClasses(css) {
 }
 
 // Attributes/calls that assign class names in Blade, plain HTML, and JS.
+// NOT covered: Blade's @class([...]) directive — nothing uses it today; if a
+// future view reaches for it, its classes will be invisible to this validator
+// (add a pattern here, or stick to literal class="..." attributes).
 const CLASS_ATTR_PATTERNS = [
     /class=["']([^"']+)["']/g, // HTML/Blade + JS string templates
     /className\s*=\s*["']([^"']+)["']/g, // JS className = '...'

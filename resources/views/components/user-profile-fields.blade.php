@@ -38,7 +38,7 @@
 <div class="mb-6 floating-label-visible">
     <input type="email"
            id="email"
-               wire:model.live.blur="email"
+           wire:model.live.blur="email"
            placeholder="mail@example.com"
            class="input w-full @error('email') input-error @enderror"
            required>
@@ -106,7 +106,7 @@
 <div class="mb-6 floating-label-visible">
     <input type="text"
            id="address_line1"
-               wire:model.live.blur="address_line1"
+           wire:model.live.blur="address_line1"
            placeholder="123 Main Street"
            class="input w-full @error('address_line1') input-error @enderror"
            required>
@@ -122,7 +122,7 @@
 <div class="mb-6 floating-label-visible">
     <input type="text"
            id="address_line2"
-               wire:model.live.blur="address_line2"
+           wire:model.live.blur="address_line2"
            placeholder="Apt 4B"
            class="input w-full">
     <label for="address_line2">Address Line 2 (optional)</label>
@@ -182,7 +182,7 @@
 <div class="mb-6 floating-label-visible">
     <input type="text"
            id="country"
-               wire:model.live.blur="country"
+           wire:model.live.blur="country"
            placeholder="United States"
            class="input w-full @error('country') input-error @enderror"
            required>
@@ -257,7 +257,7 @@
 <div class="mb-6 floating-label-visible">
     <input type="text"
            id="yacht_club"
-               wire:model.live.blur="yacht_club"
+           wire:model.live.blur="yacht_club"
            placeholder="e.g., San Diego Yacht Club"
            class="input w-full @error('yacht_club') input-error @enderror">
     <label for="yacht_club">Yacht Club</label>

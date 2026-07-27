@@ -597,4 +597,40 @@ class FlashFormTest extends TestCase
         $this->assertContains('2025-01-10', $updatedExistingDates);
         $this->assertContains('2025-01-12', $updatedExistingDates);
     }
+
+    public function test_sailing_type_starts_disabled_and_follows_activity_type(): void
+    {
+        $user = User::factory()->create();
+
+        $component = Livewire::actingAs($user)
+            ->test(FlashForm::class, ['submitText' => 'Log Activity']);
+
+        // Initial render (no activity chosen): the Sailing Type select is
+        // disabled and NOT required — mirroring the server-side
+        // required_if:activity_type,sailing rule, which never requires
+        // event_type while activity_type is empty.
+        $select = $this->sailingTypeOpeningTag($component->html());
+        $this->assertMatchesRegularExpression('/\sdisabled[\s>]/', $select);
+        $this->assertDoesNotMatchRegularExpression('/\srequired[\s>]/', $select);
+
+        // Choosing sailing enables the field and makes it required.
+        $component->set('activity_type', 'sailing');
+        $select = $this->sailingTypeOpeningTag($component->html());
+        $this->assertMatchesRegularExpression('/\srequired[\s>]/', $select);
+        $this->assertDoesNotMatchRegularExpression('/\sdisabled[\s>]/', $select);
+
+        // A non-sailing activity disables it again.
+        $component->set('activity_type', 'maintenance');
+        $select = $this->sailingTypeOpeningTag($component->html());
+        $this->assertMatchesRegularExpression('/\sdisabled[\s>]/', $select);
+        $this->assertDoesNotMatchRegularExpression('/\srequired[\s>]/', $select);
+    }
+
+    private function sailingTypeOpeningTag(string $html): string
+    {
+        preg_match('/<select[^>]*id="sailing_type"[^>]*>/s', $html, $matches);
+        $this->assertNotEmpty($matches, 'sailing_type select not found in rendered HTML');
+
+        return $matches[0];
+    }
 }

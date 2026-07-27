@@ -530,7 +530,7 @@
 
     .btn:is(:disabled, [disabled], [aria-disabled='true']), .btn-disabled {
         pointer-events: none;
-        color: color-mix(in oklch, var(--color-base-content) 20%, #0000);
+        color: color-mix(in oklab, var(--color-base-content) 20%, #0000);
         background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
         border-color: #0000;
         box-shadow: none;
@@ -943,7 +943,7 @@
         color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
     }
     .table :where(thead tr :is(th, td), tbody tr:not(:last-child) :is(th, td)) {
-        border-bottom: var(--border) solid color-mix(in oklch, var(--color-base-content) 5%, #0000);
+        border-bottom: var(--border) solid color-mix(in oklab, var(--color-base-content) 5%, #0000);
     }
     .table-xs :where(th, td) { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
 
@@ -1071,7 +1071,7 @@
     }
 
     .password-toggle-btn svg.hidden {
-        display: none !important;
+        display: none;
     }
 
     /* Hide browser's native password reveal icon */
