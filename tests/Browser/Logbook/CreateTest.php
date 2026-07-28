@@ -2,10 +2,9 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('logs a single sailing day via the date picker', function () {
@@ -47,13 +46,15 @@ it('logs multiple dates in one submission', function () {
     $this->actingAs($user);
 
     $page = visit('/logbook');
+    $first = testDate(8);
+    $second = testDate(9);
 
     // Use Livewire direct call to submit multiple dates
     $page->script("
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');
         const comp = Livewire.find(wireId);
-        comp.set('dates', ['2027-01-08', '2027-01-09']);
+        comp.set('dates', ['{$first}', '{$second}']);
         comp.set('activity_type', 'sailing');
         comp.set('event_type', 'practice');
         comp.call('save');
@@ -94,11 +95,12 @@ it('does not require event_type for maintenance', function () {
 
     // Open the date picker and pick a day
     // Use Livewire direct call to bypass native validation on sailing_type
+    $date = testDate(9);
     $page->script("
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');
         const comp = Livewire.find(wireId);
-        comp.set('dates', ['2027-01-09']);
+        comp.set('dates', ['{$date}']);
         comp.set('activity_type', 'maintenance');
         comp.call('save');
     ");
@@ -115,11 +117,12 @@ it('does not require event_type for race_committee', function () {
     $page = visit('/logbook');
 
     // Use Livewire direct call to bypass native validation
+    $date = testDate(8);
     $page->script("
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');
         const comp = Livewire.find(wireId);
-        comp.set('dates', ['2027-01-08']);
+        comp.set('dates', ['{$date}']);
         comp.set('activity_type', 'race_committee');
         comp.call('save');
     ");
@@ -167,13 +170,14 @@ it('rejects future dates beyond today plus one day', function () {
 
     $page = visit('/logbook');
 
-    // Use script to set a future date via Livewire (beyond max date of 2027-01-16)
-    $page->script(<<<'JS'
-        const wireEl = document.querySelector('#activity_type').closest('[wire\\:id]');
+    // Use script to set a date beyond the max (frozen today +1) via Livewire
+    $future = testDate(15, 2);
+    $page->script("
+        const wireEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = wireEl.getAttribute('wire:id');
-        Livewire.find(wireId).set('dates', ['2027-02-15']);
+        Livewire.find(wireId).set('dates', ['{$future}']);
         Livewire.find(wireId).set('activity_type', 'maintenance');
-    JS);
+    ");
 
     // Wait a moment for Livewire to process
     // Submit the form
@@ -189,20 +193,21 @@ it('rejects duplicate dates for the same user', function () {
     $user = User::factory()->create();
 
     // Seed an existing flash on a specific date
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create();
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create();
 
     $this->actingAs($user);
 
     $page = visit('/logbook');
 
     // Use script to set the duplicate date via Livewire
-    $page->script(<<<'JS'
-        const wireEl = document.querySelector('#activity_type').closest('[wire\\:id]');
+    $duplicate = testDate(10);
+    $page->script("
+        const wireEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = wireEl.getAttribute('wire:id');
-        Livewire.find(wireId).set('dates', ['2027-01-10']);
+        Livewire.find(wireId).set('dates', ['{$duplicate}']);
         Livewire.find(wireId).set('activity_type', 'sailing');
         Livewire.find(wireId).set('event_type', 'regatta');
-    JS);
+    ");
 
     // Wait for Livewire to process
     // Submit the form

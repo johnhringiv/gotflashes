@@ -2,7 +2,6 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 // Server time is frozen mid-January so the grace period is active (min =
 // Jan 1 of the previous year, max = frozen today +1). Every date below is
@@ -11,10 +10,10 @@ use Carbon\Carbon;
 // month and tests navigate explicitly via _datePicker.setView().
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
     $this->year = now()->year;
     $this->prevYear = $this->year - 1;
-    $this->ym = now()->format('Y-m'); // frozen year-month, e.g. "2027-01"
+    $this->ym = now()->format('Y-m'); // frozen year-month ("Y-m")
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
 });

@@ -6,10 +6,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     // Create admin
     $this->admin = User::factory()->create([
@@ -33,11 +32,10 @@ beforeEach(function () {
         'user_id' => $this->sailor->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 10; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($this->sailor)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($this->sailor)->onDate(testDate($i))->create();
     }
 });
 
@@ -72,7 +70,7 @@ it('marks selected awards as Sent with confirmation', function () {
     // First set to processing
     AwardFulfillment::create([
         'user_id' => $this->sailor->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'processing',
         'updated_by_user_id' => $this->admin->id,
@@ -119,7 +117,7 @@ it('shows Downgrade warning when moving Sent back to Processing', function () {
     // Set award to sent
     AwardFulfillment::create([
         'user_id' => $this->sailor->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'sent',
         'updated_by_user_id' => $this->admin->id,
@@ -142,7 +140,7 @@ it('shows Downgrade warning when moving Sent back to Processing', function () {
 it('removes fulfillment records (resets to Earned)', function () {
     AwardFulfillment::create([
         'user_id' => $this->sailor->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'processing',
         'updated_by_user_id' => $this->admin->id,

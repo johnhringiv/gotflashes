@@ -2,10 +2,9 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('downloads user data CSV from /profile', function () {
@@ -13,7 +12,7 @@ it('downloads user data CSV from /profile', function () {
         'first_name' => 'Export',
         'last_name' => 'User',
     ]);
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-01-05')->create([
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(5))->create([
         'event_type' => 'regatta',
         'location' => 'Export Lake',
     ]);
@@ -33,7 +32,7 @@ it('downloads user data CSV from /profile', function () {
     expect($csv)->toContain('Export User');
     expect($csv)->toContain('Export Lake');
     expect($csv)->toContain('regatta');
-    expect($csv)->toContain('2027-01-05');
+    expect($csv)->toContain(testDate(5));
 });
 
 it('disables Export button for users with no flashes', function () {

@@ -2,15 +2,14 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('opens edit modal when clicking Edit on a flash', function () {
     $user = User::factory()->create();
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
         'location' => 'Lake Norman',
     ]);
@@ -31,7 +30,7 @@ it('opens edit modal when clicking Edit on a flash', function () {
 
 it('updates a flash and reflects the change in the list', function () {
     $user = User::factory()->create();
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
         'location' => 'Lake Norman',
     ]);
@@ -77,7 +76,7 @@ it('updates a flash and reflects the change in the list', function () {
 
 it('disables all dates except the current one in the edit calendar', function () {
     $user = User::factory()->create();
-    $flash = Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    $flash = Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
     ]);
 
@@ -93,12 +92,12 @@ it('disables all dates except the current one in the edit calendar', function ()
     $page->assertAttribute('#date-picker-single', 'data-mode', 'single');
 
     // The default date should be the flash's date
-    $page->assertAttribute('#date-picker-single', 'data-default-date', '2027-01-10');
+    $page->assertAttribute('#date-picker-single', 'data-default-date', testDate(10));
 });
 
 it('reinitializes form JS in edit modal when switching activity types', function () {
     $user = User::factory()->create();
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
     ]);
 

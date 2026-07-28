@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('logging flashes updates the leaderboard for the same user', function () {
@@ -24,7 +23,7 @@ it('logging flashes updates the leaderboard for the same user', function () {
         'user_id' => $user->id,
         'district_id' => $district->id,
         'fleet_id' => $fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     // First, verify user is NOT on leaderboard (no flashes yet)
@@ -32,7 +31,7 @@ it('logging flashes updates the leaderboard for the same user', function () {
     $page->assertDontSee('Logger Sailor');
 
     // Now create a flash directly in the database (simulating a log)
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-01-10')->create();
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(10))->create();
 
     // Visit leaderboard again and verify user appears
     $page2 = visit('/leaderboard');

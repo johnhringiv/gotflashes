@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->district = District::first();
     $this->fleet = Fleet::where('district_id', $this->district->id)->first();
@@ -18,9 +17,9 @@ beforeEach(function () {
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create();
+    Flash::factory()->sailing()->forUser($this->user)->onDate(testDate(10))->create();
 });
 
 it('renders three tabs and defaults to sailor tab', function () {
@@ -35,7 +34,7 @@ it('renders three tabs and defaults to sailor tab', function () {
 
 it('shows current year in page heading', function () {
     $page = visit('/leaderboard');
-    $page->assertSee('2027');
+    $page->assertSee((string) now()->year);
     $page->assertSee('Leaderboard');
 });
 
@@ -63,9 +62,9 @@ it('resets pagination when switching tabs', function () {
             'user_id' => $u->id,
             'district_id' => $this->district->id,
             'fleet_id' => $this->fleet->id,
-            'year' => 2027,
+            'year' => now()->year,
         ]);
-        Flash::factory()->sailing()->forUser($u)->onDate('2027-01-10')->create();
+        Flash::factory()->sailing()->forUser($u)->onDate(testDate(10))->create();
     }
 
     $page = visit('/leaderboard?page=2');

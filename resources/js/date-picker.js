@@ -144,27 +144,24 @@ class DatePicker {
 
         const min = fromISO(this.minIso);
         const max = fromISO(this.maxIso);
-        const spansYears = min.year !== max.year;
 
-        // One month dropdown listing ONLY the selectable months of the whole
-        // range. When the range spans years (the January grace period) the
-        // year moves into the option labels — "December 2026" — instead of a
-        // second dropdown; otherwise a static year sits beside the control.
+        // One dropdown listing ONLY the selectable months of the whole range,
+        // labeled "July 2026" — the year lives in the label (during the
+        // January grace period the list simply spans the year boundary), so
+        // the closed control reads month-then-year with the native caret at
+        // the end and there is no separate year control.
         const options = [];
         let y = min.year;
         let m = min.month;
         while (y < max.year || (y === max.year && m <= max.month)) {
-            const label = spansYears ? `${MONTH_NAMES[m - 1]} ${y}` : MONTH_NAMES[m - 1];
-            options.push(`<option value="${y}-${m}"${y === year && m === month ? ' selected' : ''}>${label}</option>`);
+            options.push(`<option value="${y}-${m}"${y === year && m === month ? ' selected' : ''}>${MONTH_NAMES[m - 1]} ${y}</option>`);
             m += 1;
             if (m > 12) {
                 m = 1;
                 y += 1;
             }
         }
-        const monthControl =
-            `<select class="dp-month-select" aria-label="Month">${options.join('')}</select>` +
-            (spansYears ? '' : ` <span class="dp-year">${year}</span>`);
+        const monthControl = `<select class="dp-month-select" aria-label="Month">${options.join('')}</select>`;
 
         const prevDisabled = year === min.year && month === min.month;
         const nextDisabled = year === max.year && month === max.month;

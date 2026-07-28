@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('paginates sailor results at 15 per page', function () {
@@ -26,9 +25,9 @@ it('paginates sailor results at 15 per page', function () {
             'user_id' => $user->id,
             'district_id' => $district->id,
             'fleet_id' => $fleet->id,
-            'year' => 2027,
+            'year' => now()->year,
         ]);
-        Flash::factory()->sailing()->forUser($user)->onDate('2027-01-05')->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate(5))->create();
     }
 
     $page = visit('/leaderboard');

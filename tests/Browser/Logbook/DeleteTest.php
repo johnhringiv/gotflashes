@@ -2,15 +2,14 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('opens confirmation modal and cancels without deleting', function () {
     $user = User::factory()->create();
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
         'location' => 'Lake Norman',
     ]);
@@ -42,7 +41,7 @@ it('opens confirmation modal and cancels without deleting', function () {
 
 it('deletes a flash after confirmation and updates the list', function () {
     $user = User::factory()->create();
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'regatta',
         'location' => 'Lake Norman',
     ]);

@@ -1,10 +1,9 @@
 <?php
 
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('returns 403 for /admin/fulfillment as non-admin', function () {

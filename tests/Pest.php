@@ -114,3 +114,24 @@ function fillRegistrationForm($page, array $data): void
         fillLive($page, '[wire\\:model\\.live\\.blur="'.$field.'"]', $data[$field]);
     }
 }
+
+/**
+ * Build a Y-m-d date derived from the frozen test clock (set via travelTo in
+ * each browser test's beforeEach) so tests never hardcode years:
+ * testDate(5) → Jan 5 of the frozen year, testDate(10, 2) → Feb 10,
+ * testDate(20, 12, -1) → Dec 20 of the previous year.
+ */
+function testDate(int $day, int $month = 1, int $yearOffset = 0): string
+{
+    return sprintf('%04d-%02d-%02d', now()->year + $yearOffset, $month, $day);
+}
+
+/**
+ * The instant browser tests freeze to: Jan 15 (grace period active), noon, of
+ * the CURRENT real year. Tests derive all dates from it via testDate(), so no
+ * test file hardcodes a year and the suite never rots as real time advances.
+ */
+function frozenJanuary(): Carbon\Carbon
+{
+    return Carbon\Carbon::create(now()->year, 1, 15, 12);
+}
