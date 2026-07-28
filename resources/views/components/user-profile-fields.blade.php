@@ -4,11 +4,12 @@
     <!-- First Name -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
+               id="first_name"
                wire:model.live.blur="first_name"
                placeholder="John"
-               class="input input-bordered w-full @error('first_name') input-error @enderror"
+               class="input w-full @error('first_name') input-error @enderror"
                required>
-        <label>First Name</label>
+        <label for="first_name">First Name</label>
         @error('first_name')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -19,11 +20,12 @@
     <!-- Last Name -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
+               id="last_name"
                wire:model.live.blur="last_name"
                placeholder="Doe"
-               class="input input-bordered w-full @error('last_name') input-error @enderror"
+               class="input w-full @error('last_name') input-error @enderror"
                required>
-        <label>Last Name</label>
+        <label for="last_name">Last Name</label>
         @error('last_name')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -35,11 +37,12 @@
 <!-- Email -->
 <div class="mb-6 floating-label-visible">
     <input type="email"
+           id="email"
            wire:model.live.blur="email"
            placeholder="mail@example.com"
-           class="input input-bordered w-full @error('email') input-error @enderror"
+           class="input w-full @error('email') input-error @enderror"
            required>
-    <label>Email</label>
+    <label for="email">Email</label>
     @error('email')
         <div class="label">
             <span class="label-text-alt text-error">{{ $message }}</span>
@@ -63,12 +66,13 @@
     <!-- Date of Birth -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
+               id="date_of_birth"
                wire:model.live.blur="date_of_birth"
                placeholder="YYYY-MM-DD"
-               class="input input-bordered w-full @error('date_of_birth') input-error @enderror"
+               class="input w-full @error('date_of_birth') input-error @enderror"
                maxlength="10"
                required>
-        <label>Date of Birth</label>
+        <label for="date_of_birth">Date of Birth</label>
         @error('date_of_birth')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -78,7 +82,7 @@
 
     <!-- Gender -->
     <div class="mb-6 floating-label-visible">
-        <select wire:model.live.blur="gender" class="select select-bordered w-full @error('gender') select-error @enderror" required>
+        <select id="gender" wire:model.live.blur="gender" class="select w-full @error('gender') select-error @enderror" required>
             {{-- hidden: placeholder text shows in the closed control but never
                  as a (checkmarked) row in the open picker --}}
             <option value="" disabled hidden>Select gender</option>
@@ -87,7 +91,7 @@
             <option value="non_binary">Non-binary</option>
             <option value="prefer_not_to_say">Prefer not to say</option>
         </select>
-        <label>Gender</label>
+        <label for="gender">Gender</label>
         @error('gender')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -101,11 +105,12 @@
 <!-- Street Address -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
+           id="address_line1"
            wire:model.live.blur="address_line1"
            placeholder="123 Main Street"
-           class="input input-bordered w-full @error('address_line1') input-error @enderror"
+           class="input w-full @error('address_line1') input-error @enderror"
            required>
-    <label>Street Address</label>
+    <label for="address_line1">Street Address</label>
     @error('address_line1')
         <div class="label">
             <span class="label-text-alt text-error">{{ $message }}</span>
@@ -116,21 +121,23 @@
 <!-- Address Line 2 -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
+           id="address_line2"
            wire:model.live.blur="address_line2"
            placeholder="Apt 4B"
-           class="input input-bordered w-full">
-    <label>Address Line 2 (optional)</label>
+           class="input w-full">
+    <label for="address_line2">Address Line 2 (optional)</label>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4">
     <!-- City -->
     <div class="mb-6 floating-label-visible md:col-span-1">
         <input type="text"
+               id="city"
                wire:model.live.blur="city"
                placeholder="San Diego"
-               class="input input-bordered w-full @error('city') input-error @enderror"
+               class="input w-full @error('city') input-error @enderror"
                required>
-        <label>City</label>
+        <label for="city">City</label>
         @error('city')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -141,11 +148,12 @@
     <!-- State -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
+               id="state"
                wire:model.live.blur="state"
                placeholder="CA"
-               class="input input-bordered w-full @error('state') input-error @enderror"
+               class="input w-full @error('state') input-error @enderror"
                required>
-        <label>State/Province</label>
+        <label for="state">State/Province</label>
         @error('state')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -156,11 +164,12 @@
     <!-- Zip Code -->
     <div class="mb-6 floating-label-visible">
         <input type="text"
+               id="zip_code"
                wire:model.live.blur="zip_code"
                placeholder="92101"
-               class="input input-bordered w-full @error('zip_code') input-error @enderror"
+               class="input w-full @error('zip_code') input-error @enderror"
                required>
-        <label>Zip/Postal Code</label>
+        <label for="zip_code">Zip/Postal Code</label>
         @error('zip_code')
             <div class="label">
                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -172,11 +181,12 @@
 <!-- Country -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
+           id="country"
            wire:model.live.blur="country"
            placeholder="United States"
-           class="input input-bordered w-full @error('country') input-error @enderror"
+           class="input w-full @error('country') input-error @enderror"
            required>
-    <label>Country</label>
+    <label for="country">Country</label>
     @error('country')
         <div class="label">
             <span class="label-text-alt text-error">{{ $message }}</span>
@@ -193,13 +203,13 @@
         <div wire:ignore>
             <select name="district_id"
                     id="{{ $districtSelectId }}"
-                    class="select select-bordered w-full"
+                    class="select w-full"
                     data-value="{{ $this->district_id }}"
                     data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
                 <option value="">Select district...</option>
             </select>
         </div>
-        <label class="flex items-center gap-1">
+        <label for="{{ $districtSelectId }}" class="flex items-center gap-1">
             District
             <span class="tooltip tooltip-right" data-tip="Select 'Unaffiliated/None' if you're not in a district">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,13 +229,13 @@
         <div wire:ignore>
             <select name="fleet_id"
                     id="{{ $fleetSelectId }}"
-                    class="select select-bordered w-full"
+                    class="select w-full"
                     data-value="{{ $this->fleet_id }}"
                     data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
                 <option value="">Select fleet...</option>
             </select>
         </div>
-        <label class="flex items-center gap-1">
+        <label for="{{ $fleetSelectId }}" class="flex items-center gap-1">
             Fleet
             <span class="tooltip tooltip-right" data-tip="Search by name or number, or select 'None' if unaffiliated">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,10 +256,11 @@
 <!-- Yacht Club -->
 <div class="mb-6 floating-label-visible">
     <input type="text"
+           id="yacht_club"
            wire:model.live.blur="yacht_club"
            placeholder="e.g., San Diego Yacht Club"
-           class="input input-bordered w-full @error('yacht_club') input-error @enderror">
-    <label>Yacht Club</label>
+           class="input w-full @error('yacht_club') input-error @enderror">
+    <label for="yacht_club">Yacht Club</label>
     @error('yacht_club')
         <div class="label">
             <span class="label-text-alt text-error">{{ $message }}</span>

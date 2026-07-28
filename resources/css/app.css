@@ -1,204 +1,1681 @@
-@import 'tailwindcss';
+/**
+ * G.O.T. Flashes — application stylesheet (hand-authored, framework-free).
+ *
+ * Rebuilt from Tailwind CSS + DaisyUI into vanilla CSS in the project's own
+ * style. Vite bundles this file and the JS; there is no CSS framework.
+ *
+ * Architecture (via @layer for predictable specificity — utilities win over
+ * components without !important; precedence comes from the @layer statement
+ * below, not source order, so the utilities block sitting before components
+ * in this file changes nothing):
+ *   reset       — modern box-sizing + element normalization
+ *   base        — element defaults (typography, forms, links)
+ *   components  — component classes + all project CSS (floating labels, focus
+ *                 rings, leaderboard table, lightning-fill hero, /stats charts)
+ *   utilities   — the atomic helpers the markup uses (flex, spacing, colour…)
+ *   (unlayered) — ONLY third-party widget overrides (tom-select / flatpickr):
+ *                 they must outrank the unlayered vendor CSS imported below, and
+ *                 the !important cascade reverses across layers, so they cannot
+ *                 safely be layered. See the block at the end of this file.
+ *
+ * Design tokens live in :root. Colours are OKLCH (Lightning Class brand).
+ */
+
 @import 'tom-select/dist/css/tom-select.css';
 @import 'flatpickr/dist/flatpickr.min.css';
 
-@plugin "daisyui";
+@layer reset, base, components, utilities;
 
-@plugin "daisyui/theme" {
-  name: "lightning";
-  default: true;
-  prefersdark: false;
-  color-scheme: light;
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+:root {
+    /* Surfaces — soft off-white with a blue undertone */
+    --color-base-100: oklch(96% 0.003 245deg);
+    --color-base-200: oklch(92% 0.005 245deg);
+    --color-base-300: oklch(85% 0.008 245deg);
+    --color-base-content: oklch(25% 0.02 245deg);
 
-  /*  https://daisyui.com/theme-generator/#theme=eJx9keFugyAURl_FuCzZkmqAasW9DcKlulIwoFm7Ze8-RNcx14m_uOfw-aEfqWZnSF9SxoeRKXV9HfVRQbpLs8wy0Y0uc6CAD8Z6CeWktHCOqexAifuoMZcAbnPXvcN_cYHdC2uMFTDZuL-EgYB-aKd92GnTuak_8jtulLGZ4y2EK6nu2A5BmkHDHGQYIY8eZCkrydaQzBAocInWcD9DgQUVcg250QPoYRKI2FcFjQQN42CZ2mLxeRlW5HRaGg_MSfH2qUKPCcrxoUxIWeQHUjxHphs5B-d-5HqSCaoTXOK8wjiW35jVnT7eZEpCMq0TWuQFqWMXrA1_bInFcyxJ9kWdV4dfsVPbzessJTedpVvsYDY9606bKb3tzsxew4dnJaU8bgH-pFho2VDexCeZrziHMkB-_Q3dvuJ3-KY1v-SuIkCyUfmZZMrBLu0tSLDOR56W2ecXflAjlw */
+    /* Brand */
+    --color-primary: oklch(38% 0.09 245deg); /* Lightning Class blue */
+    --color-primary-content: oklch(100% 0 0deg);
+    --color-secondary: oklch(55% 0.12 240deg); /* lighter blue — links/headings */
+    --color-secondary-content: oklch(100% 0 0deg);
+    --color-accent: oklch(44% 0.21 29deg); /* red — CTAs */
+    --color-accent-content: oklch(100% 0 0deg);
+    --color-neutral: oklch(25% 0.015 245deg);
+    --color-neutral-content: oklch(100% 0 0deg);
 
-  /* Base colors - Soft off-white with blue undertone */
-  --color-base-100: oklch(96% 0.003 245deg);
-  --color-base-200: oklch(92% 0.005 245deg);
-  --color-base-300: oklch(85% 0.008 245deg);
-  --color-base-content: oklch(25% 0.02 245deg);
+    /* Status */
+    --color-info: oklch(55% 0.15 240deg);
+    --color-info-content: oklch(100% 0 0deg);
+    --color-success: oklch(55% 0.15 150deg);
+    --color-success-content: oklch(100% 0 0deg);
+    --color-warning: oklch(70% 0.15 80deg);
+    --color-warning-content: oklch(20% 0.02 80deg);
+    --color-error: oklch(55% 0.20 25deg);
+    --color-error-content: oklch(100% 0 0deg);
 
-  /* Primary: Lightning Class Blue (#2a588c) - Main actions, navbar */
-  --color-primary: oklch(38% 0.09 245deg);
-  --color-primary-content: oklch(100% 0 0deg);
+    /* Radii */
+    --radius-selector: 0.25rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.375rem;
 
-  /* Secondary: Lighter Blue - Links and headings */
-  --color-secondary: oklch(55% 0.12 240deg);
-  --color-secondary-content: oklch(100% 0 0deg);
-
-  /* Accent: Pure Red (#AE0000) - CTAs and emphasis */
-  --color-accent: oklch(44% 0.21 29deg);
-  --color-accent-content: oklch(100% 0 0deg);
-
-  /* Neutral: Dark blue-gray */
-  --color-neutral: oklch(25% 0.015 245deg);
-  --color-neutral-content: oklch(100% 0 0deg);
-
-  /* Status Colors */
-  --color-info: oklch(55% 0.15 240deg);
-  --color-info-content: oklch(100% 0 0deg);
-  --color-success: oklch(55% 0.15 150deg);
-  --color-success-content: oklch(100% 0 0deg);
-  --color-warning: oklch(70% 0.15 80deg);
-  --color-warning-content: oklch(20% 0.02 80deg);
-  --color-error: oklch(55% 0.20 25deg);
-  --color-error-content: oklch(100% 0 0deg);
-
-  /* Border radius - Clean and professional */
-  --radius-selector: 0.25rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.375rem;
-
-  /* Base sizes */
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-
-  /* Border size */
-  --border: 1px;
-
-  /* Effects */
-  --depth: 1;
-  --noise: 0;
+    /* Misc */
+    --border: 1px;
+    --spacing: 0.25rem;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
 }
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-@source inline("alert-warning alert-error alert-success alert-info");
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+@layer reset {
+    *, ::before, ::after {
+        box-sizing: border-box;
+        border: 0 solid;
+    }
 
-@theme {
-    --animate-fade-out: fade-out 4s ease-in-out forwards;
+    * { margin: 0; }
 
-    @keyframes fade-out {
-        0%, 70% {
-            opacity: 1;
-        }
+    html {
+        -webkit-text-size-adjust: 100%;
+        tab-size: 4;
+        line-height: 1.5;
+        font-family: var(--font-sans);
 
-        100% {
-            opacity: 0;
-            pointer-events: none;
-        }
+        /* Deliberately NO scrollbar-gutter/overflow-y tweak (tried and reverted):
+           a reserved-but-empty gutter paints as a blank strip beside the dark
+           navbar and gray footer on short pages (Chromium won't reliably paint
+           root background *images* into the gutter, so it can't be band-filled),
+           and overflow-y: scroll shows a dead track on short pages. Like prod,
+           we accept the small centering shift between pages that scroll and
+           pages that don't. */
+    }
+
+    body {
+        min-height: 100vh;
+        line-height: inherit;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+
+    a { color: inherit; text-decoration: inherit; }
+
+    b, strong { font-weight: bolder; }
+
+    code, kbd, samp, pre { font-family: var(--font-mono); font-size: 1em; }
+
+    small { font-size: 80%; }
+
+    table { border-collapse: collapse; }
+
+    button, input, optgroup, select, textarea {
+        font: inherit;
+        color: inherit;
+        letter-spacing: inherit;
+    }
+
+    button, select { text-transform: none; }
+
+    button, [type='button'], [type='reset'], [type='submit'] {
+        appearance: auto;
+        background-color: transparent;
+        background-image: none;
+        cursor: pointer;
+    }
+
+    :-moz-focusring { outline: auto; }
+
+    ::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent); }
+
+    textarea { resize: vertical; }
+
+    img, svg, video, canvas, audio, iframe, embed, object {
+        display: block;
+        vertical-align: middle;
+    }
+
+    img, video { max-width: 100%; height: auto; }
+
+    ul, ol { list-style: none; padding: 0; }
+
+    :disabled { cursor: default; }
+
+    [hidden] { display: none; }
+}
+
+/* ==========================================================================
+   Base — element defaults
+   ========================================================================== */
+@layer base {
+    body {
+        background-color: var(--color-base-100);
+        color: var(--color-base-content);
+        font-family: var(--font-sans);
     }
 }
 
-/* Tooltip custom colors - Lighter blue */
-.tooltip::before,
-.tooltip-top::before,
-.tooltip-bottom::before,
-.tooltip-left::before,
-.tooltip-right::before {
-    background-color: oklch(55% 0.12 240deg) !important; /* Secondary blue - lighter */
-    color: oklch(100% 0 0deg) !important; /* White text */
+/* ==========================================================================
+   Utilities — atomic helpers used by the markup
+   ========================================================================== */
+@layer utilities {
+    /* Display */
+    .block { display: block; }
+    .inline-block { display: inline-block; }
+    .inline { display: inline; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .hidden { display: none; }
+
+    /* Flexbox */
+    .flex-row { flex-direction: row; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-none { flex: none; }
+    .flex-shrink-0, .shrink-0 { flex-shrink: 0; }
+    .grow { flex-grow: 1; }
+    .items-start { align-items: flex-start; }
+    .items-center { align-items: center; }
+    .justify-start { justify-content: flex-start; }
+    .justify-center { justify-content: center; }
+    .justify-between { justify-content: space-between; }
+
+    /* Grid */
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .col-span-1 { grid-column: span 1 / span 1; }
+    .col-span-2 { grid-column: span 2 / span 2; }
+    .order-1 { order: 1; }
+    .order-2 { order: 2; }
+    .order-3 { order: 3; }
+    .order-4 { order: 4; }
+    .order-5 { order: 5; }
+
+    /* Gap */
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .gap-x-4 { column-gap: 1rem; }
+
+    /* Space-between (vertical stacks) */
+    .space-y-1 > * + * { margin-top: 0.25rem; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+
+    /* Margin */
+    .mx-auto { margin-inline: auto; }
+    .-mt-1 { margin-top: -0.25rem; }
+    .-mt-2\.5 { margin-top: -0.625rem; }
+    .-mt-4 { margin-top: -1rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 0.75rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+    .mt-8 { margin-top: 2rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .mb-20 { margin-bottom: 5rem; }
+    .ml-1 { margin-left: 0.25rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .mr-1 { margin-right: 0.25rem; }
+    .mr-2 { margin-right: 0.5rem; }
+    .my-6 { margin-block: 1.5rem; }
+
+    /* Padding */
+    .p-0 { padding: 0; }
+    .p-3 { padding: 0.75rem; }
+    .p-4 { padding: 1rem; }
+    .p-5 { padding: 1.25rem; }
+    .px-1 { padding-inline: 0.25rem; }
+    .px-2 { padding-inline: 0.5rem; }
+    .px-4 { padding-inline: 1rem; }
+    .py-3 { padding-block: 0.75rem; }
+    .py-4 { padding-block: 1rem; }
+    .py-6 { padding-block: 1.5rem; }
+    .py-8 { padding-block: 2rem; }
+    .py-12 { padding-block: 3rem; }
+    .py-16 { padding-block: 4rem; }
+    .pt-4 { padding-top: 1rem; }
+    .pr-10 { padding-right: 2.5rem; }
+
+    /* Sizing — width */
+    .w-3 { width: 0.75rem; }
+    .w-4 { width: 1rem; }
+    .w-5 { width: 1.25rem; }
+    .w-6 { width: 1.5rem; }
+    .w-8 { width: 2rem; }
+    .w-12 { width: 3rem; }
+    .w-16 { width: 4rem; }
+    .w-20 { width: 5rem; }
+    .w-24 { width: 6rem; }
+    .w-28 { width: 7rem; }
+    .w-48 { width: 12rem; }
+    .w-56 { width: 14rem; }
+    .w-96 { width: 24rem; }
+    .w-full { width: 100%; }
+    .w-auto { width: auto; }
+    .w-fit { width: fit-content; }
+
+    /* Sizing — height */
+    .h-3 { height: 0.75rem; }
+    .h-4 { height: 1rem; }
+    .h-5 { height: 1.25rem; }
+    .h-6 { height: 1.5rem; }
+    .h-8 { height: 2rem; }
+    .h-9 { height: 2.25rem; }
+    .h-12 { height: 3rem; }
+    .h-16 { height: 4rem; }
+    .h-20 { height: 5rem; }
+    .h-32 { height: 8rem; }
+    .h-full { height: 100%; }
+
+    /* Sizing — min/max */
+    .min-h-screen { min-height: 100vh; }
+    .max-h-72 { max-height: 18rem; }
+    .max-w-xs { max-width: 20rem; }
+    .max-w-2xl { max-width: 42rem; }
+    .max-w-4xl { max-width: 56rem; }
+    .max-w-6xl { max-width: 72rem; }
+
+    /* Typography — size */
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+    .text-5xl { font-size: 3rem; line-height: 1; }
+    .text-8xl { font-size: 6rem; line-height: 1; }
+
+    /* Typography — weight / family / align */
+    .font-normal { font-weight: 400; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .font-sans { font-family: var(--font-sans); }
+    .font-mono { font-family: var(--font-mono); }
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .break-words { overflow-wrap: break-word; }
+    .whitespace-pre-wrap { white-space: pre-wrap; }
+    .underline { text-decoration-line: underline; }
+    .underline-offset-4 { text-underline-offset: 4px; }
+    .decoration-2 { text-decoration-thickness: 2px; }
+    .decoration-accent { text-decoration-color: var(--color-accent); }
+    .decoration-error { text-decoration-color: var(--color-error); }
+    .decoration-white { text-decoration-color: #fff; }
+
+    /* Colours — text */
+    .text-white { color: #fff; }
+    .text-base-content { color: var(--color-base-content); }
+    .text-primary { color: var(--color-primary); }
+    .text-secondary { color: var(--color-secondary); }
+    .text-accent { color: var(--color-accent); }
+    .text-info { color: var(--color-info); }
+    .text-success { color: var(--color-success); }
+    .text-warning { color: var(--color-warning); }
+    .text-error { color: var(--color-error); }
+    .text-white\/80 { color: oklch(100% 0 0deg / 0.8); }
+    .text-base-content\/80 { color: color-mix(in oklab, var(--color-base-content) 80%, transparent); }
+    .text-base-content\/70 { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+    .text-base-content\/60 { color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+    .text-base-content\/50 { color: color-mix(in oklab, var(--color-base-content) 50%, transparent); }
+    .text-base-content\/40 { color: color-mix(in oklab, var(--color-base-content) 40%, transparent); }
+    .text-base-content\/20 { color: color-mix(in oklab, var(--color-base-content) 20%, transparent); }
+
+    /* Colours — background */
+    .bg-base-100 { background-color: var(--color-base-100); }
+    .bg-base-200 { background-color: var(--color-base-200); }
+    .bg-base-300 { background-color: var(--color-base-300); }
+    .bg-primary { background-color: var(--color-primary); }
+    .bg-white\/10 { background-color: oklch(100% 0 0deg / 0.1); }
+
+    /* Gradients (Tailwind-style from/to stops) */
+    .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--gradient-stops, transparent, transparent)); }
+    .from-primary\/10 {
+        --gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);
+        --gradient-stops: var(--gradient-from), var(--gradient-to, transparent);
+    }
+    .to-secondary\/10 { --gradient-to: color-mix(in oklab, var(--color-secondary) 10%, transparent); }
+
+    /* Borders */
+    .border { border-width: 1px; }
+    .border-2 { border-width: 2px; }
+    .border-b { border-bottom-width: 1px; }
+    .border-b-2 { border-bottom-width: 2px; }
+    .border-t-2 { border-top-width: 2px; }
+    .border-base-300 { border-color: var(--color-base-300); }
+    .border-primary { border-color: var(--color-primary); }
+    .border-primary\/20 { border-color: color-mix(in oklab, var(--color-primary) 20%, transparent); }
+    .border-base-content\/20 { border-color: color-mix(in oklab, var(--color-base-content) 20%, transparent); }
+    .border-base-content\/50 { border-color: color-mix(in oklab, var(--color-base-content) 50%, transparent); }
+    .border-dotted { border-style: dotted; }
+    .rounded { border-radius: 0.25rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .rounded-box { border-radius: var(--radius-box); }
+
+    /* Effects */
+    .shadow { box-shadow: 0 1px 3px 0 oklch(0% 0 0deg / 0.1), 0 1px 2px -1px oklch(0% 0 0deg / 0.1); }
+    .shadow-md { box-shadow: 0 4px 6px -1px oklch(0% 0 0deg / 0.1), 0 2px 4px -2px oklch(0% 0 0deg / 0.1); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px oklch(0% 0 0deg / 0.1), 0 4px 6px -4px oklch(0% 0 0deg / 0.1); }
+    .shadow-xl { box-shadow: 0 20px 25px -5px oklch(0% 0 0deg / 0.1), 0 8px 10px -6px oklch(0% 0 0deg / 0.1); }
+    .drop-shadow-lg { filter: drop-shadow(0 10px 8px oklch(0% 0 0deg / 0.04)) drop-shadow(0 4px 3px oklch(0% 0 0deg / 0.1)); }
+    .opacity-30 { opacity: 0.3; }
+    .opacity-50 { opacity: 0.5; }
+    .opacity-60 { opacity: 0.6; }
+    .opacity-70 { opacity: 0.7; }
+
+    /* Position */
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .fixed { position: fixed; }
+    .top-0 { top: 0; }
+    .top-2 { top: 0.5rem; }
+    .top-20 { top: 5rem; }
+    .bottom-0 { bottom: 0; }
+    .left-0 { left: 0; }
+    .right-0 { right: 0; }
+    .right-2 { right: 0.5rem; }
+    .z-50 { z-index: 50; }
+
+    /* Object / overflow / misc */
+    .object-contain { object-fit: contain; }
+    .overflow-x-auto { overflow-x: auto; }
+    .overflow-y-auto { overflow-y: auto; }
+    .cursor-pointer { cursor: pointer; }
+    .cursor-help { cursor: help; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    .pointer-events-none { pointer-events: none; }
+    .select-none { user-select: none; }
+    .transition-colors { transition-property: color, background-color, border-color; transition-duration: 0.15s; }
+    .transition-opacity { transition-property: opacity; transition-duration: 0.15s; }
+    .list-disc { list-style-type: disc; }
+    .list-inside { list-style-position: inside; }
+
+    /* SVG paint (icons use stroke-based paths coloured by currentColor) */
+    .stroke-current { stroke: currentColor; }
+
+    .container {
+        width: 100%;
+        margin-inline: auto;
+        padding-inline: 1rem;
+    }
+    @media (min-width: 640px) { .container { max-width: 640px; } }
+    @media (min-width: 768px) { .container { max-width: 768px; } }
+    @media (min-width: 1024px) { .container { max-width: 1024px; } }
+    @media (min-width: 1280px) { .container { max-width: 1280px; } }
+    @media (min-width: 1536px) { .container { max-width: 1536px; } }
+
+    /* Hover states */
+    .hover\:underline:hover { text-decoration-line: underline; }
+    .hover\:opacity-100:hover { opacity: 1; }
+    .hover\:text-base-content:hover { color: var(--color-base-content); }
+    .hover\:text-base-content\/70:hover { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+    .hover\:bg-white\/10:hover { background-color: oklch(100% 0 0deg / 0.1); }
+
+    /* Responsive — sm (≥640px) */
+    @media (min-width: 640px) {
+        .sm\:flex { display: flex; }
+        .sm\:hidden { display: none; }
+        .sm\:flex-row { flex-direction: row; }
+        .sm\:flex-1 { flex: 1 1 0%; }
+        .sm\:items-center { align-items: center; }
+        .sm\:justify-center { justify-content: center; }
+        .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .sm\:w-60 { width: 15rem; }
+    }
+
+    /* Responsive — md (≥768px) */
+    @media (min-width: 768px) {
+        .md\:flex-row { flex-direction: row; }
+        .md\:text-left { text-align: left; }
+        .md\:col-span-1 { grid-column: span 1 / span 1; }
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .md\:max-w-xs { max-width: 20rem; }
+        .md\:order-2 { order: 2; }
+        .md\:order-3 { order: 3; }
+        .md\:order-4 { order: 4; }
+        .md\:order-5 { order: 5; }
+    }
+
+    /* Responsive — lg (≥1024px) */
+    @media (min-width: 1024px) {
+        .lg\:flex { display: flex; }
+        .lg\:hidden { display: none; }
+        .lg\:stats-horizontal { grid-auto-flow: column; }
+        .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
 }
 
-.tooltip::after,
-.tooltip-top::after,
-.tooltip-bottom::after,
-.tooltip-left::after,
-.tooltip-right::after {
-    border-color: oklch(55% 0.12 240deg) transparent transparent !important;
+/* ==========================================================================
+   Components
+   ========================================================================== */
+@layer components {
+    /* --- Buttons ---------------------------------------------------------- */
+    .btn {
+        --btn-bg: var(--btn-color, var(--color-base-200));
+        --btn-fg: var(--btn-content, var(--color-base-content));
+        --btn-size: 2.5rem;
+        --btn-px: 1rem;
+        --btn-fontsize: 0.875rem;
+
+        display: inline-flex;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+
+        /* A button label never breaks (DaisyUI behaviour) — when a container
+           squeezes below one-line width (fulfillment's w-24 Select All column)
+           the button overflows instead of wrapping to two lines. */
+        white-space: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        height: var(--btn-size);
+        padding-inline: var(--btn-px);
+        border: var(--border) solid color-mix(in oklab, var(--btn-bg), #000 5%);
+        border-radius: var(--radius-field);
+        font-size: var(--btn-fontsize);
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+        cursor: pointer;
+        user-select: none;
+        outline-offset: 2px;
+        outline-color: var(--btn-color, var(--color-base-content));
+        color: var(--btn-fg);
+        background-color: var(--btn-bg);
+        text-shadow: 0 0.5px oklch(100% 0 0deg / 0.15);
+        box-shadow:
+            0 0.5px 0 0.5px oklch(100% 0 0deg / 0.06) inset,
+            0 3px 2px -2px color-mix(in oklab, var(--btn-bg) 30%, #0000),
+            0 4px 3px -2px color-mix(in oklab, var(--btn-bg) 30%, #0000);
+        transition: color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .btn:hover {
+        --btn-bg: color-mix(in oklab, var(--btn-color, var(--color-base-200)), #000 7%);
+
+        border-color: color-mix(in oklab, var(--btn-bg), #000 5%);
+        background-color: var(--btn-bg);
+    }
+
+    .btn:active:not(.btn-active) {
+        background-color: color-mix(in oklab, var(--btn-color, var(--color-base-200)), #000 5%);
+        box-shadow: none;
+        translate: 0 0.5px;
+    }
+
+    .btn:focus-visible { isolation: isolate; outline-width: 2px; outline-style: solid; }
+
+    .btn:is(:disabled, [disabled], [aria-disabled='true']), .btn-disabled {
+        pointer-events: none;
+        color: color-mix(in oklab, var(--color-base-content) 20%, #0000);
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+        border-color: #0000;
+        box-shadow: none;
+        text-shadow: none;
+    }
+
+    .btn-primary { --btn-color: var(--color-primary); --btn-content: var(--color-primary-content); }
+    .btn-accent { --btn-color: var(--color-accent); --btn-content: var(--color-accent-content); }
+    .btn-error { --btn-color: var(--color-error); --btn-content: var(--color-error-content); }
+    .btn-warning { --btn-color: var(--color-warning); --btn-content: var(--color-warning-content); }
+    .btn-success { --btn-color: var(--color-success); --btn-content: var(--color-success-content); }
+    .btn-info { --btn-color: var(--color-info); --btn-content: var(--color-info-content); }
+
+    .btn-ghost {
+        color: var(--btn-color, var(--color-base-content));
+        background-color: #0000;
+        border-color: #0000;
+        box-shadow: none;
+        text-shadow: none;
+    }
+    .btn-ghost:hover {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, #0000);
+        /* DaisyUI derives a faint light border on ghost hover (visible on dark
+           surfaces like the navbar, subtle on light ones). */
+        border-color: color-mix(in oklab, var(--color-base-200), #000 12%);
+    }
+
+    .btn-outline {
+        color: var(--btn-color, var(--color-base-content));
+        background-color: #0000;
+        border-color: var(--btn-color, var(--color-base-content));
+        box-shadow: none;
+        text-shadow: none;
+    }
+
+    .btn-sm { --btn-size: 2rem; --btn-px: 0.75rem; --btn-fontsize: 0.75rem; }
+    .btn-xs { --btn-size: 1.5rem; --btn-px: 0.5rem; --btn-fontsize: 0.6875rem; }
+    .btn-circle { width: var(--btn-size); height: var(--btn-size); padding-inline: 0; border-radius: 9999px; }
+
+    /* --- Navbar ----------------------------------------------------------- */
+    .navbar {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 4rem;
+        padding: 0.5rem;
+        background-color: var(--color-primary);
+        color: var(--color-primary-content);
+    }
+    .navbar-start { display: inline-flex; align-items: center; flex: 1; justify-content: flex-start; }
+    .navbar-center { display: inline-flex; align-items: center; }
+    .navbar-end { display: inline-flex; align-items: center; flex: 1; justify-content: flex-end; }
+
+    /* Desktop: breathing room between the auth cluster (Logout) and the viewport
+       edge, matching the logo's effective 16px on the left (navbar 8px + the
+       logo link's own px-2). Mobile keeps the tighter 8px for the hamburger. */
+    @media (min-width: 1024px) {
+        .navbar { padding-inline-end: 1rem; }
+    }
+
+    /* --- Menu ------------------------------------------------------------- */
+    .menu {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        font-size: 0.875rem;
+        padding: 0.5rem;
+        list-style: none;
+    }
+    .menu-horizontal { flex-direction: row; align-items: center; }
+    .menu :where(li) { display: flex; flex-direction: column; flex-shrink: 0; }
+    .menu-horizontal > li { flex-direction: row; }
+    /* The `form > button` arm covers rows whose action needs a CSRF form (the
+       mobile menu's Logout): the button is a grandchild of the li, so the plain
+       child selector misses it and it sat at the UA-default indent instead of
+       lining up with its sibling links. */
+    .menu :where(li) > :where(a, button, .menu-item),
+    .menu :where(li) > form > button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-field);
+        text-align: start;
+    }
+    .menu :where(li) > :where(a, button):not(.btn):hover,
+    .menu :where(li) > form > button:not(.btn):hover {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    }
+    .menu-title { padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+
+    /* --- Dropdown --------------------------------------------------------- */
+    .dropdown { position: relative; display: inline-block; }
+
+    /* Collapsed until the trigger (a focusable [tabindex] child — e.g. the
+       mobile nav hamburger) gains focus. While open, the trigger is given
+       pointer-events: none so a second tap on it falls through and blurs it,
+       dropping :focus-within and closing the menu; without this the hamburger
+       can only be dismissed by tapping elsewhere. Mirrors DaisyUI's dropdown. */
+    .dropdown-content { position: absolute; display: none; }
+    .dropdown:focus-within > .dropdown-content { display: flex; }
+    .dropdown:focus-within > [tabindex]:first-child { pointer-events: none; }
+
+    /* --- Footer ----------------------------------------------------------- */
+    .footer { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; font-size: 0.875rem; }
+    .footer-center { align-items: center; justify-content: center; text-align: center; }
+    .footer-center > * { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+
+    /* --- Card ------------------------------------------------------------- */
+    .card { position: relative; display: flex; flex-direction: column; border-radius: var(--radius-box); }
+    .card-body { display: flex; flex: auto; flex-direction: column; gap: 0.5rem; padding: 1.5rem; font-size: 0.875rem; }
+    .card-body p { flex-grow: 1; }
+    .card-title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.25rem; font-weight: 600; }
+    .card-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; }
+
+    /* --- Alert ------------------------------------------------------------ */
+    .alert {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns: auto;
+        justify-content: start;
+        place-items: center start;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border: var(--border) solid var(--color-base-200);
+        border-radius: var(--radius-box);
+        background-color: var(--color-base-200);
+        color: var(--color-base-content);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        text-align: start;
+    }
+    .alert:has(:nth-child(2)) { grid-template-columns: auto minmax(auto, 1fr); }
+    .alert-info { background-color: var(--color-info); border-color: var(--color-info); color: var(--color-info-content); }
+    .alert-success { background-color: var(--color-success); border-color: var(--color-success); color: var(--color-success-content); }
+    .alert-warning { background-color: var(--color-warning); border-color: var(--color-warning); color: var(--color-warning-content); }
+    .alert-error { background-color: var(--color-error); border-color: var(--color-error); color: var(--color-error-content); }
+
+    /* --- Badge ------------------------------------------------------------ */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: fit-content;
+        height: 1.5rem;
+        padding-inline: 0.6875rem;
+        border: var(--border) solid var(--color-base-200);
+        border-radius: var(--radius-selector);
+        background-color: var(--color-base-100);
+        color: var(--color-base-content);
+        font-size: 0.875rem;
+    }
+    .badge-sm { height: 1.25rem; padding-inline: 0.5rem; font-size: 0.75rem; }
+    .badge-lg { height: 1.75rem; padding-inline: 0.875rem; font-size: 1rem; }
+    .badge-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-content); }
+    .badge-info { background-color: var(--color-info); border-color: var(--color-info); color: var(--color-info-content); }
+    .badge-success { background-color: var(--color-success); border-color: var(--color-success); color: var(--color-success-content); }
+    .badge-warning { background-color: var(--color-warning); border-color: var(--color-warning); color: var(--color-warning-content); }
+
+    /* --- Hero ------------------------------------------------------------- */
+    .hero { display: grid; width: 100%; place-items: center; background-size: cover; background-position: center; }
+    .hero-content { display: flex; align-items: center; justify-content: center; max-width: 80rem; gap: 1rem; padding: 1rem; }
+
+    /* Fill the viewport minus ~16rem of page chrome (navbar + footer + margins)
+       so the hero's place-items centering vertically centers its card — the
+       auth pages. Replaces Tailwind's arbitrary-value min-h-[calc(100vh-16rem)],
+       which has no rule without the JIT. */
+    .hero-fill { min-height: calc(100vh - 16rem); }
+
+    /* --- Links ------------------------------------------------------------ */
+    .link { cursor: pointer; text-decoration: underline; }
+    .link-hover { text-decoration: none; }
+    .link-hover:hover { text-decoration: underline; }
+    .link-primary { color: var(--color-primary); }
+    .link-neutral { color: var(--color-neutral); }
+
+    /* --- Form controls ---------------------------------------------------- */
+    .form-control { display: flex; flex-direction: column; }
+
+    /* No vertical padding — DaisyUI 5 (the visual reference) dropped it; with it,
+       every labelled field (e.g. the admin filter cards) runs 8px taller than prod. */
+    .label { display: flex; align-items: center; justify-content: space-between; }
+    .label-text { font-size: 0.875rem; color: var(--color-base-content); }
+    .label-text-alt { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+
+    .input, .textarea, .select {
+        width: 100%;
+        background-color: var(--color-base-100);
+        border: var(--border) solid var(--color-base-300);
+        border-radius: var(--radius-field);
+        color: var(--color-base-content);
+        font-size: 0.875rem;
+    }
+    .input {
+        height: 2.5rem;
+        padding-inline: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+    }
+    .select {
+        height: 2.5rem;
+        padding-inline: 0.75rem 1.75rem;
+        appearance: none;
+        background-image:
+            linear-gradient(45deg, transparent 50%, currentcolor 50%),
+            linear-gradient(135deg, currentcolor 50%, transparent 50%);
+        background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
+        background-size: 4px 4px, 4px 4px;
+        background-repeat: no-repeat;
+    }
+    .textarea { padding: 0.5rem 0.75rem; min-height: 4rem; line-height: 1.5; }
+    .select-sm { height: 2rem; font-size: 0.75rem; padding-inline: 0.5rem 1.5rem; }
+
+    /* Native <select> option rows (Chrome renders these in-page and honours CSS).
+       Ported from DaisyUI so the gender dropdown gets the gray hover highlight
+       instead of the browser default; the custom block below then tweaks the
+       checked/active states. */
+    :is(.select, .select select) option {
+        border-radius: var(--radius-field);
+        padding-block: 0.375rem;
+        padding-inline: 0.75rem;
+        white-space: normal;
+        transition: color 0.2s, background-color 0.2s;
+    }
+    :is(.select, .select select) option:not(:disabled):hover,
+    :is(.select, .select select) option:not(:disabled):focus-visible {
+        cursor: pointer;
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+        outline: none;
+    }
+
+    /* Chrome customizable <select> (Chrome 130+, appearance: base-select):
+       render the native dropdown as a styled popup — rounded, padded, shadowed
+       — so the gender dropdown matches the tom-select ones. The @supports guard
+       degrades to the OS popup on browsers without it (Safari/Firefox). */
+    @supports (appearance: base-select) {
+        /* align-items: center — a base-select control is display:flex with the
+           UA default align-items:normal (stretch), which floats the value's text
+           to the top of the box. Centre it vertically like a normal select. */
+        :is(.select, .select select) { appearance: base-select; align-items: center; }
+        :is(.select, .select select)::picker(select) {
+            appearance: base-select;
+            color: inherit;
+            border: var(--border) solid var(--color-base-200);
+            border-radius: var(--radius-box);
+            background-color: var(--color-base-100);
+            max-height: min(24rem, 70dvh);
+            box-shadow: 0 20px 25px -5px oklch(0% 0 0deg / 0.1), 0 8px 10px -6px oklch(0% 0 0deg / 0.1);
+            margin-block: 0.5rem;
+            margin-inline: 0.5rem;
+            padding: 0.5rem;
+            translate: -0.5rem;
+        }
+        :is(.select, .select select)::picker-icon { display: none; }
+        :is(.select, .select select) selectedcontent {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+    }
+    .input-error, .select-error, .textarea-error { border-color: var(--color-error); }
+    .select-disabled, .input:disabled, .select:disabled, .textarea:disabled {
+        border-color: var(--color-base-200);
+        background-color: var(--color-base-200);
+        cursor: not-allowed;
+    }
+    /* TomSelect copies the .select class onto its wrapper; suppress our native
+       .select box there so only the inner .ts-control (custom block) renders —
+       otherwise the wrapper draws a second, taller box with its own arrow. */
+    .ts-wrapper.select {
+        height: auto;
+        min-height: 0;
+        padding: 0;
+        border: none;
+        background: none;
+        box-shadow: none;
+    }
+
+    /* --- Checkbox --------------------------------------------------------- */
+    /* A colour variant (.checkbox-primary etc.) tints the border even when
+       unchecked, like DaisyUI 5; the plain .checkbox keeps the faint border. */
+    .checkbox {
+        appearance: none;
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: var(--border) solid var(--checkbox-color, color-mix(in oklab, var(--color-base-content) 20%, transparent));
+        border-radius: var(--radius-selector);
+        cursor: pointer;
+        vertical-align: middle;
+        position: relative;
+    }
+    .checkbox-sm { width: 1.25rem; height: 1.25rem; }
+
+    /* Checked: solid fill in the variant colour, the checkmark knocked out in
+       base-100 by DaisyUI's stacked-gradient trick. --chk-bg is the FILL and
+       --chk-fg the CHECK — swapping them renders a white box with a coloured
+       tick instead. */
+    .checkbox:checked, .checkbox[aria-checked='true'] {
+        --chk-bg: var(--checkbox-color, var(--color-base-content));
+        --chk-fg: var(--color-base-100);
+
+        background-color: var(--chk-bg);
+        border-color: var(--chk-bg);
+        background-image:
+            linear-gradient(-45deg, transparent 65%, var(--chk-bg) 65.99%),
+            linear-gradient(45deg, transparent 75%, var(--chk-bg) 75.99%),
+            linear-gradient(-45deg, var(--chk-bg) 40%, transparent 40.99%),
+            linear-gradient(45deg, var(--chk-bg) 30%, var(--chk-fg) 30.99%, var(--chk-fg) 40%, transparent 40.99%),
+            linear-gradient(-45deg, var(--chk-fg) 50%, var(--chk-bg) 50.99%);
+    }
+    .checkbox-primary { --checkbox-color: var(--color-primary); }
+    .checkbox-warning { --checkbox-color: var(--color-warning); }
+
+    /* --- Divider ---------------------------------------------------------- */
+    .divider {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        align-self: stretch;
+        margin: 1rem 0;
+        height: 1rem;
+        white-space: nowrap;
+    }
+    .divider::before, .divider::after {
+        content: "";
+        flex-grow: 1;
+        height: 0.125rem;
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    }
+    .divider:not(:empty) { gap: 1rem; }
+
+    /* --- Tooltip ---------------------------------------------------------- */
+    .tooltip {
+        --tt-bg: var(--color-secondary);
+        --tt-fg: var(--color-secondary-content);
+
+        position: relative;
+        display: inline-block;
+    }
+    .tooltip[data-tip]::before {
+        content: attr(data-tip);
+
+        /* Top (default) placement — directional variants below override */
+        position: absolute;
+        bottom: calc(100% + 0.5rem);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) 75ms;
+        width: max-content;
+        max-width: 20rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-field);
+        background-color: var(--tt-bg);
+        color: var(--tt-fg);
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.25;
+        text-align: center;
+        white-space: normal;
+    }
+    .tooltip:hover::before,
+    .tooltip.tooltip-open::before,
+    .tooltip:has(:focus-visible)::before {
+        opacity: 1;
+    }
+
+    /* Right */
+    .tooltip-right[data-tip]::before { inset: 50% auto auto calc(100% + 0.5rem); transform: translateY(-50%); }
+
+    /* Left */
+    .tooltip-left[data-tip]::before { inset: 50% calc(100% + 0.5rem) auto auto; transform: translateY(-50%); }
+
+    /* Bottom */
+    .tooltip-bottom[data-tip]::before { inset: calc(100% + 0.5rem) auto auto 50%; bottom: auto; transform: translateX(-50%); }
+
+    /* --- Loading ---------------------------------------------------------- */
+    .loading {
+        display: inline-block;
+        width: 1.5rem;
+        aspect-ratio: 1;
+        background-color: currentcolor;
+        mask-image: url("data:image/svg+xml,%3Csvg width='24' height='24' stroke='black' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform-origin='center'%3E%3Ccircle cx='12' cy='12' r='9.5' fill='none' stroke-width='3' stroke-linecap='round'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='2s' repeatCount='indefinite'/%3E%3Canimate attributeName='stroke-dasharray' values='0,150;42,150;42,150' keyTimes='0;0.475;1' dur='1.5s' repeatCount='indefinite'/%3E%3Canimate attributeName='stroke-dashoffset' values='0;-16;-59' keyTimes='0;0.475;1' dur='1.5s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/g%3E%3C/svg%3E");
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: 100%;
+        vertical-align: middle;
+    }
+    .loading-xs { width: 1rem; }
+    .loading-sm { width: 1.25rem; }
+
+    /* --- Table ------------------------------------------------------------ */
+    .table {
+        width: 100%;
+        border-radius: var(--radius-box);
+        text-align: left;
+        font-size: 0.875rem;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .table :where(th, td) { padding: 0.75rem 1rem; vertical-align: middle; }
+    .table :where(thead, tfoot) {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+    }
+    .table :where(thead tr :is(th, td), tbody tr:not(:last-child) :is(th, td)) {
+        border-bottom: var(--border) solid color-mix(in oklab, var(--color-base-content) 5%, #0000);
+    }
+    .table-xs :where(th, td) { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+    /* --- Tabs ------------------------------------------------------------- */
+    .tabs { display: flex; flex-wrap: wrap; }
+    .tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2rem;
+        padding-inline: 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+        border-color: transparent;
+    }
+    .tab:hover { color: var(--color-base-content); }
+    .tab.tab-active, .tab[aria-selected='true'] { color: var(--color-base-content); }
+
+    /* --- Stats ------------------------------------------------------------ */
+    .stats { display: inline-grid; grid-auto-flow: column; position: relative; overflow-x: auto; border-radius: var(--radius-box); }
+    .stats-vertical { grid-auto-flow: row; }
+    .stats-horizontal { grid-auto-flow: column; }
+    .stat {
+        display: inline-grid;
+        grid-template-columns: repeat(1, 1fr);
+        column-gap: 1rem;
+        width: 100%;
+        padding: 1rem 1.5rem;
+    }
+    .stat:not(:last-child) { border-inline-end: var(--border) dashed color-mix(in oklab, currentcolor 10%, #0000); }
+    .stat-title { font-size: 0.875rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+    .stat-value { font-size: 2rem; font-weight: 800; }
+    .stat-desc { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+
+    /* --- Progress --------------------------------------------------------- */
+    /* DaisyUI drives both the filled value and the track from `color` via
+       currentcolor: the track is that colour at 20%. So .progress-primary makes
+       the value primary AND the unmet track primary/20 (light blue), not gray. */
+    .progress {
+        appearance: none;
+        display: block;
+        width: 100%;
+        height: 0.5rem;
+        border-radius: var(--radius-box);
+        color: var(--color-base-content);
+        background-color: color-mix(in oklab, currentcolor 20%, transparent);
+        overflow: hidden;
+    }
+    .progress::-webkit-progress-bar { background-color: transparent; }
+    .progress::-webkit-progress-value { background-color: currentcolor; border-radius: var(--radius-box); }
+    .progress::-moz-progress-bar { background-color: currentcolor; border-radius: var(--radius-box); }
+    .progress-primary { color: var(--color-primary); }
+
+    /* --- Join ------------------------------------------------------------- */
+    .join { display: inline-flex; align-items: stretch; }
+    .join > :where(.join-item) { border-radius: 0; }
+    .join > :first-child:where(.join-item) { border-start-start-radius: var(--radius-field); border-end-start-radius: var(--radius-field); }
+    .join > :last-child:where(.join-item) { border-start-end-radius: var(--radius-field); border-end-end-radius: var(--radius-field); }
+
+    /* --- Toast ------------------------------------------------------------ */
+    .toast {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: fit-content;
+        white-space: nowrap;
+    }
+    .toast-top { top: 1rem; bottom: auto; }
+    .toast-center { left: 50%; right: auto; transform: translateX(-50%); }
+
+    /* --- Modal ------------------------------------------------------------ */
+    .modal {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        background-color: oklch(0% 0 0deg / 0.4);
+        transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal.modal-open, .modal[open], .modal:target { opacity: 1; visibility: visible; }
+    .modal-box {
+        /* Positioning context for the dialog's absolute ✕ close button — without
+           this it resolves against the fixed .modal overlay and lands in the
+           viewport corner. */
+        position: relative;
+
+        /* Fixed width (91.67% capped at max-width) so the box does not shrink to
+           fit its content — otherwise the edit dialog resizes as fields change. */
+        width: 91.6667%;
+        max-width: 32rem;
+        max-height: calc(100vh - 5rem);
+        overflow-y: auto;
+        padding: 1.5rem;
+        border-radius: var(--radius-box);
+        background-color: var(--color-base-100);
+        box-shadow: 0 25px 50px -12px oklch(0% 0 0deg / 0.25);
+    }
+    .modal-action { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: -1; }
 }
 
-/* Password toggle visibility - ensure eye icon is always visible */
-.password-input-wrapper {
-    position: relative;
+
+/* ==========================================================================
+   Project components (@layer components — so utilities still win predictably,
+   and these never silently outrank a component/utility as unlayered rules did)
+   ========================================================================== */
+@layer components {
+
+    /* Password toggle visibility - ensure eye icon is always visible */
+    .password-input-wrapper {
+        position: relative;
+    }
+
+    .password-input-wrapper .password-toggle-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+    }
+
+    .password-toggle-btn svg.hidden {
+        display: none;
+    }
+
+    /* Hide browser's native password reveal icon */
+    .hide-password-reveal::-ms-reveal,
+    .hide-password-reveal::-ms-clear {
+        display: none;
+    }
+
+    .hide-password-reveal::-webkit-credentials-auto-fill-button,
+    .hide-password-reveal::-webkit-textfield-decoration-container {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* Floating Label - Always Visible (on border) */
+    .floating-label-visible {
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .floating-label-visible input,
+    .floating-label-visible select,
+    .floating-label-visible textarea {
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    /* Native selects keep DaisyUI's fixed height, so the 0.75rem vertical padding
+       above shrinks the text box below the line-height and clips descenders (the
+       "g" in "Select gender"). Trim the vertical padding so the glyph fits. */
+    .floating-label-visible select {
+        padding-block: 0.5rem;
+    }
+
+    .floating-label-visible label {
+        position: absolute;
+        left: 0.75rem;
+        top: -0.5rem;
+        font-size: 0.875rem;
+        color: oklch(60% 0.01 245deg);
+        pointer-events: none;
+
+        /* Must match the page surface — the label straddles the field's border */
+        background: var(--color-base-100);
+        padding: 0 0.25rem;
+        z-index: 10;
+    }
+
+    /* Keep a disabled floating-label control light (not DaisyUI's grey fill) so its
+       label — which straddles the field's top edge — blends on both sides instead
+       of showing a box (grey over the card, or white over a grey fill). The dimmed
+       placeholder + not-allowed cursor still signal the disabled state, and it keeps
+       Sailing Type looking like Activity Type when it's inactive. */
+    .floating-label-visible :is(input, select, textarea):disabled {
+        background-color: var(--color-base-100);
+        border-color: var(--color-base-300);
+    }
+
+    /* DaisyUI's .label (used for @error field messages) is inline-flex with
+       white-space: nowrap, so a long validation message stays on one line and
+       overflows into the neighbouring grid column — visible on the two-up
+       Date of Birth / Gender row, where the DOB error collided with the Gender
+       error. Render the field error as a normal wrapping block within its field. */
+    .floating-label-visible > .label {
+        display: block;
+        white-space: normal;
+    }
+
+    /* Tooltip inside a floating label (district/fleet) must stay hoverable. */
+    .floating-label-visible label .tooltip {
+        pointer-events: auto;
+    }
+
+    /* Cap specific tooltip-right hints that would otherwise run off the right edge
+       on a narrow mobile viewport (district/fleet fields + any element marked
+       .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
+       Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
+    .floating-label-visible label .tooltip::before,
+    .tooltip-clamp::before {
+        max-width: 12rem;
+    }
+
+    /* While a field's tooltip is hovered, lift the whole field above its grid
+       neighbor so the tooltip isn't covered by the adjacent field's label. */
+    .floating-label-visible:has(.tooltip:hover) {
+        z-index: 60;
+    }
+
+    /* Hide these tooltips instantly rather than fading: the z-index lift above
+       drops the moment the hover ends, so a fading tooltip would briefly show
+       the neighbor field painted over it. */
+    .floating-label-visible label .tooltip::before {
+        transition: none;
+    }
+
+    /* Brand-blue focus ring on native form controls: the browser's automatic
+       focus outline is kept and only recoloured. Secondary, not primary: thin
+       strokes lose perceived hue, so the dark primary navy read near-black at
+       2px — and secondary is already the interaction color (links, tooltips). */
+    .input:focus,
+    .input:focus-within,
+    .select:focus,
+    .select:focus-within,
+    .textarea:focus,
+    .textarea:focus-within {
+        outline-color: var(--color-secondary);
+    }
+
+    /* Error-state fields keep an error-colored focus, mirroring
+       .ts-has-error .ts-wrapper.focus .ts-control below. */
+    .input-error:focus,
+    .input-error:focus-within,
+    .select-error:focus,
+    .select-error:focus-within,
+    .textarea-error:focus,
+    .textarea-error:focus-within {
+        outline-color: var(--color-error);
+    }
+
+    /* A select still showing its empty-value placeholder option ("Select activity
+       type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
+       currentcolor at 50%) so it can't be mistaken for a real selection. */
+    .select:has(option[value='']:checked) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+    }
+
+    /* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
+       the OS picker regardless): selection is marked by the picker's own checkmark
+       only — no fill (DaisyUI paints the checked row base-content, which also lit
+       up the disabled "Select activity/sailing type" placeholders). Gray is the
+       only filled state: DaisyUI's hover, extended here to mousedown-hold, which
+       DaisyUI paints neutral (near-black) with a pressed shadow. */
+    :is(.select, .select select) option:checked {
+        background-color: transparent;
+        color: var(--color-base-content);
+    }
+
+    :is(.select, .select select) option:not(:disabled):active {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+        color: var(--color-base-content);
+        box-shadow: none;
+    }
+
+    /* Placeholder dimming targets the closed control's displayed text; option rows
+       in the open picker inherit the select's color in Chromium, so restore full
+       contrast for the actual choices. */
+    .select:has(option[value='']:checked) option {
+        color: var(--color-base-content);
+    }
+
+    /* Leaderboard table styling */
+
+    /* Alternating row colors (primary blue with transparency) */
+    .table tbody tr:nth-child(even):not(.current-user-row) {
+        background-color: oklch(from var(--color-primary) l c h / 10%);
+    }
+
+    /* Opt-in row hover highlight (<tr class="hover">, e.g. the fulfillment
+       table) — the DaisyUI convention the markup already uses. Placed after the
+       zebra rule (equal specificity) so hovering also reads on even rows. */
+    .table tbody tr.hover:hover {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    }
+
+    /* Current user/fleet/district highlighting */
+    .current-user-row {
+        background-color: oklch(from var(--color-accent) l c h / 15%);
+    }
+
+    /* Red indicator bar on left side of current user row */
+    .current-user-row td:first-child {
+        position: relative;
+    }
+
+    .current-user-row td:first-child::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background-color: var(--color-accent);
+    }
+
+    /* Accent badge styling (red) */
+    .badge-accent {
+        background-color: var(--color-accent);
+        color: var(--color-accent-content);
+        border-color: var(--color-accent);
+    }
+
+    /* ============================================================
+       Community Stats page (/stats)
+       ============================================================ */
+
+    /* Lightning fill-up hero — a "thermometer" in the Lightning Class bolt insignia.
+       The bolt shape comes from the class logo PNG used as an alpha mask; a gradient
+       layer rises inside it toward the community goal, with a benchmark line marking
+       the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
+       so fill/benchmark heights map to that central 70% band. */
+    .lightning-fill {
+        /* Defaults for the two vars the Blade component sets inline per render
+           (--lf-fill: fill %, --lf-prior: prior-year fraction). Declaring them
+           here gives descendants a value to inherit and lets tooling resolve the
+           var() references; the inline style overrides these at runtime. */
+        --lf-fill: 0%;
+        --lf-prior: 0;
+
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .lightning-fill-goal {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-base-content);
+        opacity: 0.6;
+    }
+
+    .lightning-fill-goal span {
+        font-weight: 400;
+    }
+
+    .lightning-fill-circle {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        background: oklch(100% 0 0deg);
+        border: 5px solid var(--color-primary);
+        overflow: hidden;
+    }
+
+    .lightning-fill-bolt {
+        position: absolute;
+        inset: 15%;
+
+        /* The Lightning Class bolt insignia, as an alpha mask over the fill layers */
+        mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+    }
+
+    .lightning-fill-track {
+        position: absolute;
+        inset: 0;
+        background: var(--color-base-300);
+    }
+
+    .lightning-fill-rise {
+        position: absolute;
+        inset: 0;
+
+        /* The Lightning Class bolt is red; it fills in its own colour */
+        background: linear-gradient(to top, var(--color-accent), oklch(58% 0.19 29deg));
+        clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
+        animation: lightning-fill-rise 1.5s ease-out;
+    }
+
+    @keyframes lightning-fill-rise {
+        from {
+            clip-path: inset(100% 0 0 0);
+        }
+    }
+
+    /* Prior-year benchmark. Two parts: a solid line across the bolt (masked to the
+       bolt so it spans exactly the red at that height and never overhangs), and a
+       dashed leader running right to the year chip. */
+    .lightning-fill-prior-solid {
+        position: absolute;
+        inset: 15%;
+        pointer-events: none;
+        mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
+    }
+
+    .lightning-fill-prior-solid::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--lf-prior, 0) * 100%);
+
+        /* Dark blue reads clearly over the red bolt fill */
+        border-top: 1.5px solid var(--color-primary);
+    }
+
+    .lightning-fill-prior-leader {
+        position: absolute;
+
+        /* Starts just past the bolt's right edge at the benchmark height, so the
+           dashes sit on the white only — the solid part carries it across the bolt. */
+        left: 61%;
+        right: 13%;
+        bottom: calc(15% + var(--lf-prior, 0) * 70%);
+        border-top: 1px dashed var(--color-secondary);
+        pointer-events: none;
+    }
+
+    .lightning-fill-prior-chip {
+        position: absolute;
+        right: 11%;
+        bottom: calc(15% + var(--lf-prior, 0) * 70%);
+        transform: translateY(50%);
+        font-size: 0.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 0 0.25rem;
+        border-radius: 3px;
+        color: var(--color-secondary);
+        background: oklch(100% 0 0deg / 88%);
+    }
+
+    /* Goal reached: gentle glow pulse after the fill animation lands */
+    .lightning-fill-complete .lightning-fill-circle {
+        animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
+    }
+
+    @keyframes lightning-glow-pulse {
+        0%,
+        100% {
+            box-shadow: 0 0 4px oklch(55% 0.12 240deg / 45%);
+        }
+
+        50% {
+            box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
+        }
+    }
+
+    /* Respect reduced-motion: the fill and glow settle straight to their resting
+       state (the clip-path level is applied regardless — only the animation drops). */
+    @media (prefers-reduced-motion: reduce) {
+        .lightning-fill-rise,
+        .lightning-fill-complete .lightning-fill-circle {
+            animation: none;
+        }
+    }
+
+    /* D3 chart containers */
+    .stats-chart {
+        position: relative;
+        width: 100%;
+    }
+
+    .stats-chart svg {
+        display: block;
+        max-width: 100%;
+    }
+
+    /* Wide charts (heatmap) scroll inside their own container only when they
+       overflow; JS centres them and switches off the scrollbar when they fit. */
+    .stats-chart .chart-scroll {
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .stats-chart .chart-scroll svg {
+        max-width: none;
+    }
+
+    /* Filterable cumulative-flashes chart: toggle chips grouped by dimension */
+    .stats-chart .flash-filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .stats-chart .flash-filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .stats-chart .ff-group-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        opacity: 0.55;
+        margin-right: 0.15rem;
+    }
+
+    /* Multi-select toggle pill — pressed/unpressed states so it reads as a control,
+       not a legend swatch. */
+    .stats-chart .ff-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        padding: 0.16rem 0.6rem;
+        border-radius: 9999px;
+        border: 1px solid var(--color-base-300);
+        background: var(--color-base-100);
+        color: var(--color-base-content);
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    }
+
+    .stats-chart .ff-chip:hover {
+        background: var(--color-base-200);
+        border-color: var(--color-base-content);
+    }
+
+    .stats-chart .ff-chip:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+    }
+
+    /* On = included: clean neutral pill — colour lives in the swatch, not a fill,
+       so an all-on row stays calm. The swatch + hover carry the affordance. */
+    .stats-chart .ff-chip[data-on='1'] {
+        border-color: var(--color-base-300);
+        background: var(--color-base-100);
+    }
+
+    /* Off = excluded: faded + struck through, an unambiguous "removed" signal. */
+    .stats-chart .ff-chip[data-on='0'] {
+        opacity: 0.5;
+        background: transparent;
+        text-decoration: line-through;
+    }
+
+    .stats-chart .ff-chip .ff-swatch {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .stats-chart .ff-chip[data-on='0'] .ff-swatch {
+        opacity: 0.35;
+    }
+
+    /* Pick-one segmented control (Stack by / Show) — a connected pill with a filled
+       active segment; unmistakably a toggle, unlike faded text. */
+    .stats-chart .ff-segmented {
+        display: inline-flex;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 9999px;
+        background: var(--color-base-200);
+        border: 1px solid var(--color-base-300);
+    }
+
+    .stats-chart .ff-seg {
+        border: none;
+        background: transparent;
+        color: var(--color-base-content);
+        font-size: 0.72rem;
+        line-height: 1.4;
+        padding: 0.14rem 0.7rem;
+        border-radius: 9999px;
+        cursor: pointer;
+        opacity: 0.65;
+        transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+    }
+
+    .stats-chart .ff-seg:hover {
+        opacity: 1;
+    }
+
+    .stats-chart .ff-seg[data-on='1'] {
+        background: var(--color-primary);
+        color: var(--color-primary-content);
+        opacity: 1;
+        font-weight: 600;
+    }
+
+    .stats-chart .ff-seg:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+    }
+
+    /* Side-by-side charts (Sailor ages / award funnel): reserve a common chart
+       height so the two cards line up at the bottom (items-start keeps a data-table
+       expansion from shoving its neighbour). */
+    .stats-duo .stats-chart {
+        min-height: 280px;
+    }
+
+    /* Single "Reset" control, top-right of a toggleable chart's card. Muted text
+       button that restores all filters (and stack/mode) to their defaults. */
+    .stats-reset {
+        position: absolute;
+        top: 1.15rem;
+        right: 1.4rem;
+        z-index: 2;
+        padding: 0.15rem 0.3rem;
+        font-size: 0.72rem;
+        line-height: 1;
+        color: var(--color-base-content);
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity 0.12s ease;
+    }
+
+    .stats-reset:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+
+    .stats-reset:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 1px;
+        opacity: 1;
+    }
+
+    /* Filters applied → the reset is actionable, so surface it. */
+    .stats-reset[data-active='1'] {
+        opacity: 1;
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+    /* Heatmap "Less → More" scale — a centred row under the grid */
+    .stats-chart .chart-heat-legend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: var(--color-base-content);
+        opacity: 0.7;
+    }
+
+    .stats-chart .chart-heat-legend .heat-swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 2px;
+    }
+
+    .stats-chart .chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        z-index: 10;
+        background: var(--color-neutral);
+        color: var(--color-neutral-content);
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        max-width: 16rem;
+        white-space: nowrap;
+    }
+
+    .stats-chart .chart-tooltip.visible {
+        opacity: 1;
+    }
+
+    .stats-chart .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem 1rem;
+        font-size: 0.75rem;
+        color: var(--color-base-content);
+        margin-bottom: 0.375rem;
+    }
+
+    .stats-chart .chart-legend .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .stats-chart .chart-legend .legend-swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 0.125rem;
+        flex-shrink: 0;
+    }
+
+    .stats-chart .chart-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--color-base-content);
+        opacity: 0.6;
+    }
 }
 
-.password-input-wrapper .password-toggle-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 20;
-}
+/* ==========================================================================
+   Third-party widget overrides — INTENTIONALLY UNLAYERED.
 
-.password-toggle-btn svg.hidden {
-    display: none !important;
-}
-
-/* Hide browser's native password reveal icon */
-.hide-password-reveal::-ms-reveal,
-.hide-password-reveal::-ms-clear {
-    display: none;
-}
-
-.hide-password-reveal::-webkit-credentials-auto-fill-button,
-.hide-password-reveal::-webkit-textfield-decoration-container {
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Floating Label - Always Visible (on border) */
-.floating-label-visible {
-    position: relative;
-    display: block;
-    width: 100%;
-}
-
-.floating-label-visible input,
-.floating-label-visible select,
-.floating-label-visible textarea {
-    width: 100%;
-    padding: 0.75rem;
-}
-
-/* Native selects keep DaisyUI's fixed height, so the 0.75rem vertical padding
-   above shrinks the text box below the line-height and clips descenders (the
-   "g" in "Select gender"). Trim the vertical padding so the glyph fits. */
-.floating-label-visible select {
-    padding-block: 0.5rem;
-}
-
-.floating-label-visible label {
-    position: absolute;
-    left: 0.75rem;
-    top: -0.5rem;
-    font-size: 0.875rem;
-    color: oklch(60% 0.01 245deg);
-    pointer-events: none;
-    background: oklch(96% 0.003 245deg);
-    padding: 0 0.25rem;
-    z-index: 10;
-}
-
-/* DaisyUI's .label (used for @error field messages) is inline-flex with
-   white-space: nowrap, so a long validation message stays on one line and
-   overflows into the neighbouring grid column — visible on the two-up
-   Date of Birth / Gender row, where the DOB error collided with the Gender
-   error. Render the field error as a normal wrapping block within its field. */
-.floating-label-visible > .label {
-    display: block;
-    white-space: normal;
-}
-
-/* Tooltip inside a floating label (district/fleet) must stay hoverable. */
-.floating-label-visible label .tooltip {
-    pointer-events: auto;
-}
-
-/* Cap specific tooltip-right hints that would otherwise run off the right edge
-   on a narrow mobile viewport (district/fleet fields + any element marked
-   .tooltip-clamp, e.g. the logbook "Sailing Type" hint); they wrap instead.
-   Other tooltips (e.g. the leaderboard tooltip-left header) keep the default. */
-.floating-label-visible label .tooltip::before,
-.tooltip-clamp::before {
-    max-width: 12rem;
-}
-
-/* While a field's tooltip is hovered, lift the whole field above its grid
-   neighbor so the tooltip isn't covered by the adjacent field's label. */
-.floating-label-visible:has(.tooltip:hover) {
-    z-index: 60;
-}
-
-/* Hide these tooltips instantly rather than fading: the z-index lift above
-   drops the moment the hover ends, so a fading tooltip would briefly show
-   the neighbor field painted over it. */
-.floating-label-visible label .tooltip::before,
-.floating-label-visible label .tooltip::after {
-    transition: none;
-}
+   tom-select and flatpickr ship their own CSS (imported unlayered at the top
+   of this file). Unlayered normal declarations outrank every @layer, so these
+   overrides must also stay unlayered to win. Pulling the vendor CSS into a
+   layer is not safe either: the !important cascade REVERSES across layers
+   (an earlier layer's !important beats a later one's), and both vendors ship
+   !important on properties we override (background/color/box-shadow/outline/
+   cursor), so a layered vendor could beat us. These rules only ever target
+   .ts-* / .flatpickr-* widgets, never our own elements, so being unlayered
+   cannot shadow a component/utility by surprise. This is the one exception.
+   ========================================================================== */
 
 /* TomSelect customization with Lightning Class theme colors */
 .ts-dropdown {
@@ -255,26 +1732,51 @@
 }
 
 .ts-control {
-    min-height: 3rem;
+    /* Match the native .select height (2.5rem) so a TomSelect-ified field lines
+       up with the plain selects beside it — e.g. the sailor-logs / fulfillment
+       filter rows, where a 3rem control stood taller than the year select. */
+    min-height: 2.5rem;
     display: flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
+
+    /* Dropdown caret, matching the native .select. TomSelect's own arrow lives
+       on the .select-classed wrapper, which we suppress (.ts-wrapper.select), so
+       re-add it here; the right-padding that clears it lives on
+       .ts-wrapper.single .ts-control (it can out-specify TomSelect's own rule). */
+    background-image:
+        linear-gradient(45deg, transparent 50%, currentcolor 50%),
+        linear-gradient(135deg, currentcolor 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
 }
 
 .ts-wrapper .item {
     line-height: normal;
+
+    /* Keep a selected item on one line; long fleet names ("12 - Buffalo Canoe
+       Club") must not wrap and grow the control when it is re-focused and the
+       search input appears. */
+    white-space: nowrap;
 }
 
 .ts-wrapper.single .ts-control {
-    background: var(--color-base-100) !important;
+    background-color: var(--color-base-100) !important;
     border: 1px solid var(--color-base-300);
     border-radius: var(--radius-selector);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    /* Clear the caret added on .ts-control. This selector matches TomSelect's own
+       `.ts-control:not(.rtl){padding-right:… !important}` specificity (0,2,0) and
+       comes later, so our padding wins. */
+    padding-inline-end: 1.75rem !important;
 
     /* Keep the selected item and the search input on one line. Without this,
        focusing an already-selected single select on a narrow (mobile) viewport
        wraps the input onto a second line and grows the control. */
     flex-wrap: nowrap;
+    overflow: hidden;
 }
 
 .ts-wrapper.single .ts-control input {
@@ -282,72 +1784,13 @@
 }
 
 .ts-wrapper.focus .ts-control {
-    /* Secondary to match the native focus rings (see the .input:focus block) */
-    border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px oklch(from var(--color-secondary) l c h / 20%);
-    outline: none;
-    background: var(--color-base-100) !important;
-}
-
-/* Brand-blue focus ring on native DaisyUI form controls (DaisyUI 5's default
-   focus outline is base-content, which reads as black). Secondary, not
-   primary: thin strokes lose perceived hue, so the dark primary navy also
-   read near-black at 2px — and secondary is already the interaction color
-   (links, tooltips). --input-color also drives DaisyUI's focus box-shadow
-   underline. */
-.input:focus,
-.input:focus-within,
-.select:focus,
-.select:focus-within,
-.textarea:focus,
-.textarea:focus-within {
-    --input-color: var(--color-secondary);
-
-    outline-color: var(--color-secondary);
-}
-
-/* Error-state fields keep an error-colored focus, mirroring
-   .ts-has-error .ts-wrapper.select.focus above. */
-.input-error:focus,
-.input-error:focus-within,
-.select-error:focus,
-.select-error:focus-within,
-.textarea-error:focus,
-.textarea-error:focus-within {
-    --input-color: var(--color-error);
-
-    outline-color: var(--color-error);
-}
-
-/* A select still showing its empty-value placeholder option ("Select activity
-   type…") has no value yet — dim it to match input ::placeholder (DaisyUI:
-   currentcolor at 50%) so it can't be mistaken for a real selection. */
-.select:has(option[value='']:checked) {
-    color: color-mix(in oklab, currentcolor 50%, transparent);
-}
-
-/* Native <select> dropdown options (stylable in Chromium; Firefox/Safari show
-   the OS picker regardless): selection is marked by the picker's own checkmark
-   only — no fill (DaisyUI paints the checked row base-content, which also lit
-   up the disabled "Select activity/sailing type" placeholders). Gray is the
-   only filled state: DaisyUI's hover, extended here to mousedown-hold, which
-   DaisyUI paints neutral (near-black) with a pressed shadow. */
-:is(.select, .select select) option:checked {
-    background-color: transparent;
-    color: var(--color-base-content);
-}
-
-:is(.select, .select select) option:not(:disabled):active {
-    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
-    color: var(--color-base-content);
+    /* Match the crisp secondary auto focus ring the native inputs get
+       (.input:focus below): keep the base border, no soft glow — an auto
+       outline in the brand secondary. */
     box-shadow: none;
-}
-
-/* Placeholder dimming targets the closed control's displayed text; option rows
-   in the open picker inherit the select's color in Chromium, so restore full
-   contrast for the actual choices. */
-.select:has(option[value='']:checked) option {
-    color: var(--color-base-content);
+    outline: 1px auto var(--color-secondary);
+    outline-offset: 1px;
+    background-color: var(--color-base-100) !important;
 }
 
 .ts-wrapper.disabled .ts-control,
@@ -368,16 +1811,16 @@
    .select.select-bordered there, which is full-width and matches the text
    inputs). Its inset box-shadows draw top/bottom lines that hide a plain red
    border, so we replace them with a flat error ring on all four edges. On focus
-   DaisyUI draws a dark 2px outline, so we recolor that to the error color (same
-   as .input-error on the text fields). The inner .ts-control is taller and
-   horizontally inset, so we strip its border/ring to avoid a misaligned double
-   line. */
+   the ring is the 1px auto outline drawn on .ts-control (.ts-wrapper.focus
+   above), so we recolor that to the error color (same as .input-error on the
+   text fields). The inner .ts-control is taller and horizontally inset, so we
+   strip its border/ring to avoid a misaligned double line. */
 .ts-has-error .ts-wrapper.select {
     border-color: var(--color-error);
     box-shadow: 0 0 0 1px var(--color-error);
 }
 
-.ts-has-error .ts-wrapper.select.focus {
+.ts-has-error .ts-wrapper.focus .ts-control {
     outline-color: var(--color-error);
 }
 
@@ -392,42 +1835,42 @@
 
 /* Calendar container */
 .flatpickr-calendar {
-    background: oklch(96% 0.003 245deg) !important;
-    border: 1px solid oklch(85% 0.008 245deg) !important;
+    background: var(--color-base-100) !important;
+    border: 1px solid var(--color-base-300) !important;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%) !important;
 }
 
 /* Month/Year header */
 .flatpickr-months {
-    background: oklch(38% 0.09 245deg) !important;
+    background: var(--color-primary) !important;
 }
 
 .flatpickr-current-month {
-    color: oklch(100% 0 0deg) !important;
+    color: var(--color-primary-content) !important;
 }
 
 .flatpickr-month,
 /* stylelint-disable-next-line selector-class-pattern */
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-current-month input.cur-year {
-    color: oklch(100% 0 0deg) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Navigation arrows */
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-    fill: oklch(100% 0 0deg) !important;
+    fill: var(--color-primary-content) !important;
 }
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-    fill: oklch(92% 0.005 245deg) !important;
+    fill: var(--color-base-200) !important;
 }
 
 /* Year dropdown styling (custom select element) */
 .flatpickr-current-month select {
-    background: oklch(38% 0.09 245deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    color: var(--color-primary-content) !important;
     border: none !important;
     font-weight: inherit !important;
     cursor: pointer !important;
@@ -451,61 +1894,61 @@
 
 /* Weekday headers */
 .flatpickr-weekdays {
-    background: oklch(92% 0.005 245deg) !important;
+    background: var(--color-base-200) !important;
 }
 
 span.flatpickr-weekday {
-    color: oklch(38% 0.09 245deg) !important;
+    color: var(--color-primary) !important;
     font-weight: 600 !important;
 }
 
 /* Regular date cells */
 .flatpickr-day {
-    color: oklch(25% 0.02 245deg) !important;
+    color: var(--color-base-content) !important;
     border: 1px solid transparent !important;
 }
 
 .flatpickr-day:hover {
-    background: oklch(92% 0.005 245deg) !important;
-    border-color: oklch(85% 0.008 245deg) !important;
+    background: var(--color-base-200) !important;
+    border-color: var(--color-base-300) !important;
 }
 
 /* Selected dates */
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    background: oklch(38% 0.09 245deg) !important;
-    border-color: oklch(38% 0.09 245deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Today's date - ONLY when not selected */
 .flatpickr-day.today:not(.selected) {
-    border-color: oklch(44% 0.21 29deg) !important;
-    background: oklch(96% 0.003 245deg) !important;
+    border-color: var(--color-accent) !important;
+    background: var(--color-base-100) !important;
 }
 
 .flatpickr-day.today:not(.selected):hover {
-    background: oklch(92% 0.005 245deg) !important;
-    border-color: oklch(44% 0.21 29deg) !important;
+    background: var(--color-base-200) !important;
+    border-color: var(--color-accent) !important;
 }
 
 /* Today's date when selected - blue background with red border */
 .flatpickr-day.today.selected,
 .flatpickr-day.today.selected:hover {
-    background: oklch(38% 0.09 245deg) !important;
-    border-color: oklch(44% 0.21 29deg) !important;
-    color: oklch(100% 0 0deg) !important;
+    background: var(--color-primary) !important;
+    border-color: var(--color-accent) !important;
+    color: var(--color-primary-content) !important;
 }
 
 /* Future dates (disabled) - grayed out */
 .flatpickr-day.flatpickr-disabled:not(.has-entry) {
-    color: oklch(85% 0.008 245deg) !important;
-    background: oklch(96% 0.003 245deg) !important;
+    color: var(--color-base-300) !important;
+    background: var(--color-base-100) !important;
     cursor: not-allowed !important;
 }
 
 .flatpickr-day.flatpickr-disabled:not(.has-entry):hover {
-    background: oklch(96% 0.003 245deg) !important;
+    background: var(--color-base-100) !important;
     border-color: transparent !important;
 }
 
@@ -516,9 +1959,7 @@ span.flatpickr-weekday {
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
-    background-color: oklch(92% 0.005 245deg) !important;
-
-    /* border: 1px solid oklch(55% 0.12 240deg) !important; */
+    background-color: var(--color-base-200) !important;
     color: transparent !important;
     cursor: not-allowed;
 }
@@ -531,432 +1972,7 @@ span.flatpickr-weekday {
     background-size: auto 20px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
-    background-color: oklch(92% 0.005 245deg) !important;
-    border: 2px solid oklch(44% 0.21 29deg) !important;
+    background-color: var(--color-base-200) !important;
+    border: 2px solid var(--color-accent) !important;
     color: transparent !important;
-}
-
-/* Leaderboard table styling */
-
-/* Alternating row colors (primary blue with transparency) */
-.table tbody tr:nth-child(even):not(.current-user-row) {
-    background-color: oklch(from var(--color-primary) l c h / 10%);
-}
-
-/* Current user/fleet/district highlighting */
-.current-user-row {
-    background-color: oklch(from var(--color-accent) l c h / 15%);
-}
-
-/* Red indicator bar on left side of current user row */
-.current-user-row td:first-child {
-    position: relative;
-}
-
-.current-user-row td:first-child::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var(--color-accent);
-}
-
-/* Accent badge styling (red) */
-.badge-accent {
-    background-color: var(--color-accent);
-    color: var(--color-accent-content);
-    border-color: var(--color-accent);
-}
-
-/* ============================================================
-   Community Stats page (/stats)
-   ============================================================ */
-
-/* Lightning fill-up hero — a "thermometer" in the Lightning Class bolt insignia.
-   The bolt shape comes from the class logo PNG used as an alpha mask; a gradient
-   layer rises inside it toward the community goal, with a benchmark line marking
-   the prior year's total. Geometry: the bolt box is inset 15% inside the circle,
-   so fill/benchmark heights map to that central 70% band. */
-.lightning-fill {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.lightning-fill-goal {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-base-content);
-    opacity: 0.6;
-}
-
-.lightning-fill-goal span {
-    font-weight: 400;
-}
-
-.lightning-fill-circle {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    background: oklch(100% 0 0deg);
-    border: 5px solid var(--color-primary);
-    overflow: hidden;
-}
-
-.lightning-fill-bolt {
-    position: absolute;
-    inset: 15%;
-
-    /* The Lightning Class bolt insignia, as an alpha mask over the fill layers */
-    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
-}
-
-.lightning-fill-track {
-    position: absolute;
-    inset: 0;
-    background: var(--color-base-300);
-}
-
-.lightning-fill-rise {
-    position: absolute;
-    inset: 0;
-
-    /* The Lightning Class bolt is red; it fills in its own colour */
-    background: linear-gradient(to top, var(--color-accent), oklch(58% 0.19 29deg));
-    clip-path: inset(calc(100% - var(--lf-fill, 0%)) 0 0 0);
-    animation: lightning-fill-rise 1.5s ease-out;
-}
-
-@keyframes lightning-fill-rise {
-    from {
-        clip-path: inset(100% 0 0 0);
-    }
-}
-
-/* Prior-year benchmark. Two parts: a solid line across the bolt (masked to the
-   bolt so it spans exactly the red at that height and never overhangs), and a
-   dashed leader running right to the year chip. */
-.lightning-fill-prior-solid {
-    position: absolute;
-    inset: 15%;
-    pointer-events: none;
-    mask: url('../../public/images/lightning_logo.png') center / contain no-repeat;
-}
-
-.lightning-fill-prior-solid::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--lf-prior, 0) * 100%);
-
-    /* Dark blue reads clearly over the red bolt fill */
-    border-top: 1.5px solid var(--color-primary);
-}
-
-.lightning-fill-prior-leader {
-    position: absolute;
-
-    /* Starts just past the bolt's right edge at the benchmark height, so the
-       dashes sit on the white only — the solid part carries it across the bolt. */
-    left: 61%;
-    right: 13%;
-    bottom: calc(15% + var(--lf-prior, 0) * 70%);
-    border-top: 1px dashed var(--color-secondary);
-    pointer-events: none;
-}
-
-.lightning-fill-prior-chip {
-    position: absolute;
-    right: 11%;
-    bottom: calc(15% + var(--lf-prior, 0) * 70%);
-    transform: translateY(50%);
-    font-size: 0.6rem;
-    font-weight: 700;
-    line-height: 1.2;
-    padding: 0 0.25rem;
-    border-radius: 3px;
-    color: var(--color-secondary);
-    background: oklch(100% 0 0deg / 88%);
-}
-
-/* Goal reached: gentle glow pulse after the fill animation lands */
-.lightning-fill-complete .lightning-fill-circle {
-    animation: lightning-glow-pulse 2.4s ease-in-out 1.6s infinite;
-}
-
-@keyframes lightning-glow-pulse {
-    0%,
-    100% {
-        box-shadow: 0 0 4px oklch(55% 0.12 240deg / 45%);
-    }
-
-    50% {
-        box-shadow: 0 0 20px oklch(55% 0.12 240deg / 90%);
-    }
-}
-
-/* Respect reduced-motion: the fill and glow settle straight to their resting
-   state (the clip-path level is applied regardless — only the animation drops). */
-@media (prefers-reduced-motion: reduce) {
-    .lightning-fill-rise,
-    .lightning-fill-complete .lightning-fill-circle {
-        animation: none;
-    }
-}
-
-/* D3 chart containers */
-.stats-chart {
-    position: relative;
-    width: 100%;
-}
-
-.stats-chart svg {
-    display: block;
-    max-width: 100%;
-}
-
-/* Wide charts (heatmap) scroll inside their own container only when they
-   overflow; JS centres them and switches off the scrollbar when they fit. */
-.stats-chart .chart-scroll {
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-}
-
-.stats-chart .chart-scroll svg {
-    max-width: none;
-}
-
-/* Filterable cumulative-flashes chart: toggle chips grouped by dimension */
-.stats-chart .flash-filter-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.stats-chart .flash-filter-group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.stats-chart .ff-group-label {
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.55;
-    margin-right: 0.15rem;
-}
-
-/* Multi-select toggle pill — pressed/unpressed states so it reads as a control,
-   not a legend swatch. */
-.stats-chart .ff-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    line-height: 1.4;
-    padding: 0.16rem 0.6rem;
-    border-radius: 9999px;
-    border: 1px solid var(--color-base-300);
-    background: var(--color-base-100);
-    color: var(--color-base-content);
-    cursor: pointer;
-    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
-}
-
-.stats-chart .ff-chip:hover {
-    background: var(--color-base-200);
-    border-color: var(--color-base-content);
-}
-
-.stats-chart .ff-chip:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-}
-
-/* On = included: clean neutral pill — colour lives in the swatch, not a fill,
-   so an all-on row stays calm. The swatch + hover carry the affordance. */
-.stats-chart .ff-chip[data-on='1'] {
-    border-color: var(--color-base-300);
-    background: var(--color-base-100);
-}
-
-/* Off = excluded: faded + struck through, an unambiguous "removed" signal. */
-.stats-chart .ff-chip[data-on='0'] {
-    opacity: 0.5;
-    background: transparent;
-    text-decoration: line-through;
-}
-
-.stats-chart .ff-chip .ff-swatch {
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-
-.stats-chart .ff-chip[data-on='0'] .ff-swatch {
-    opacity: 0.35;
-}
-
-/* Pick-one segmented control (Stack by / Show) — a connected pill with a filled
-   active segment; unmistakably a toggle, unlike faded text. */
-.stats-chart .ff-segmented {
-    display: inline-flex;
-    gap: 2px;
-    padding: 2px;
-    border-radius: 9999px;
-    background: var(--color-base-200);
-    border: 1px solid var(--color-base-300);
-}
-
-.stats-chart .ff-seg {
-    border: none;
-    background: transparent;
-    color: var(--color-base-content);
-    font-size: 0.72rem;
-    line-height: 1.4;
-    padding: 0.14rem 0.7rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    opacity: 0.65;
-    transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
-}
-
-.stats-chart .ff-seg:hover {
-    opacity: 1;
-}
-
-.stats-chart .ff-seg[data-on='1'] {
-    background: var(--color-primary);
-    color: var(--color-primary-content);
-    opacity: 1;
-    font-weight: 600;
-}
-
-.stats-chart .ff-seg:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-}
-
-/* Side-by-side charts (Sailor ages / award funnel): reserve a common chart
-   height so the two cards line up at the bottom (items-start keeps a data-table
-   expansion from shoving its neighbour). */
-.stats-duo .stats-chart {
-    min-height: 280px;
-}
-
-/* Single "Reset" control, top-right of a toggleable chart's card. Muted text
-   button that restores all filters (and stack/mode) to their defaults. */
-.stats-reset {
-    position: absolute;
-    top: 1.15rem;
-    right: 1.4rem;
-    z-index: 2;
-    padding: 0.15rem 0.3rem;
-    font-size: 0.72rem;
-    line-height: 1;
-    color: var(--color-base-content);
-    background: none;
-    border: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.12s ease;
-}
-
-.stats-reset:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-.stats-reset:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-    opacity: 1;
-}
-
-/* Filters applied → the reset is actionable, so surface it. */
-.stats-reset[data-active='1'] {
-    opacity: 1;
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
-/* Heatmap "Less → More" scale — a centred row under the grid */
-.stats-chart .chart-heat-legend {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    margin-top: 0.5rem;
-    font-size: 0.7rem;
-    color: var(--color-base-content);
-    opacity: 0.7;
-}
-
-.stats-chart .chart-heat-legend .heat-swatch {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 2px;
-}
-
-.stats-chart .chart-tooltip {
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    background: var(--color-neutral);
-    color: var(--color-neutral-content);
-    border-radius: 0.375rem;
-    padding: 0.375rem 0.625rem;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    opacity: 0;
-    transition: opacity 0.1s ease;
-    max-width: 16rem;
-    white-space: nowrap;
-}
-
-.stats-chart .chart-tooltip.visible {
-    opacity: 1;
-}
-
-.stats-chart .chart-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem 1rem;
-    font-size: 0.75rem;
-    color: var(--color-base-content);
-    margin-bottom: 0.375rem;
-}
-
-.stats-chart .chart-legend .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.stats-chart .chart-legend .legend-swatch {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 0.125rem;
-    flex-shrink: 0;
-}
-
-.stats-chart .chart-empty {
-    padding: 2.5rem 1rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--color-base-content);
-    opacity: 0.6;
 }

@@ -3,7 +3,7 @@
         Sign In
     </x-slot:title>
 
-    <div class="hero min-h-[calc(100vh-16rem)]">
+    <div class="hero hero-fill">
         <div class="hero-content flex-col">
             <div class="card w-96 bg-base-100">
                 <div class="card-body">
@@ -13,32 +13,33 @@
                         @csrf
 
                         <!-- Email -->
-                        <label class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <input type="email"
+                                   id="email"
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered w-full @error('email') input-error @enderror"
+                                   class="input w-full @error('email') input-error @enderror"
                                    required
                                    autofocus>
-                            <span>Email</span>
-                        </label>
-                        @error('email')
-                            <div class="label -mt-4 mb-2">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </div>
-                        @enderror
+                            <label for="email">Email</label>
+                            @error('email')
+                                <div class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </div>
+                            @enderror
+                        </div>
 
                         <!-- Password -->
-                        <div class="floating-label mb-6">
-                            <x-password-input name="password" :class="$errors->has('password') ? 'input-error' : ''" />
-                            <span>Password</span>
+                        <div class="mb-6 floating-label-visible">
+                            <x-password-input name="password" id="password" :class="$errors->has('password') ? 'input-error' : ''" />
+                            <label for="password">Password</label>
+                            @error('password')
+                                <div class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
-                        @error('password')
-                            <div class="label -mt-4 mb-2">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </div>
-                        @enderror
 
                         <!-- Remember Me & Forgot Password -->
                         <div class="form-control mt-4">
@@ -46,7 +47,7 @@
                                 <label class="label cursor-pointer justify-start p-0">
                                     <input type="checkbox"
                                            name="remember"
-                                           class="checkbox">
+                                           class="checkbox checkbox-primary">
                                     <span class="label-text ml-2">Remember me</span>
                                 </label>
                                 <a href="{{ route('password.request') }}" class="link link-primary text-sm">
