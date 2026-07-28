@@ -204,7 +204,10 @@ removed):
   hide-extra-weeks pass exists.
 - Day cells are real `<button>`s with aria-labels; keyboard support: Enter on
   the input opens with focus in the grid, arrows/Home/End/PageUp/PageDown
-  move (skipping disabled days), Escape closes, Tab exits to the next field.
+  move (clamped to the range), Escape closes, Tab exits to the next field.
+  Logged days are `aria-disabled` — focusable and announced ("already
+  logged") but not selectable — while out-of-range days are natively
+  disabled and skipped.
 - **Livewire-proof by construction, NOT by hooks** (the old flatpickr version
   needed `morph.updated` + `requestAnimationFrame` reinit glue):
   - Initialization is lazy — one delegated click/keydown listener on

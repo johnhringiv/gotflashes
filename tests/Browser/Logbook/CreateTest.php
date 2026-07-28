@@ -19,7 +19,7 @@ it('logs a single sailing day via the date picker', function () {
     $page->assertVisible('.date-picker');
 
     // Pick an available day
-    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not(.other-month)').click()");
+    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not([aria-disabled=\"true\"]):not(.other-month)').click()");
 
     // Close the calendar
     $page->script("document.querySelector('#date-picker')._datePicker.close()");
@@ -74,7 +74,7 @@ it('requires event_type when activity_type is sailing', function () {
     // Open the date picker and pick a day
     $page->click('#date-picker');
     $page->assertVisible('.date-picker');
-    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not(.other-month)').click()");
+    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not([aria-disabled=\"true\"]):not(.other-month)').click()");
     $page->script("document.querySelector('#date-picker')._datePicker.close()");
 
     // Select sailing but do NOT select an event type
@@ -142,7 +142,7 @@ it('clears the date picker after a successful save', function () {
     // Open the date picker and pick a day
     $page->click('#date-picker');
     $page->assertVisible('.date-picker');
-    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not(.other-month)').click()");
+    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not([aria-disabled=\"true\"]):not(.other-month)').click()");
     $page->script("document.querySelector('#date-picker')._datePicker.close()");
     settleLivewire($page);
 
@@ -238,7 +238,7 @@ it('clears validation errors as fields are corrected', function () {
 
     // Picking a date clears the date error too.
     $page->click('#date-picker');
-    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not(.other-month)').click()");
+    $page->script("document.querySelector('.date-picker .dp-day:not([disabled]):not([aria-disabled=\"true\"]):not(.other-month)').click()");
     $page->script("document.querySelector('#date-picker')._datePicker.close()");
     $page->assertAttributeDoesntContain('#date-picker', 'class', 'input-error');
 });

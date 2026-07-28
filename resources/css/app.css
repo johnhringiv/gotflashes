@@ -1775,8 +1775,9 @@
 
     .dp-day.today.selected { border-color: var(--color-accent); }
 
-    /* Out of allowed range */
-    .dp-day:disabled:not(.has-entry) {
+    /* Out of allowed range (has-entry days are aria-disabled instead so they
+       stay keyboard-focusable — see date-picker.js) */
+    .dp-day:disabled {
         color: var(--color-base-300);
         background: none;
         border-color: transparent;

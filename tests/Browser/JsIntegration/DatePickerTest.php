@@ -78,7 +78,7 @@ describe('date picker calendar', function () {
         );
     });
 
-    it('marks existing dates as disabled has-entry days', function () {
+    it('marks existing dates as locked has-entry days that stay focusable', function () {
         Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-10")->create();
         Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-11")->create();
 
@@ -87,8 +87,42 @@ describe('date picker calendar', function () {
         $page->assertVisible('.date-picker');
         $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
 
+        // aria-disabled (not the disabled attribute) so keyboard focus can
+        // land on them and announce "(already logged)".
         $page->assertScript('document.querySelectorAll(".date-picker .dp-day.has-entry").length', 2);
-        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').disabled", true);
+        $page->assertScript(
+            "document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').getAttribute('aria-disabled')",
+            'true',
+        );
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').disabled", false);
+    });
+
+    it('arrows onto logged days without selecting them', function () {
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-10")->create();
+
+        $page = visit('/logbook');
+        $page->click('#date-picker');
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
+
+        // ArrowRight from the 9th lands ON the logged 10th (no skip)...
+        $page->script(<<<JS
+            const from = document.querySelector('.dp-day[data-date="{$this->ym}-09"]');
+            from.focus();
+            from.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        JS);
+        $page->assertScript('document.activeElement.dataset.date', "{$this->ym}-10");
+
+        // ...clicking/pressing it selects nothing...
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').click()");
+        $page->assertValue('#date-picker', '');
+
+        // ...and another ArrowRight continues past it.
+        $page->script(<<<'JS'
+            document.activeElement.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+            );
+        JS);
+        $page->assertScript('document.activeElement.dataset.date', "{$this->ym}-11");
     });
 
     it('enforces min/max — tomorrow selectable, day-after-tomorrow disabled', function () {
@@ -219,7 +253,10 @@ describe('date picker edit mode', function () {
         // Opens on the month of the selected date — no navigation needed.
         $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->year}-1");
         $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-11\"]').disabled", false);
-        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').disabled", true);
+        $page->assertScript(
+            "document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').getAttribute('aria-disabled')",
+            'true',
+        );
 
         // Picking a new date closes the calendar (single mode) and updates the input.
         $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-12\"]').click()");

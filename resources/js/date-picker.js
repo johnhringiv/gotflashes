@@ -176,10 +176,14 @@ class DatePicker {
                 if (day.hasEntry) classes.push('has-entry');
                 if (isSelected) classes.push('selected');
                 const label = formatLongDate(day.iso) + (day.hasEntry ? ' (already logged)' : '');
+                // Logged days are FOCUSABLE but not selectable (aria-disabled,
+                // guarded in onCalendarClick): arrow keys land on them and
+                // announce the state instead of skipping past — the APG
+                // pattern. Out-of-range days stay natively disabled.
+                const state = day.hasEntry ? ' aria-disabled="true"' : day.disabled ? ' disabled' : '';
                 return (
                     `<button type="button" class="${classes.join(' ')}" data-date="${day.iso}"` +
-                    ` aria-label="${label}" aria-pressed="${isSelected}" tabindex="-1"` +
-                    `${day.disabled ? ' disabled' : ''}>${day.day}</button>`
+                    ` aria-label="${label}" aria-pressed="${isSelected}" tabindex="-1"${state}>${day.day}</button>`
                 );
             })
             .join('');
@@ -298,7 +302,7 @@ class DatePicker {
             return;
         }
         const day = e.target.closest('.dp-day');
-        if (day) this.select(day.dataset.date);
+        if (day && day.getAttribute('aria-disabled') !== 'true') this.select(day.dataset.date);
     }
 
     onCalendarKeydown(e) {
@@ -338,8 +342,7 @@ class DatePicker {
         if (!target) return;
 
         e.preventDefault();
-        target = clampISO(target, this.minIso, this.maxIso);
-        if (!this.isDisabled(target)) this.focusDay(target);
+        this.focusDay(clampISO(target, this.minIso, this.maxIso));
     }
 
     onDocumentPointerDown(e) {
@@ -350,17 +353,12 @@ class DatePicker {
 
     // --- focus helpers -----------------------------------------------------
 
-    isDisabled(iso) {
-        if (iso < this.minIso || iso > this.maxIso) return true;
-        return this.existingDates.has(iso) && iso !== this.editableIso;
-    }
-
-    /** Arrow-key movement; steps over disabled (existing-entry) days. */
+    /**
+     * Arrow-key movement. Logged days are focusable (see render), so focus
+     * simply lands on them; movement clamps at the range edges.
+     */
     moveFocus(fromIso, delta) {
-        let iso = addDaysISO(fromIso, delta);
-        while (iso >= this.minIso && iso <= this.maxIso && this.isDisabled(iso)) {
-            iso = addDaysISO(iso, delta);
-        }
+        const iso = addDaysISO(fromIso, delta);
         if (iso < this.minIso || iso > this.maxIso) return;
         this.focusDay(iso);
     }

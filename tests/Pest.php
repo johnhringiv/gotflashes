@@ -127,11 +127,14 @@ function testDate(int $day, int $month = 1, int $yearOffset = 0): string
 }
 
 /**
- * The instant browser tests freeze to: Jan 15 (grace period active), noon, of
- * the CURRENT real year. Tests derive all dates from it via testDate(), so no
- * test file hardcodes a year and the suite never rots as real time advances.
+ * The instant browser tests freeze to: Jan 15, noon, of the NEXT real year.
+ * It must be January so the grace period applies, and it must be a year
+ * AFTER app.start_year (2026) or DateRangeService disables the grace period
+ * (there is no previous season to grace into) — next-real-year satisfies
+ * both forever. Tests derive all dates from it via testDate(), so no test
+ * file hardcodes a year and the suite never rots as real time advances.
  */
 function frozenJanuary(): Carbon\Carbon
 {
-    return Carbon\Carbon::create(now()->year, 1, 15, 12);
+    return Carbon\Carbon::create(now()->year + 1, 1, 15, 12);
 }
