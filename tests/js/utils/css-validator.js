@@ -37,12 +37,18 @@ export function extractDefinedClasses(css) {
 }
 
 // Attributes/calls that assign class names in Blade, plain HTML, and JS.
-// NOT covered: Blade's @class([...]) directive — nothing uses it today; if a
-// future view reaches for it, its classes will be invisible to this validator
-// (add a pattern here, or stick to literal class="..." attributes).
+// class/className capture the FULL quoted value — quotes of the OTHER kind may
+// legitimately appear inside (Blade ternaries and @error('field') use
+// single-quoted literals inside double-quoted attributes) and are handled by
+// classTokensFromAttrValue below. NOT covered: Blade's @class([...]) directive
+// — nothing uses it today; if a future view reaches for it, its classes will be
+// invisible to this validator (add a pattern here, or stick to literal
+// class="..." attributes).
 const CLASS_ATTR_PATTERNS = [
-    /class=["']([^"']+)["']/g, // HTML/Blade + JS string templates
-    /className\s*=\s*["']([^"']+)["']/g, // JS className = '...'
+    /class\s*=\s*"([^"]*)"/g, // HTML/Blade double-quoted attribute
+    /class\s*=\s*'([^']*)'/g, // HTML/Blade single-quoted attribute
+    /className\s*=\s*"([^"]*)"/g, // JS className = "..."
+    /className\s*=\s*'([^']*)'/g, // JS className = '...'
     /\.attr\(\s*["']class["']\s*,\s*["']([^"']+)["']\s*\)/g, // D3 .attr('class', '...')
     /\.classed\(\s*["']([^"']+)["']/g, // D3 .classed('...', bool)
 ];
@@ -68,6 +74,32 @@ function looksLikeClassToken(token) {
 }
 
 /**
+ * Tokenize one captured class-attribute value into class-name candidates.
+ *
+ * Blade `{{ ... }}` interpolations are mined for string literals in ternary
+ * RESULT position only (after `?` or `:`), so conditional classes like
+ * `{{ $tab === 'sailor' ? 'tab-active' : '' }}` yield `tab-active` while the
+ * compared VALUE ('sailor') is never mistaken for a class. Everything outside
+ * interpolations tokenizes by whitespace — which also covers the
+ * `@error('field') input-error @enderror` idiom, since `input-error` stands
+ * alone once the full attribute value is captured (the directive fragments are
+ * rejected by looksLikeClassToken).
+ */
+function classTokensFromAttrValue(value) {
+    const tokens = [];
+
+    const outsideInterpolations = value.replace(/\{\{([\s\S]*?)\}\}/g, (whole, expr) => {
+        for (const literal of expr.matchAll(/[?:]\s*(?:'([^']*)'|"([^"]*)")/g)) {
+            tokens.push(...(literal[1] ?? literal[2] ?? '').split(/\s+/));
+        }
+        return ' ';
+    });
+    tokens.push(...outsideInterpolations.split(/\s+/));
+
+    return tokens.filter(looksLikeClassToken);
+}
+
+/**
  * Read every source file once, returning both the confidently-parsed class set
  * (from class="…" style attributes) and the raw concatenated text.
  */
@@ -83,8 +115,8 @@ function collectSource(baseDir, patterns) {
             pattern.lastIndex = 0;
             let match;
             while ((match = pattern.exec(content)) !== null) {
-                for (const token of match[1].split(/\s+/)) {
-                    if (looksLikeClassToken(token)) used.add(token);
+                for (const token of classTokensFromAttrValue(match[1])) {
+                    used.add(token);
                 }
             }
         }
@@ -103,8 +135,9 @@ export function extractUsedClasses(baseDir, patterns) {
  * Diff the sets.
  * - usedButUndefined (the failing check): a class parsed from a class="…"
  *   attribute that no rule defines. High precision — the parser only trusts
- *   real class attributes and skips Blade `{{ }}` interiors, so a value like
- *   'sailing' is never mistaken for a class.
+ *   real class attributes, and inside Blade `{{ }}` interiors it reads only
+ *   ternary-branch literals, so a compared value like 'sailing' is never
+ *   mistaken for a class.
  * - definedButUnused (informational): a defined class whose name appears
  *   NOWHERE in the source text — not even inside a Blade ternary or @error()
  *   the attribute parser skips. Using raw-substring absence keeps this
