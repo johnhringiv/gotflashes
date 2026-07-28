@@ -63,6 +63,15 @@
     /* Misc */
     --border: 1px;
     --spacing: 0.25rem;
+
+    /* Dropdown caret — single rounded chevron, shared by .select, .ts-control
+       and the calendar's month select (one SVG replaces the old two-gradient
+       square trick). background-image SVGs can't use currentcolor/var(), so
+       the two strokes are baked: the dark one mirrors --color-base-content,
+       the inverse is white for the navy calendar header. Keep in sync with
+       the tokens. */
+    --caret-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='oklch(25%25 0.02 245deg)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --caret-chevron-inverse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -734,11 +743,9 @@
         height: 2.5rem;
         padding-inline: 0.75rem 1.75rem;
         appearance: none;
-        background-image:
-            linear-gradient(45deg, transparent 50%, currentcolor 50%),
-            linear-gradient(135deg, currentcolor 50%, transparent 50%);
-        background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
-        background-size: 4px 4px, 4px 4px;
+        background-image: var(--caret-chevron);
+        background-position: calc(100% - 10px) calc(50% + 1px);
+        background-size: 13px 13px;
         background-repeat: no-repeat;
     }
     .textarea { padding: 0.5rem 0.75rem; min-height: 4rem; line-height: 1.5; }
@@ -1731,11 +1738,9 @@
            end padding restores the breathing room between text and caret
            that the old longest-option sizing used to provide. */
         padding-inline: 0.5rem 1.875rem;
-        background-image:
-            linear-gradient(45deg, transparent 50%, currentcolor 50%),
-            linear-gradient(135deg, currentcolor 50%, transparent 50%);
-        background-position: calc(100% - 14px) calc(1px + 50%), calc(100% - 10.1px) calc(1px + 50%);
-        background-size: 4px 4px, 4px 4px;
+        background-image: var(--caret-chevron-inverse);
+        background-position: calc(100% - 10px) calc(50% + 1px);
+        background-size: 13px 13px;
         background-repeat: no-repeat;
     }
 
@@ -1943,11 +1948,9 @@
        on the .select-classed wrapper, which we suppress (.ts-wrapper.select), so
        re-add it here; the right-padding that clears it lives on
        .ts-wrapper.single .ts-control (it can out-specify TomSelect's own rule). */
-    background-image:
-        linear-gradient(45deg, transparent 50%, currentcolor 50%),
-        linear-gradient(135deg, currentcolor 50%, transparent 50%);
-    background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
-    background-size: 4px 4px, 4px 4px;
+    background-image: var(--caret-chevron);
+    background-position: calc(100% - 10px) calc(50% + 1px);
+    background-size: 13px 13px;
     background-repeat: no-repeat;
 }
 
