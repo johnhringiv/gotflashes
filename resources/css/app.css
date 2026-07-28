@@ -1713,13 +1713,26 @@
         font-weight: 600;
     }
 
+    /* Styled as a compact version of the site's .select (light pill, brand
+       double-chevron caret) rather than flatpickr's white-on-navy text. */
     .dp-month-select {
-        background: var(--color-primary);
-        color: var(--color-primary-content);
-        border: none;
+        appearance: none;
+        height: 1.75rem;
+        background-color: var(--color-base-100);
+        color: var(--color-base-content);
+        border: 1px solid var(--color-base-300);
+        border-radius: var(--radius-selector);
         font: inherit;
+        font-size: 0.875rem;
         font-weight: 600;
         cursor: pointer;
+        padding-inline: 0.625rem 1.5rem;
+        background-image:
+            linear-gradient(45deg, transparent 50%, currentcolor 50%),
+            linear-gradient(135deg, currentcolor 50%, transparent 50%);
+        background-position: calc(100% - 16px) calc(1px + 50%), calc(100% - 12.1px) calc(1px + 50%);
+        background-size: 4px 4px, 4px 4px;
+        background-repeat: no-repeat;
     }
 
     .dp-weekdays {
@@ -1800,9 +1813,21 @@
         outline-offset: -2px;
     }
 
-    .dp-nav:focus-visible,
-    .dp-month-select:focus-visible {
+    /* Focus ring on a logged (unpickable) day: muted gray — "you're here,
+       but there's nothing to pick" — vs the actionable secondary blue. */
+    .dp-day[aria-disabled='true']:focus-visible {
+        outline-color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+    }
+
+    .dp-nav:focus-visible {
         outline: 2px solid var(--color-primary-content);
+        outline-offset: 1px;
+    }
+
+    /* Light control on the navy band: the site's secondary focus ring reads
+       fine here, matching .input:focus elsewhere. */
+    .dp-month-select:focus-visible {
+        outline: 1px auto var(--color-secondary);
         outline-offset: 1px;
     }
 }
