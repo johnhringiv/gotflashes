@@ -114,12 +114,38 @@ describe('date picker calendar', function () {
         $page = visit('/logbook');
         $page->click('#date-picker');
         $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
-        $page->assertSeeIn('.dp-title', 'January');
+        $page->assertScript('document.querySelector(".dp-month-select").value', '1');
 
         // January 2027 is the max month, so only prev is enabled.
         $page->assertScript('document.querySelector(\'.dp-nav[data-nav="1"]\').disabled', true);
         $page->script("document.querySelector('.dp-nav[data-nav=\"-1\"]').click()");
-        $page->assertSeeIn('.dp-title', 'December');
+        $page->assertScript('document.querySelector(".dp-month-select").value', '12');
+        $page->assertScript('document.querySelector(".dp-year-select").value', '2026');
+    });
+
+    it('jumps months via the month dropdown and disables out-of-range months', function () {
+        $page = visit('/logbook');
+        $page->click('#date-picker');
+        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+
+        // Viewing 2027 (max is 2027-01-16): only January is in range.
+        $page->assertScript(
+            'Array.from(document.querySelectorAll(".dp-month-select option")).filter(o => o.disabled).length',
+            11,
+        );
+
+        // In 2026 every month is in range; jumping to March renders March days.
+        $page->script("document.querySelector('#date-picker')._datePicker.setView(2026, 6)");
+        $page->assertScript(
+            'Array.from(document.querySelectorAll(".dp-month-select option")).filter(o => o.disabled).length',
+            0,
+        );
+        $page->script(<<<'JS'
+            const select = document.querySelector('.dp-month-select');
+            select.value = '3';
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        JS);
+        $page->assertPresent('.dp-day[data-date="2026-03-15"]');
     });
 
     it('closes on outside click and on Escape', function () {
@@ -193,7 +219,7 @@ describe('date picker edit mode', function () {
         $page->assertVisible('.date-picker');
 
         // Opens on the month of the selected date — no navigation needed.
-        $page->assertSeeIn('.dp-title', 'January');
+        $page->assertScript('document.querySelector(".dp-month-select").value', '1');
         $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-11"]\').disabled', false);
         $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-10"]\').disabled', true);
 

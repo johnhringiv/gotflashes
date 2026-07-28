@@ -1715,6 +1715,7 @@
 
     .dp-year { font-weight: 600; }
 
+    .dp-month-select,
     .dp-year-select {
         background: var(--color-primary);
         color: var(--color-primary-content);
@@ -1746,11 +1747,14 @@
         appearance: none;
         background: none;
         border: 1px solid transparent;
-        border-radius: var(--radius-selector);
+
+        /* Circular day cells (matching the flatpickr look): square via
+           aspect-ratio so the 50% radius yields a circle, not an ellipse. */
+        border-radius: 50%;
+        aspect-ratio: 1;
         color: var(--color-base-content);
         font: inherit;
         font-size: 0.875rem;
-        height: 2.25rem;
         padding: 0;
         cursor: pointer;
     }
@@ -1799,6 +1803,7 @@
     }
 
     .dp-nav:focus-visible,
+    .dp-month-select:focus-visible,
     .dp-year-select:focus-visible {
         outline: 2px solid var(--color-primary-content);
         outline-offset: 1px;
