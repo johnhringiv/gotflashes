@@ -1715,8 +1715,7 @@
 
     .dp-year { font-weight: 600; }
 
-    .dp-month-select,
-    .dp-year-select {
+    .dp-month-select {
         background: var(--color-primary);
         color: var(--color-primary-content);
         border: none;
@@ -1803,8 +1802,7 @@
     }
 
     .dp-nav:focus-visible,
-    .dp-month-select:focus-visible,
-    .dp-year-select:focus-visible {
+    .dp-month-select:focus-visible {
         outline: 2px solid var(--color-primary-content);
         outline-offset: 1px;
     }

@@ -74,9 +74,8 @@ class DatePicker {
         this.root.addEventListener('keydown', (e) => this.onCalendarKeydown(e));
         this.root.addEventListener('change', (e) => {
             if (e.target.classList.contains('dp-month-select')) {
-                this.setView(this.view.year, parseInt(e.target.value, 10), '.dp-month-select');
-            } else if (e.target.classList.contains('dp-year-select')) {
-                this.setView(parseInt(e.target.value, 10), this.view.month, '.dp-year-select');
+                const [y, m] = e.target.value.split('-').map(Number);
+                this.setView(y, m, '.dp-month-select');
             }
         });
         document.body.appendChild(this.root);
@@ -145,27 +144,27 @@ class DatePicker {
 
         const min = fromISO(this.minIso);
         const max = fromISO(this.maxIso);
+        const spansYears = min.year !== max.year;
 
-        // Month dropdown — months outside [min, max] for the viewed year are
-        // disabled (an improvement over flatpickr, which offered them anyway).
-        const monthControl = `<select class="dp-month-select" aria-label="Month">${MONTH_NAMES.map((name, i) => {
-            const m = i + 1;
-            const outOfRange = (year === min.year && m < min.month) || (year === max.year && m > max.month);
-            return `<option value="${m}"${m === month ? ' selected' : ''}${outOfRange ? ' disabled' : ''}>${name}</option>`;
-        }).join('')}</select>`;
-
-        // Year control only becomes a dropdown when the range spans years
-        // (the January grace period).
-        let yearControl;
-        if (min.year === max.year) {
-            yearControl = `<span class="dp-year">${year}</span>`;
-        } else {
-            const options = [];
-            for (let y = max.year; y >= min.year; y--) {
-                options.push(`<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`);
+        // One month dropdown listing ONLY the selectable months of the whole
+        // range. When the range spans years (the January grace period) the
+        // year moves into the option labels — "December 2026" — instead of a
+        // second dropdown; otherwise a static year sits beside the control.
+        const options = [];
+        let y = min.year;
+        let m = min.month;
+        while (y < max.year || (y === max.year && m <= max.month)) {
+            const label = spansYears ? `${MONTH_NAMES[m - 1]} ${y}` : MONTH_NAMES[m - 1];
+            options.push(`<option value="${y}-${m}"${y === year && m === month ? ' selected' : ''}>${label}</option>`);
+            m += 1;
+            if (m > 12) {
+                m = 1;
+                y += 1;
             }
-            yearControl = `<select class="dp-year-select" aria-label="Year">${options.join('')}</select>`;
         }
+        const monthControl =
+            `<select class="dp-month-select" aria-label="Month">${options.join('')}</select>` +
+            (spansYears ? '' : ` <span class="dp-year">${year}</span>`);
 
         const prevDisabled = year === min.year && month === min.month;
         const nextDisabled = year === max.year && month === max.month;
@@ -191,7 +190,7 @@ class DatePicker {
         this.root.innerHTML =
             `<div class="dp-header">` +
             `<button type="button" class="dp-nav" data-nav="-1" aria-label="Previous month"${prevDisabled ? ' disabled' : ''}>&lsaquo;</button>` +
-            `<div class="dp-title">${monthControl} ${yearControl}</div>` +
+            `<div class="dp-title">${monthControl}</div>` +
             `<button type="button" class="dp-nav" data-nav="1" aria-label="Next month"${nextDisabled ? ' disabled' : ''}>&rsaquo;</button>` +
             `</div>` +
             `<div class="dp-weekdays" aria-hidden="true">${WEEKDAY_NAMES.map((w) => `<span>${w}</span>`).join('')}</div>` +

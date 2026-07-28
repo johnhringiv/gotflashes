@@ -197,10 +197,11 @@ removed):
   `data-default-date` (edit only). Selections sync to Livewire via
   `component.set('dates'/'date', …)`.
 - Existing flash dates render as disabled Lightning-logo days; the date being
-  edited is exempt. Header has a month dropdown (out-of-range months disabled)
-  plus a year dropdown when the range spans years (January grace period).
-  Grid weeks are only generated where the month has days, so no
-  hide-extra-weeks pass exists.
+  edited is exempt. Header has ONE month dropdown listing only the selectable
+  months of the whole range; when the range spans years (January grace
+  period) the year moves into the labels ("December 2026") — there is no
+  separate year control and no dead options. Grid weeks are only generated
+  where the month has days, so no hide-extra-weeks pass exists.
 - Day cells are real `<button>`s with aria-labels; keyboard support: Enter on
   the input opens with focus in the grid, arrows/Home/End/PageUp/PageDown
   move (skipping disabled days), Escape closes, Tab exits to the next field.

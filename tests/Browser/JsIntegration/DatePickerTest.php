@@ -4,12 +4,17 @@ use App\Models\Flash;
 use App\Models\User;
 use Carbon\Carbon;
 
-// Server time is frozen to Jan 2027 (grace period: min 2026-01-01, max
-// 2027-01-16), but the browser runs on REAL time, so the calendar opens on
-// the real current month — tests navigate explicitly via _datePicker.setView().
+// Server time is frozen mid-January so the grace period is active (min =
+// Jan 1 of the previous year, max = frozen today +1). Every date below is
+// DERIVED from that one frozen instant — no other hardcoded years. The
+// browser still runs on REAL time, so the calendar opens on the real current
+// month and tests navigate explicitly via _datePicker.setView().
 
 beforeEach(function () {
     $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->year = now()->year;
+    $this->prevYear = $this->year - 1;
+    $this->ym = now()->format('Y-m'); // frozen year-month, e.g. "2027-01"
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
 });
@@ -28,19 +33,19 @@ describe('date picker calendar', function () {
 
         $page->click('#date-picker');
         $page->assertVisible('.date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
 
-        $page->script("document.querySelector('.dp-day[data-date=\"2027-01-05\"]').click()");
-        $page->script("document.querySelector('.dp-day[data-date=\"2027-01-06\"]').click()");
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-05\"]').click()");
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-06\"]').click()");
         settleLivewire($page);
 
-        $page->assertValue('#date-picker', '2027-01-05, 2027-01-06');
+        $page->assertValue('#date-picker', "{$this->ym}-05, {$this->ym}-06");
         $page->assertScript('document.querySelector("#date-picker")._datePicker.selected.length', 2);
 
         // Clicking a selected day again deselects it.
-        $page->script("document.querySelector('.dp-day[data-date=\"2027-01-05\"]').click()");
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-05\"]').click()");
         settleLivewire($page);
-        $page->assertValue('#date-picker', '2027-01-06');
+        $page->assertValue('#date-picker', "{$this->ym}-06");
     });
 
     it('clears the picker after save — input empty, saved date becomes has-entry', function () {
@@ -49,8 +54,8 @@ describe('date picker calendar', function () {
 
         $page->click('#date-picker');
         $page->assertVisible('.date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
-        $page->script("document.querySelector('.dp-day[data-date=\"2027-01-05\"]').click()");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-05\"]').click()");
         $page->script("document.querySelector('#date-picker')._datePicker.close()");
         settleLivewire($page);
 
@@ -67,85 +72,79 @@ describe('date picker calendar', function () {
         // Reopen: the config is re-read from the morphed data attributes, so
         // the just-saved date now renders as a disabled lightning day.
         $page->click('#date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
         $page->assertScript(
-            'document.querySelector(\'.dp-day[data-date="2027-01-05"]\').classList.contains("has-entry")',
+            "document.querySelector('.dp-day[data-date=\"{$this->ym}-05\"]').classList.contains('has-entry')",
             true,
         );
     });
 
     it('marks existing dates as disabled has-entry days', function () {
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create();
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-11')->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-10")->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-11")->create();
 
         $page = visit('/logbook');
         $page->click('#date-picker');
         $page->assertVisible('.date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
 
         $page->assertScript('document.querySelectorAll(".date-picker .dp-day.has-entry").length', 2);
-        $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-10"]\').disabled', true);
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').disabled", true);
     });
 
     it('enforces min/max — tomorrow selectable, day-after-tomorrow disabled', function () {
+        $tomorrow = now()->addDay()->toDateString();
+        $dayAfter = now()->addDays(2)->toDateString();
+
         $page = visit('/logbook');
         $page->click('#date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
 
-        // Server "today" is 2027-01-15; max is today +1.
-        $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-16"]\').disabled', false);
-        $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-17"]\').disabled', true);
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$tomorrow}\"]').disabled", false);
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$dayAfter}\"]').disabled", true);
     });
 
-    it('shows a year dropdown during the January grace period', function () {
+    it('lists only selectable months, spanning years during the January grace period', function () {
         $page = visit('/logbook');
         $page->click('#date-picker');
         $page->assertVisible('.date-picker');
 
-        // Grace period range spans 2026–2027, so the year control is a select.
-        $page->assertPresent('.dp-year-select');
+        // Grace range runs Jan 1 of the previous year through frozen January:
+        // exactly 13 months, year in the labels — no separate year control,
+        // no dead options.
+        $page->assertScript('document.querySelectorAll(".dp-month-select option").length', 13);
+        $page->assertScript('document.querySelectorAll(".dp-month-select option[disabled]").length', 0);
+        $page->assertNotPresent('.dp-year-select');
         $page->assertScript(
-            'Array.from(document.querySelectorAll(".dp-year-select option")).map(o => o.value).join(",")',
-            '2027,2026',
+            '(o => [o[0].textContent, o[o.length - 1].textContent].join("|"))(document.querySelectorAll(".dp-month-select option"))',
+            "January {$this->prevYear}|January {$this->year}",
         );
     });
 
     it('navigates months with the header arrows', function () {
         $page = visit('/logbook');
         $page->click('#date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
-        $page->assertScript('document.querySelector(".dp-month-select").value', '1');
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
+        $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->year}-1");
 
-        // January 2027 is the max month, so only prev is enabled.
+        // The frozen January is the max month, so only prev is enabled.
         $page->assertScript('document.querySelector(\'.dp-nav[data-nav="1"]\').disabled', true);
         $page->script("document.querySelector('.dp-nav[data-nav=\"-1\"]').click()");
-        $page->assertScript('document.querySelector(".dp-month-select").value', '12');
-        $page->assertScript('document.querySelector(".dp-year-select").value', '2026');
+        $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->prevYear}-12");
     });
 
-    it('jumps months via the month dropdown and disables out-of-range months', function () {
+    it('jumps straight to a month in another year via the dropdown', function () {
         $page = visit('/logbook');
         $page->click('#date-picker');
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2027, 1)");
+        $page->script("document.querySelector('#date-picker')._datePicker.setView({$this->year}, 1)");
 
-        // Viewing 2027 (max is 2027-01-16): only January is in range.
-        $page->assertScript(
-            'Array.from(document.querySelectorAll(".dp-month-select option")).filter(o => o.disabled).length',
-            11,
-        );
-
-        // In 2026 every month is in range; jumping to March renders March days.
-        $page->script("document.querySelector('#date-picker')._datePicker.setView(2026, 6)");
-        $page->assertScript(
-            'Array.from(document.querySelectorAll(".dp-month-select option")).filter(o => o.disabled).length',
-            0,
-        );
-        $page->script(<<<'JS'
+        $page->script(<<<JS
             const select = document.querySelector('.dp-month-select');
-            select.value = '3';
+            select.value = '{$this->prevYear}-3';
             select.dispatchEvent(new Event('change', { bubbles: true }));
         JS);
-        $page->assertPresent('.dp-day[data-date="2026-03-15"]');
+        $page->assertPresent(".dp-day[data-date=\"{$this->prevYear}-03-15\"]");
+        $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->prevYear}-3");
     });
 
     it('closes on outside click and on Escape', function () {
@@ -196,22 +195,22 @@ describe('date picker calendar', function () {
 
 describe('date picker edit mode', function () {
     it('initializes the single-date picker with the flash date', function () {
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-10")->create();
 
         $page = visit('/logbook');
         $page->click('Edit');
         $page->assertVisible('.modal.modal-open');
         $page->assertVisible('#date-picker-single');
-        $page->assertValue('#date-picker-single', '2027-01-10');
+        $page->assertValue('#date-picker-single', "{$this->ym}-10");
     });
 
     it('keeps the edited date selectable while other entries stay locked', function () {
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create();
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-11')->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-10")->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate("{$this->ym}-11")->create();
 
         $page = visit('/logbook');
         trackLivewireRequests($page);
-        // The list is newest-first, so the first Edit button opens Jan 11.
+        // The list is newest-first, so the first Edit button opens the -11 flash.
         $page->click('Edit');
         $page->assertVisible('.modal.modal-open');
 
@@ -219,14 +218,14 @@ describe('date picker edit mode', function () {
         $page->assertVisible('.date-picker');
 
         // Opens on the month of the selected date — no navigation needed.
-        $page->assertScript('document.querySelector(".dp-month-select").value', '1');
-        $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-11"]\').disabled', false);
-        $page->assertScript('document.querySelector(\'.dp-day[data-date="2027-01-10"]\').disabled', true);
+        $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->year}-1");
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-11\"]').disabled", false);
+        $page->assertScript("document.querySelector('.dp-day[data-date=\"{$this->ym}-10\"]').disabled", true);
 
         // Picking a new date closes the calendar (single mode) and updates the input.
-        $page->script("document.querySelector('.dp-day[data-date=\"2027-01-12\"]').click()");
+        $page->script("document.querySelector('.dp-day[data-date=\"{$this->ym}-12\"]').click()");
         settleLivewire($page);
         $page->assertNotPresent('.date-picker');
-        $page->assertValue('#date-picker-single', '2027-01-12');
+        $page->assertValue('#date-picker-single', "{$this->ym}-12");
     });
 });
