@@ -13,7 +13,7 @@ beforeEach(function () {
 it('shows success toast after flash save', function () {
     $page = visit('/logbook');
 
-    // Use Livewire direct call to avoid flatpickr/native validation issues
+    // Use Livewire direct call — this test exercises the toast, not the picker
     $page->script("
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');

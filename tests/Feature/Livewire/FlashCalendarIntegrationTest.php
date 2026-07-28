@@ -18,8 +18,8 @@ use Tests\TestCase;
  * 3. Edit mode calendar behavior - verifies current date is not disabled when editing
  *
  * Note: These tests verify the Livewire → JavaScript data layer.
- * They do NOT test the JavaScript side (flatpickr behavior).
- * For full end-to-end testing including JavaScript, use Laravel Dusk browser tests.
+ * They do NOT test the JavaScript side (the date-picker calendar itself) —
+ * that lives in tests/Browser/JsIntegration/DatePickerTest.php.
  *
  * Coverage complement to FlashFormTest:
  * - FlashFormTest: Tests viewData() and component behavior

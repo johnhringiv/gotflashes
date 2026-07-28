@@ -15,10 +15,10 @@ const sourcePatterns = [
 ];
 
 // Classes that are real but applied at RUNTIME (never in static markup): generated
-// by tom-select / flatpickr, added by our JS via classList, built as template
-// strings (toast `alert-${type}`), or drawn by D3. Static scanning can't see them,
-// so they're excluded from both directions here.
-const IGNORE_PREFIXES = ['ts-', 'flatpickr-'];
+// by tom-select, added by our JS via classList, built as template strings (toast
+// `alert-${type}`), or drawn by D3. Static scanning can't see them, so they're
+// excluded from both directions here.
+const IGNORE_PREFIXES = ['ts-'];
 
 const IGNORE = new Set([
     // JS-hook classes with no styles of their own (selectors only, toggled by JS)
@@ -32,8 +32,8 @@ const IGNORE = new Set([
     'no-results', 'create', 'highlight', 'dropdown-content', 'has-items',
     'input-active', 'dropdown-active', 'rtl',
 
-    // flatpickr day states referenced by our overrides
-    'today', 'selected', 'has-entry', 'cur-year', 'numInputWrapper', 'arrowUp', 'arrowDown',
+    // date-picker.js day states, composed into a template string at render time
+    'today', 'selected', 'has-entry', 'other-month',
 
     // applied by our JS at runtime (classList)
     'select-disabled', 'visible',

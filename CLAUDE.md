@@ -188,19 +188,33 @@ Routes in `routes/web.php`:
 - **AdminSettings** (`app/Livewire/AdminSettings.php`): `/admin/settings`, extends `AdminComponent`
   - Sets the per-year community goal (`settings` table via `App\Models\Setting` key-value helpers); saving clears that year's stats cache
 
-**Multi-Date Picker** (`resources/js/multi-date-picker.js`):
-- Uses flatpickr for date selection with multiple date support
-- Min/max dates passed from Livewire component via data attributes
-- Year selector converted to dropdown (only shows current year + previous year during grace period)
-- Custom `hideExtraWeeks()` function removes calendar weeks containing only adjacent month dates
-- Existing flash dates are disabled and marked with Lightning logo
-- **Livewire Integration Pattern**: Syncs with Livewire updates using hooks
-  - Listens for `flash-saved` and `flash-deleted` events to set pending flags
-  - Uses Livewire's `morph.updated` hook to detect when date picker element updates
-  - Wraps reinitialization in `requestAnimationFrame()` to wait for browser paint cycle
-  - Re-queries element with `document.getElementById()` to get freshest DOM reference
-  - This ensures flatpickr always has current `data-existing-dates` after Livewire updates
-  - **Key insight**: Even after Livewire morph completes, must wait one browser frame for paint cycle to finish before DOM attributes are truly current
+**Date Picker** (`resources/js/date-picker.js` + pure date math in
+`resources/js/utils/calendar.js`) — home-grown, no library (flatpickr was
+removed):
+- Multi-date toggle selection (create mode) and single date (edit mode); the
+  input's data attributes are the whole contract: `data-mode`,
+  `data-min-date`, `data-max-date`, `data-existing-dates`,
+  `data-default-date` (edit only). Selections sync to Livewire via
+  `component.set('dates'/'date', …)`.
+- Existing flash dates render as disabled Lightning-logo days; the date being
+  edited is exempt. Year dropdown appears only when the range spans years
+  (January grace period). Grid weeks are only generated where the month has
+  days, so no hide-extra-weeks pass exists.
+- Day cells are real `<button>`s with aria-labels; keyboard support: Enter on
+  the input opens with focus in the grid, arrows/Home/End/PageUp/PageDown
+  move (skipping disabled days), Escape closes, Tab exits to the next field.
+- **Livewire-proof by construction, NOT by hooks** (the old flatpickr version
+  needed `morph.updated` + `requestAnimationFrame` reinit glue):
+  - Initialization is lazy — one delegated click/keydown listener on
+    `#date-picker` / `#date-picker-single`; nothing to re-run after morphs or
+    `wire:navigate`.
+  - Data attributes are re-read on EVERY open, so Livewire can morph them
+    freely while the picker is closed; `flash-deleted` needs no handler.
+  - The calendar is appended to `document.body` only while open, so morph
+    never sees it (and it escapes the edit modal's `overflow-y: auto`).
+  - `flash-saved` → `picker.clear()` (empty selection + input).
+- Styles are the `.date-picker` / `.dp-*` component block in `app.css`
+  (in `@layer components`, brand tokens); test handle: `el._datePicker`.
 
 **CSS (hand-authored, framework-free — `resources/css/app.css`):**
 
@@ -230,20 +244,22 @@ gzipped built). When in doubt about what a class does, read its rule in
   `tests/js/utils/css-validator.js`, runs in `npm test` / `composer check`):
   FAILS the build on any class used in Blade/JS that no rule defines; warns
   (informational only) on defined-but-unused rules. Classes applied purely at
-  runtime (vendor-generated `ts-*`/`flatpickr-*`, `classList` toggles, template
-  strings like toast's `alert-${type}`) go in the test's IGNORE list. This
-  replaces Tailwind's `@source inline()` safelist mechanism entirely.
-- **One deliberate unlayered exception**: the tom-select/flatpickr overrides at
-  the end of `app.css` must stay unlayered to outrank the vendors' own
-  unlayered `@import`ed CSS (the `!important` cascade reverses across layers).
-  They only target `.ts-*`/`.flatpickr-*`. Never add project rules there.
+  runtime (vendor-generated `ts-*`, `classList` toggles, template strings like
+  toast's `alert-${type}` or the date picker's day states) go in the test's
+  IGNORE list. This replaces Tailwind's `@source inline()` safelist mechanism
+  entirely.
+- **One deliberate unlayered exception**: the tom-select overrides at the end
+  of `app.css` must stay unlayered to outrank the vendor's own unlayered
+  `@import`ed CSS (the `!important` cascade reverses across layers). They only
+  target `.ts-*`. Never add project rules there.
 - **Stale-build gotcha**: without `public/hot` (i.e., Vite dev server not
   running), pages serve the static bundle in `public/build/` — CSS edits are
   invisible until `npm run build`. Use `composer dev` for HMR, or rebuild
   before visually verifying a CSS change.
 - Style notes: floating label form styling (label sits on the border outline,
   `.floating-label-visible`); tooltips use the secondary (lighter blue)
-  background; flatpickr calendar uses brand tokens (blue header, white text).
+  background; the date-picker calendar uses brand tokens (blue header, white
+  text).
 
 ### Database Schema
 
@@ -560,35 +576,20 @@ Example tests in `FlashCalendarIntegrationTest`:
 - HTML contains correct `data-*` attributes
 - Date format matches JavaScript expectations (Y-m-d)
 
-**Layer 2: JavaScript Behavior (Laravel Dusk)** ⏸️
-- Tests actual browser behavior (flatpickr, DOM manipulation)
-- Verifies dates are disabled/enabled in UI
-- Verifies JavaScript receives and processes Livewire updates
-- Slow, requires browser automation
+**Layer 2: JavaScript Behavior (Pest browser tests, Playwright)** ✅
+- Tests actual browser behavior (real clicks, DOM, Livewire round-trips)
+- `tests/Browser/JsIntegration/DatePickerTest.php`: calendar opens, multi-date
+  select + toggle-deselect, clear-after-save, has-entry lightning days,
+  min/max enforcement, grace-period year dropdown, month nav, light dismiss,
+  Escape, keyboard navigation, edit-mode single picker
+- Note: the browser runs on REAL time while server time is frozen with
+  `travelTo()`, so calendar tests navigate explicitly via
+  `_datePicker.setView(year, month)` before asserting on specific dates
 
-Example tests in `FlashCalendarTest` (Dusk, optional):
-- Clicking date in calendar
-- Dates become disabled after saving
-- Calendar updates without page reload
-- Visual indicators appear correctly
-
-**Current Coverage:**
-- ✅ Layer 1 (Livewire data) - Fully tested with 6 comprehensive tests
-- ⏸️ Layer 2 (JavaScript) - Manual testing currently (Dusk setup optional)
-
-**Why This Works:**
-- Layer 1 tests catch 90% of integration bugs (data not updating, wrong format, missing attributes)
-- Livewire guarantees if data is passed correctly, JavaScript will receive it
-- Manual testing can verify the final 10% (visual behavior, edge cases)
-
-**Testing Confidence:**
-If Layer 1 tests pass, you can be confident:
-- ✅ Calendar receives fresh data after saves/deletes
-- ✅ Dates are in correct format for JavaScript
-- ✅ Data attributes are present in HTML
-- ✅ Livewire events trigger re-renders
-
-The only thing not tested: flatpickr actually using the data (which is flatpickr's responsibility, not ours).
+**Layer 3: Pure date math (Vitest)** ✅
+- `tests/js/date-picker.test.js` exercises the real exported functions in
+  `resources/js/utils/calendar.js` (grid construction, range clamping,
+  existing-entry locking, edit-date exemption) — no DOM, no browser
 
 **Test Organization:**
 - **Feature Tests** (`tests/Feature/`): Full HTTP request/response workflows
@@ -619,9 +620,9 @@ The only thing not tested: flatpickr actually using the data (which is flatpickr
 - **Leaderboards** (`tests/Feature`): sailor/fleet/district, year scoping, tie-breaking, pagination
 - **Admin** (`tests/Feature`): award fulfillment + batch ops + CSV, sailor logs filters, role-based access, award-sent email (verified vs unverified, status-change-only)
 - **Profile / export** (`tests/Feature`, `tests/Browser/Profile`): profile edit, email change, user-data CSV export
-- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (flatpickr, TomSelect, toasts), multi-page flows
+- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (date picker, TomSelect, toasts), multi-page flows
 - **Unit** (`tests/Unit`): User/Flash/Member models, `FlashPolicy`, `DateRangeService` grace logic
-- **JS unit** (`tests/js`, Vitest): CSS class-usage validation (used-but-undefined fails the build, dead CSS warns), district/fleet select, multi-date picker, register form
+- **JS unit** (`tests/js`, Vitest): CSS class-usage validation (used-but-undefined fails the build, dead CSS warns), district/fleet select, date-picker calendar math, register form
 - Known gap: `MailAllowlistProvider` (dev-only mail safety net) has no dedicated test
 
 **Running Tests:**

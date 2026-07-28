@@ -128,7 +128,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Blade templates
   - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
-  - Flatpickr (multi-date calendar picker)
+  - Home-grown multi-date calendar picker (no library)
   - Tom-Select (searchable dropdowns)
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
@@ -324,7 +324,7 @@ gotflashes/
 ├── resources/
 │   ├── views/              # Blade templates
 │   ├── css/                # Stylesheet (hand-authored vanilla CSS)
-│   └── js/                 # JavaScript files (multi-date-picker, registration, etc.)
+│   └── js/                 # JavaScript files (date-picker, registration, etc.)
 ├── routes/
 │   └── web.php             # Web routes
 ├── storage/

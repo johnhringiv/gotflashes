@@ -13,8 +13,8 @@ beforeEach(function () {
 if (! function_exists('e2eSubmitNonSailingFlash')) {
     function e2eSubmitNonSailingFlash($page, string $activityType, string $date): void
     {
-        // Use a direct Livewire call — flatpickr doesn't reliably sync the
-        // selected dates to Livewire via UI interaction in tests.
+        // Use a direct Livewire call — these tests exercise the non-sailing
+        // cap, not the date picker UI (which has its own coverage).
         $page->script("
             const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
             const wireId = formEl.getAttribute('wire:id');
