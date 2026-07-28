@@ -8,8 +8,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                         <!-- Password -->
                         <div class="mb-6 floating-label-visible">
-                            <x-password-input wire-model="password" :class="$errors->has('password') ? 'input-error' : ''" />
-                            <label>Password</label>
+                            <x-password-input wire-model="password" id="password" :class="$errors->has('password') ? 'input-error' : ''" />
+                            <label for="password">Password</label>
                             @error('password')
                                 <div class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>
@@ -19,8 +19,8 @@
 
                         <!-- Password Confirmation -->
                         <div class="mb-6 floating-label-visible">
-                            <x-password-input wire-model="password_confirmation" />
-                            <label>Confirm Password</label>
+                            <x-password-input wire-model="password_confirmation" id="password_confirmation" />
+                            <label for="password_confirmation">Confirm Password</label>
                         </div>
                     </div>
                 </x-slot:passwordFields>

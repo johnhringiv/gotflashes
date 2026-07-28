@@ -13,7 +13,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Year</span>
                     </label>
-                    <select wire:model.live="selectedYear" class="select select-bordered">
+                    <select wire:model.live="selectedYear" class="select">
                         @foreach($availableYears as $year)
                             <option value="{{ $year }}">{{ $year }}</option>
                         @endforeach
@@ -25,7 +25,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Award Tier</span>
                     </label>
-                    <select wire:model.live="tierFilter" class="select select-bordered">
+                    <select wire:model.live="tierFilter" class="select">
                         <option value="all">All Tiers</option>
                         <option value="10">10 Days</option>
                         <option value="25">25 Days</option>
@@ -38,7 +38,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Status</span>
                     </label>
-                    <select wire:model.live="statusFilter" class="select select-bordered">
+                    <select wire:model.live="statusFilter" class="select">
                         <option value="pending">Pending (Earned + Processing)</option>
                         <option value="all">All Statuses</option>
                         <option value="earned">Earned</option>
@@ -55,7 +55,7 @@
                     <input type="text"
                            wire:model.live.debounce.300ms="searchQuery"
                            placeholder="Name or email..."
-                           class="input input-bordered">
+                           class="input">
                 </div>
             </div>
         </div>

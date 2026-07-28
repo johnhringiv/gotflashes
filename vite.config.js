@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ command, mode }) => ({
     plugins: [
@@ -10,7 +9,6 @@ export default defineConfig(({ command, mode }) => ({
                 input: ['resources/css/app.css', 'resources/js/app.js'],
                 refresh: true,
             }),
-            tailwindcss(),
         ] : []),
     ],
     base: command === 'build' ? '/build/' : '/',

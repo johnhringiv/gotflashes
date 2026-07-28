@@ -3,7 +3,7 @@
         Register
     </x-slot:title>
 
-    <div class="hero min-h-[calc(100vh-16rem)]">
+    <div class="hero hero-fill">
         <div class="hero-content flex-col">
             <livewire:registration-form />
         </div>

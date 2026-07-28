@@ -3,7 +3,7 @@
         Reset Password
     </x-slot:title>
 
-    <div class="hero min-h-[calc(100vh-16rem)]">
+    <div class="hero hero-fill">
         <div class="hero-content flex-col">
             <div class="card w-96 bg-base-100">
                 <div class="card-body">
@@ -20,18 +20,18 @@
                         <input type="hidden" name="email" value="{{ request('email') }}">
 
                         <!-- Password -->
-                        <div class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <x-password-input name="password" id="password" autofocus />
-                            <span>New Password</span>
+                            <label for="password">New Password</label>
                         </div>
                         <div id="password-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
                         </div>
 
                         <!-- Password Confirmation -->
-                        <div class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <x-password-input name="password_confirmation" id="password_confirmation" />
-                            <span>Confirm Password</span>
+                            <label for="password_confirmation">Confirm Password</label>
                         </div>
                         <div id="password-confirmation-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
@@ -45,7 +45,7 @@
                         <div class="form-control mt-8">
                             <button type="submit" id="submit-btn" class="btn btn-primary btn-sm w-full">
                                 <span id="submit-text">Reset Password</span>
-                                <span id="loading-spinner" class="loading loading-spinner loading-sm hidden"></span>
+                                <span id="loading-spinner" class="loading loading-sm hidden"></span>
                             </button>
                         </div>
                     </form>

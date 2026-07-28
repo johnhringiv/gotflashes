@@ -148,7 +148,7 @@ Routes in `routes/web.php`:
 **Tech Stack:**
 - Blade templates (server-rendered)
 - Livewire v4 (reactive components for flash form)
-- Tailwind CSS v4 (utility-first CSS)
+- Hand-authored vanilla CSS (framework-free — Tailwind + DaisyUI were removed; markup keeps Tailwind/DaisyUI-style class *names*, but every rule is written by hand in `resources/css/app.css`)
 - Vanilla JavaScript (minimal, progressive enhancement)
 - Vite for asset bundling
 
@@ -202,18 +202,48 @@ Routes in `routes/web.php`:
   - This ensures flatpickr always has current `data-existing-dates` after Livewire updates
   - **Key insight**: Even after Livewire morph completes, must wait one browser frame for paint cycle to finish before DOM attributes are truly current
 
-**CSS/Tailwind:**
-- Use Tailwind utility classes first
-- Custom CSS only when necessary in `resources/css/app.css`
-- Tailwind v4 uses `@source` and `@theme` directives
-- Custom "lightning" theme with Lightning Class brand colors
-- Floating label form styling (label appears in border outline)
-- Tooltips use lighter blue background (secondary color)
-- Flatpickr calendar styled with Lightning Class brand colors (blue header, white text)
-- **Dynamic Classes**: Classes created at runtime (e.g., in JavaScript) must be force-included using `@source inline("class-name")` in app.css
-  - Example: Toast notification alert variants (`alert-warning`, `alert-error`, etc.) are dynamically created in `toast.js`
-  - Without `@source inline()`, Tailwind's JIT compiler won't include these classes in the build
-  - See line 66 in `resources/css/app.css` for the toast alert safelist
+**CSS (hand-authored, framework-free — `resources/css/app.css`):**
+
+There is NO CSS framework. Tailwind and DaisyUI were removed; `app.css` is the
+single, complete source of truth for all styling (~1,900 lines source, ~13 kB
+gzipped built). When in doubt about what a class does, read its rule in
+`app.css` — do not reason from Tailwind/DaisyUI documentation or memory.
+
+- **Layer model**: `@layer reset, base, components, utilities` — precedence
+  comes from that statement, not source order (the utilities block sits before
+  components in the file; that changes nothing). Utilities always beat
+  components without `!important`.
+- **Design tokens** live in `:root` (OKLCH, Lightning Class brand). Always use
+  `var(--color-*)` for brand/surface colors — never hardcode oklch/hex values.
+- **The utility set is CLOSED.** Markup uses Tailwind-style names (`flex`,
+  `mt-4`, `md:grid-cols-2`, `text-base-content/70`), but only utilities
+  actually defined in `app.css` exist. There is no JIT: arbitrary values
+  (`w-[13px]`), undefined variants (`hover:X`, `sm:X`), or any utility not in
+  the file simply do nothing. To use a new utility, add its rule to the
+  utilities layer deliberately (escape `:` and `/` in selectors, e.g.
+  `.md\:max-w-xs`, `.text-base-content\/70`).
+- **Component classes** use DaisyUI-style names (`btn`, `card`, `alert`,
+  `modal`, `table`, `badge`, `tooltip`…) but are re-implementations — DaisyUI
+  semantics/modifiers no longer apply. If a DaisyUI modifier has no rule in
+  `app.css`, it is dead markup, not a feature.
+- **Class-usage validator** (`tests/js/css-classes.test.js` +
+  `tests/js/utils/css-validator.js`, runs in `npm test` / `composer check`):
+  FAILS the build on any class used in Blade/JS that no rule defines; warns
+  (informational only) on defined-but-unused rules. Classes applied purely at
+  runtime (vendor-generated `ts-*`/`flatpickr-*`, `classList` toggles, template
+  strings like toast's `alert-${type}`) go in the test's IGNORE list. This
+  replaces Tailwind's `@source inline()` safelist mechanism entirely.
+- **One deliberate unlayered exception**: the tom-select/flatpickr overrides at
+  the end of `app.css` must stay unlayered to outrank the vendors' own
+  unlayered `@import`ed CSS (the `!important` cascade reverses across layers).
+  They only target `.ts-*`/`.flatpickr-*`. Never add project rules there.
+- **Stale-build gotcha**: without `public/hot` (i.e., Vite dev server not
+  running), pages serve the static bundle in `public/build/` — CSS edits are
+  invisible until `npm run build`. Use `composer dev` for HMR, or rebuild
+  before visually verifying a CSS change.
+- Style notes: floating label form styling (label sits on the border outline,
+  `.floating-label-visible`); tooltips use the secondary (lighter blue)
+  background; flatpickr calendar uses brand tokens (blue header, white text).
 
 ### Database Schema
 
@@ -267,7 +297,7 @@ Routes in `routes/web.php`:
 ### Linting Configuration
 - **PHP**: Laravel Pint (PSR-12) + PHPStan (level 5) via Larastan
 - **JavaScript**: ESLint with recommended rules
-- **CSS**: Stylelint with Tailwind CSS support
+- **CSS**: Stylelint (`stylelint-config-standard`; `.stylelintrc.json` relaxes only the cosmetic rules that fight app.css's compact one-declaration-per-line utility idiom and Tailwind-escaped class names — all error-catching rules stay on)
 - **Blade**: blade-formatter for template formatting
 
 ### PHPStan Configuration
@@ -369,7 +399,7 @@ This allows tracking of:
 - ✅ Date validation and duplicate prevention
 - ✅ Activity ordering by date (newest first)
 - ✅ "Just logged" badge for entries created today
-- ✅ UI with Tailwind CSS v4 and DaisyUI components
+- ✅ UI restyled on hand-authored, framework-free vanilla CSS (Tailwind + DaisyUI removed; CSS bundle 169 kB → 63 kB raw, 28 kB → 13 kB gzipped)
 - ✅ Award tier calculations (10, 25, 50 days)
 - ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
 - ✅ Award badge images (got_10_transparent.png, got_25_transparent.png, got_50_transparent.png, burgee_50_transparent.png)
@@ -591,6 +621,7 @@ The only thing not tested: flatpickr actually using the data (which is flatpickr
 - **Profile / export** (`tests/Feature`, `tests/Browser/Profile`): profile edit, email change, user-data CSV export
 - **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (flatpickr, TomSelect, toasts), multi-page flows
 - **Unit** (`tests/Unit`): User/Flash/Member models, `FlashPolicy`, `DateRangeService` grace logic
+- **JS unit** (`tests/js`, Vitest): CSS class-usage validation (used-but-undefined fails the build, dead CSS warns), district/fleet select, multi-date picker, register form
 - Known gap: `MailAllowlistProvider` (dev-only mail safety net) has no dedicated test
 
 **Running Tests:**
@@ -600,6 +631,8 @@ composer check     # Run tests + all quality checks
 ```
 
 ### Common Pitfalls
+- Every class written in Blade/JS must have a rule in `resources/css/app.css` — there is no CSS framework and no JIT. The utility set is closed; the CSS validator test fails `composer check` on undefined classes
+- CSS edits are invisible without a rebuild when the Vite dev server isn't running (`public/build/` is stale) — run `npm run build` or use `composer dev`
 - Don't forget the unique constraint on (user_id, date) for flashes
 - Non-sailing day counting must be year-specific, not all-time, and capped at 5 per year
 - Date validation needs timezone tolerance (+1 day max) and grace period enforcement

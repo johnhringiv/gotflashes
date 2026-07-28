@@ -3,7 +3,7 @@
         Forgot Password
     </x-slot:title>
 
-    <div class="hero min-h-[calc(100vh-16rem)]">
+    <div class="hero hero-fill">
         <div class="hero-content flex-col">
             <div class="card w-96 bg-base-100">
                 <div class="card-body">
@@ -16,17 +16,17 @@
                         @csrf
 
                         <!-- Email -->
-                        <label class="floating-label mb-6">
+                        <div class="mb-6 floating-label-visible">
                             <input type="email"
                                    id="email"
                                    name="email"
                                    placeholder="mail@example.com"
                                    value="{{ old('email') }}"
-                                   class="input input-bordered"
+                                   class="input w-full"
                                    required
                                    autofocus>
-                            <span>Email</span>
-                        </label>
+                            <label for="email">Email</label>
+                        </div>
                         <div id="email-error" class="label -mt-4 mb-2 hidden">
                             <span class="label-text-alt text-error"></span>
                         </div>
@@ -35,7 +35,7 @@
                         <div class="form-control mt-8">
                             <button type="submit" id="submit-btn" class="btn btn-primary btn-sm w-full">
                                 <span id="submit-text">Send Reset Link</span>
-                                <span id="loading-spinner" class="loading loading-spinner loading-sm hidden"></span>
+                                <span id="loading-spinner" class="loading loading-sm hidden"></span>
                             </button>
                         </div>
                     </form>

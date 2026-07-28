@@ -41,7 +41,7 @@
                         @if (is_array($element))
                             @foreach ($element as $page => $url)
                                 @if ($page == $paginator->currentPage())
-                                    <button class="join-item btn" style="background-color: var(--color-primary); color: var(--color-primary-content); pointer-events: none;" aria-current="page">
+                                    <button class="join-item btn btn-primary pointer-events-none" aria-current="page">
                                         <span>{{ $page }}</span>
                                     </button>
                                 @else

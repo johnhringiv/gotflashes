@@ -129,7 +129,7 @@ class NavigationTest extends TestCase
 
         $response->assertStatus(200);
         // Home link should have active styling
-        $response->assertSee('!text-white !font-bold underline', false);
+        $response->assertSee('text-white font-bold underline', false);
     }
 
     public function test_navigation_highlights_current_page_leaderboard(): void
@@ -149,7 +149,7 @@ class NavigationTest extends TestCase
 
         $response->assertStatus(200);
         // Logbook link should have active styling
-        $response->assertSee('!text-white !font-bold underline', false);
+        $response->assertSee('text-white font-bold underline', false);
     }
 
     public function test_desktop_auth_buttons_hidden_on_mobile(): void
