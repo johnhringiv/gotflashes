@@ -4,6 +4,13 @@
 // order) or {year, month} pairs. Date objects are only ever constructed with
 // new Date(year, monthIndex, day) — never by parsing a string — so nothing
 // here is sensitive to the runtime timezone.
+//
+// TODO(Temporal): this file exists because the legacy Date API has no safe
+// string parsing (new Date('Y-m-d') is UTC and shifts a day in negative-UTC
+// zones) and no calendar arithmetic. Temporal.PlainDate covers everything
+// here (from()/add()/compare/toString/day-of-week). Once Temporal is
+// Baseline across our supported browsers, replace these helpers with it —
+// the 'Y-m-d' strings at every boundary make it a drop-in swap.
 
 export const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
