@@ -4,10 +4,9 @@ use App\Models\District;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
     $this->fleet = Fleet::where('district_id', $this->district->id)->firstOrFail();
@@ -42,7 +41,7 @@ it('lets user set fleet to None', function () {
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     $this->actingAs($this->user);
@@ -61,7 +60,7 @@ it('lets user set fleet to None', function () {
     ");
     $page->assertSee('updated');
 
-    $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
+    $member = Member::where('user_id', $this->user->id)->where('year', now()->year)->first();
     expect($member->fleet_id)->toBe(Fleet::noneId());
 });
 
@@ -70,7 +69,7 @@ it('persists unaffiliated choice on save and reload', function () {
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     $this->actingAs($this->user);
@@ -101,7 +100,7 @@ it('blocks save when district change clears fleet and user does not re-select', 
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     $this->actingAs($this->user);
@@ -120,7 +119,7 @@ it('blocks save when district change clears fleet and user does not re-select', 
     ");
     // Fleet error should appear, save should NOT have happened
     $page->assertSee('Please select a fleet');
-    $member = Member::where('user_id', $this->user->id)->where('year', 2027)->first();
+    $member = Member::where('user_id', $this->user->id)->where('year', now()->year)->first();
     expect($member->district_id)->toBe($this->district->id); // unchanged
 });
 
@@ -129,7 +128,7 @@ it('clears fleet error when fleet is selected after district change', function (
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     $this->actingAs($this->user);

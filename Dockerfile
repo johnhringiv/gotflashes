@@ -132,7 +132,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # root (public/ is root-owned; nginx still reads it) and kept near the end so a
 # per-commit version bump doesn't bust the cache for the expensive build layers.
 ARG APP_VERSION=dev
-RUN printf '%s' "$APP_VERSION" > /var/www/html/public/version
+RUN printf '%s' "$APP_VERSION" > /var/www/html/public/version && \
+    printf '{"sha":"%s","short":"%.7s"}' "$APP_VERSION" "$APP_VERSION" > /var/www/html/public/version.json
 
 # Expose port 8080 (nginx listens on non-privileged port for Synology compatibility)
 EXPOSE 8080

@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->admin = User::factory()->create([
 
@@ -30,11 +29,10 @@ beforeEach(function () {
         'user_id' => $this->sailor->id,
         'district_id' => $district->id,
         'fleet_id' => $fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 10; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($this->sailor)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($this->sailor)->onDate(testDate($i))->create();
     }
 });
 

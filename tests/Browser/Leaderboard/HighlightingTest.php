@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->district = District::first();
     $this->fleet = Fleet::where('district_id', District::first()->id)->first();
@@ -22,9 +21,9 @@ beforeEach(function () {
         'user_id' => $this->user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-05')->create();
+    Flash::factory()->sailing()->forUser($this->user)->onDate(testDate(5))->create();
 
     // Create another user so there are multiple rows
     $otherUser = User::factory()->create([
@@ -36,9 +35,9 @@ beforeEach(function () {
         'user_id' => $otherUser->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($otherUser)->onDate('2027-01-06')->create();
+    Flash::factory()->sailing()->forUser($otherUser)->onDate(testDate(6))->create();
 });
 
 it('highlights authenticated user row on sailor tab', function () {

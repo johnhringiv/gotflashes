@@ -13,16 +13,15 @@
  *   components  — component classes + all project CSS (floating labels, focus
  *                 rings, leaderboard table, lightning-fill hero, /stats charts)
  *   utilities   — the atomic helpers the markup uses (flex, spacing, colour…)
- *   (unlayered) — ONLY third-party widget overrides (tom-select / flatpickr):
- *                 they must outrank the unlayered vendor CSS imported below, and
- *                 the !important cascade reverses across layers, so they cannot
+ *   (unlayered) — ONLY third-party widget overrides (tom-select): they must
+ *                 outrank the unlayered vendor CSS imported below, and the
+ *                 !important cascade reverses across layers, so they cannot
  *                 safely be layered. See the block at the end of this file.
  *
  * Design tokens live in :root. Colours are OKLCH (Lightning Class brand).
  */
 
 @import 'tom-select/dist/css/tom-select.css';
-@import 'flatpickr/dist/flatpickr.min.css';
 
 @layer reset, base, components, utilities;
 
@@ -64,6 +63,15 @@
     /* Misc */
     --border: 1px;
     --spacing: 0.25rem;
+
+    /* Dropdown caret — single rounded chevron, shared by .select, .ts-control
+       and the calendar's month select (one SVG replaces the old two-gradient
+       square trick). background-image SVGs can't use currentcolor/var(), so
+       the two strokes are baked: the dark one mirrors --color-base-content,
+       the inverse is white for the navy calendar header. Keep in sync with
+       the tokens. */
+    --caret-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='oklch(25%25 0.02 245deg)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --caret-chevron-inverse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -735,11 +743,9 @@
         height: 2.5rem;
         padding-inline: 0.75rem 1.75rem;
         appearance: none;
-        background-image:
-            linear-gradient(45deg, transparent 50%, currentcolor 50%),
-            linear-gradient(135deg, currentcolor 50%, transparent 50%);
-        background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
-        background-size: 4px 4px, 4px 4px;
+        background-image: var(--caret-chevron);
+        background-position: calc(100% - 10px) calc(50% + 1px);
+        background-size: 13px 13px;
         background-repeat: no-repeat;
     }
     .textarea { padding: 0.5rem 0.75rem; min-height: 4rem; line-height: 1.5; }
@@ -749,15 +755,15 @@
        Ported from DaisyUI so the gender dropdown gets the gray hover highlight
        instead of the browser default; the custom block below then tweaks the
        checked/active states. */
-    :is(.select, .select select) option {
+    :is(.select, .select select, .dp-month-select) option {
         border-radius: var(--radius-field);
         padding-block: 0.375rem;
         padding-inline: 0.75rem;
         white-space: normal;
         transition: color 0.2s, background-color 0.2s;
     }
-    :is(.select, .select select) option:not(:disabled):hover,
-    :is(.select, .select select) option:not(:disabled):focus-visible {
+    :is(.select, .select select, .dp-month-select) option:not(:disabled):hover,
+    :is(.select, .select select, .dp-month-select) option:not(:disabled):focus-visible {
         cursor: pointer;
         background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
         outline: none;
@@ -771,8 +777,8 @@
         /* align-items: center — a base-select control is display:flex with the
            UA default align-items:normal (stretch), which floats the value's text
            to the top of the box. Centre it vertically like a normal select. */
-        :is(.select, .select select) { appearance: base-select; align-items: center; }
-        :is(.select, .select select)::picker(select) {
+        :is(.select, .select select, .dp-month-select) { appearance: base-select; align-items: center; }
+        :is(.select, .select select, .dp-month-select)::picker(select) {
             appearance: base-select;
             color: inherit;
             border: var(--border) solid var(--color-base-200);
@@ -785,8 +791,8 @@
             padding: 0.5rem;
             translate: -0.5rem;
         }
-        :is(.select, .select select)::picker-icon { display: none; }
-        :is(.select, .select select) selectedcontent {
+        :is(.select, .select select, .dp-month-select)::picker-icon { display: none; }
+        :is(.select, .select select, .dp-month-select) selectedcontent {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1664,17 +1670,215 @@
 }
 
 /* ==========================================================================
+   Date picker (logbook form) — home-grown calendar, rendered by
+   resources/js/date-picker.js into a body-appended .date-picker element
+   (so it escapes the edit modal's overflow and Livewire's morph).
+   ========================================================================== */
+@layer components {
+    .date-picker {
+        position: absolute;
+        z-index: 9999; /* above the edit modal (z-index 999) */
+        width: 19.5rem;
+        background: var(--color-base-100);
+        border: 1px solid var(--color-base-300);
+        border-radius: var(--radius-box);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 15%);
+        overflow: hidden; /* clip the header band to the rounded corners */
+        user-select: none;
+    }
+
+    .dp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--color-primary);
+        color: var(--color-primary-content);
+        padding: 0.375rem 0.5rem;
+    }
+
+    .dp-nav {
+        background: none;
+        border: none;
+        color: var(--color-primary-content);
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 0 0.5rem 0.2rem;
+        cursor: pointer;
+        border-radius: var(--radius-selector);
+    }
+
+    .dp-nav:hover:not(:disabled) {
+        background: color-mix(in oklab, var(--color-primary-content) 15%, transparent);
+    }
+
+    .dp-nav:disabled { opacity: 0.35; cursor: default; }
+
+    .dp-title {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-weight: 600;
+    }
+
+    /* Integrated into the navy header band like a title — no box — but with
+       the site's double-chevron caret (not the native one) and a soft hover
+       tint for affordance. */
+    .dp-month-select {
+        appearance: none;
+        height: 1.75rem;
+        background-color: transparent;
+        color: var(--color-primary-content);
+        border: none;
+        border-radius: var(--radius-selector);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+
+        /* base-select sizes the control to the selected text; the wider
+           end padding restores the breathing room between text and caret
+           that the old longest-option sizing used to provide. */
+        padding-inline: 0.5rem 1.875rem;
+        background-image: var(--caret-chevron-inverse);
+        background-position: calc(100% - 10px) calc(50% + 1px);
+        background-size: 13px 13px;
+        background-repeat: no-repeat;
+    }
+
+    .dp-month-select:hover {
+        background-color: color-mix(in oklab, var(--color-primary-content) 15%, transparent);
+    }
+
+    /* The open option list renders on a light surface — don't inherit the
+       header's white semibold styling there; rows match the site's other
+       select popups (normal weight, 0.875rem). */
+    .dp-month-select option {
+        color: var(--color-base-content);
+        background: var(--color-base-100);
+        font-weight: 400;
+        font-size: 0.875rem;
+    }
+
+    /* Never flip the month list above the control: on short viewports the
+       flip fallback threw it on top of the calendar. Dropping below and
+       scrolling (the picker clamps to the viewport) reads like a menu. */
+    @supports (appearance: base-select) {
+        .dp-month-select::picker(select) {
+            position-try-fallbacks: none;
+        }
+    }
+
+    .dp-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background: var(--color-base-200);
+        color: var(--color-primary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+        padding: 0.25rem 0.375rem;
+    }
+
+    .dp-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        padding: 0.375rem;
+    }
+
+    .dp-day {
+        appearance: none;
+        background: none;
+        border: 1px solid transparent;
+
+        /* Circular day cells (matching the flatpickr look): square via
+           aspect-ratio so the 50% radius yields a circle, not an ellipse. */
+        border-radius: 50%;
+        aspect-ratio: 1;
+        color: var(--color-base-content);
+        font: inherit;
+        font-size: 0.875rem;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .dp-day:hover:not(:disabled) {
+        background: var(--color-base-200);
+        border-color: var(--color-base-300);
+    }
+
+    .dp-day.other-month { color: color-mix(in oklab, var(--color-base-content) 40%, transparent); }
+
+    /* Today: accent (red) border, kept even when selected */
+    .dp-day.today { border-color: var(--color-accent); }
+
+    .dp-day.selected,
+    .dp-day.selected:hover {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: var(--color-primary-content);
+    }
+
+    .dp-day.today.selected { border-color: var(--color-accent); }
+
+    /* Out of allowed range (has-entry days are aria-disabled instead so they
+       stay keyboard-focusable — see date-picker.js) */
+    .dp-day:disabled {
+        color: var(--color-base-300);
+        background: none;
+        border-color: transparent;
+        cursor: not-allowed;
+    }
+
+    /* Days that already have a logged flash — lightning logo instead of the number */
+    .dp-day.has-entry,
+    .dp-day.has-entry:hover {
+        background: var(--color-base-200) url('../../public/images/lightning_logo.png') center / auto 20px no-repeat;
+        border-color: transparent;
+        color: transparent;
+        cursor: not-allowed;
+    }
+
+    .dp-day.has-entry.today { border: 2px solid var(--color-accent); }
+
+    .dp-day:focus-visible {
+        outline: 2px solid var(--color-secondary);
+        outline-offset: -2px;
+    }
+
+    /* Focus ring on a logged (unpickable) day: muted gray — "you're here,
+       but there's nothing to pick" — vs the actionable secondary blue. */
+    .dp-day[aria-disabled='true']:focus-visible {
+        outline-color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+    }
+
+    .dp-nav:focus-visible {
+        outline: 2px solid var(--color-primary-content);
+        outline-offset: 1px;
+    }
+
+    /* No focus ring or lingering tint on the month select: Tab exits the
+       calendar by design (keyboard month-switching is PageUp/PageDown), so
+       focus here only ever comes from a mouse click — Chrome applies
+       :focus-visible to selects even then, and the select stays focused
+       after the popup closes, which made a focus tint read as a stuck
+       "active" state. The hover tint is the only closed-control feedback. */
+    .dp-month-select:focus-visible {
+        outline: none;
+    }
+}
+
+/* ==========================================================================
    Third-party widget overrides — INTENTIONALLY UNLAYERED.
 
-   tom-select and flatpickr ship their own CSS (imported unlayered at the top
-   of this file). Unlayered normal declarations outrank every @layer, so these
-   overrides must also stay unlayered to win. Pulling the vendor CSS into a
-   layer is not safe either: the !important cascade REVERSES across layers
-   (an earlier layer's !important beats a later one's), and both vendors ship
-   !important on properties we override (background/color/box-shadow/outline/
-   cursor), so a layered vendor could beat us. These rules only ever target
-   .ts-* / .flatpickr-* widgets, never our own elements, so being unlayered
-   cannot shadow a component/utility by surprise. This is the one exception.
+   tom-select ships its own CSS (imported unlayered at the top of this file).
+   Unlayered normal declarations outrank every @layer, so these overrides must
+   also stay unlayered to win. Pulling the vendor CSS into a layer is not safe
+   either: the !important cascade REVERSES across layers (an earlier layer's
+   !important beats a later one's), and tom-select ships !important on
+   properties we override (background/color/padding), so a layered vendor
+   could beat us. These rules only ever target .ts-* widgets, never our own
+   elements, so being unlayered cannot shadow a component/utility by surprise.
+   This is the one exception.
    ========================================================================== */
 
 /* TomSelect customization with Lightning Class theme colors */
@@ -1744,11 +1948,9 @@
        on the .select-classed wrapper, which we suppress (.ts-wrapper.select), so
        re-add it here; the right-padding that clears it lives on
        .ts-wrapper.single .ts-control (it can out-specify TomSelect's own rule). */
-    background-image:
-        linear-gradient(45deg, transparent 50%, currentcolor 50%),
-        linear-gradient(135deg, currentcolor 50%, transparent 50%);
-    background-position: calc(100% - 20px) calc(1px + 50%), calc(100% - 16.1px) calc(1px + 50%);
-    background-size: 4px 4px, 4px 4px;
+    background-image: var(--caret-chevron);
+    background-position: calc(100% - 10px) calc(50% + 1px);
+    background-size: 13px 13px;
     background-repeat: no-repeat;
 }
 
@@ -1829,150 +2031,4 @@
 .ts-has-error .ts-wrapper.single .ts-control:hover {
     border-color: transparent;
     box-shadow: none;
-}
-
-/* Flatpickr calendar customization with brand colors */
-
-/* Calendar container */
-.flatpickr-calendar {
-    background: var(--color-base-100) !important;
-    border: 1px solid var(--color-base-300) !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%) !important;
-}
-
-/* Month/Year header */
-.flatpickr-months {
-    background: var(--color-primary) !important;
-}
-
-.flatpickr-current-month {
-    color: var(--color-primary-content) !important;
-}
-
-.flatpickr-month,
-/* stylelint-disable-next-line selector-class-pattern */
-.flatpickr-current-month .flatpickr-monthDropdown-months,
-.flatpickr-current-month input.cur-year {
-    color: var(--color-primary-content) !important;
-}
-
-/* Navigation arrows */
-.flatpickr-months .flatpickr-prev-month,
-.flatpickr-months .flatpickr-next-month {
-    fill: var(--color-primary-content) !important;
-}
-
-.flatpickr-months .flatpickr-prev-month:hover,
-.flatpickr-months .flatpickr-next-month:hover {
-    fill: var(--color-base-200) !important;
-}
-
-/* Year dropdown styling (custom select element) */
-.flatpickr-current-month select {
-    background: var(--color-primary) !important;
-    color: var(--color-primary-content) !important;
-    border: none !important;
-    font-weight: inherit !important;
-    cursor: pointer !important;
-    padding-right: 1rem !important;
-
-    /* Keep native dropdown arrow by not using appearance: none */
-}
-
-/* Hide the spinner controls container that appears on hover */
-/* stylelint-disable-next-line selector-class-pattern */
-.flatpickr-current-month .numInputWrapper {
-    display: inline-block !important;
-}
-
-/* stylelint-disable selector-class-pattern */
-.flatpickr-current-month .numInputWrapper span.arrowUp,
-.flatpickr-current-month .numInputWrapper span.arrowDown {
-    display: none !important;
-}
-/* stylelint-enable selector-class-pattern */
-
-/* Weekday headers */
-.flatpickr-weekdays {
-    background: var(--color-base-200) !important;
-}
-
-span.flatpickr-weekday {
-    color: var(--color-primary) !important;
-    font-weight: 600 !important;
-}
-
-/* Regular date cells */
-.flatpickr-day {
-    color: var(--color-base-content) !important;
-    border: 1px solid transparent !important;
-}
-
-.flatpickr-day:hover {
-    background: var(--color-base-200) !important;
-    border-color: var(--color-base-300) !important;
-}
-
-/* Selected dates */
-.flatpickr-day.selected,
-.flatpickr-day.selected:hover {
-    background: var(--color-primary) !important;
-    border-color: var(--color-primary) !important;
-    color: var(--color-primary-content) !important;
-}
-
-/* Today's date - ONLY when not selected */
-.flatpickr-day.today:not(.selected) {
-    border-color: var(--color-accent) !important;
-    background: var(--color-base-100) !important;
-}
-
-.flatpickr-day.today:not(.selected):hover {
-    background: var(--color-base-200) !important;
-    border-color: var(--color-accent) !important;
-}
-
-/* Today's date when selected - blue background with red border */
-.flatpickr-day.today.selected,
-.flatpickr-day.today.selected:hover {
-    background: var(--color-primary) !important;
-    border-color: var(--color-accent) !important;
-    color: var(--color-primary-content) !important;
-}
-
-/* Future dates (disabled) - grayed out */
-.flatpickr-day.flatpickr-disabled:not(.has-entry) {
-    color: var(--color-base-300) !important;
-    background: var(--color-base-100) !important;
-    cursor: not-allowed !important;
-}
-
-.flatpickr-day.flatpickr-disabled:not(.has-entry):hover {
-    background: var(--color-base-100) !important;
-    border-color: transparent !important;
-}
-
-/* Dates with entries - show lightning logo */
-.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry,
-.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry:hover {
-    background-image: url('../../public/images/lightning_logo.png') !important;
-    background-size: auto 20px !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-color: var(--color-base-200) !important;
-    color: transparent !important;
-    cursor: not-allowed;
-}
-
-/* Today with an entry */
-.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today,
-.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:hover,
-.flatpickr-calendar .flatpickr-day.flatpickr-disabled.has-entry.today:focus {
-    background-image: url('../../public/images/lightning_logo.png') !important;
-    background-size: auto 20px !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-color: var(--color-base-200) !important;
-    border: 2px solid var(--color-accent) !important;
-    color: transparent !important;
 }

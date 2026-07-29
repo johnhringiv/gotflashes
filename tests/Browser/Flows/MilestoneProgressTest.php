@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->district = District::first();
     $this->fleet = Fleet::where('district_id', District::first()->id)->first();
@@ -24,13 +23,12 @@ it('hitting 10-day milestone displays badge', function () {
         'user_id' => $user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     // Seed 9 flashes
     for ($i = 1; $i <= 9; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate($i))->create();
     }
 
     $this->actingAs($user);
@@ -40,7 +38,7 @@ it('hitting 10-day milestone displays badge', function () {
     $page->assertMissing('img[alt="10 Day Award"]');
 
     // Add the 10th flash directly
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-01-10')->create();
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(10))->create();
 
     // Reload and verify badge appears
     $page2 = visit('/logbook');
@@ -57,16 +55,16 @@ it('hitting 25-day milestone displays badge', function () {
         'user_id' => $user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     $this->actingAs($user);
 
-    // Seed 24 flashes in 2027 (Jan 1-15 + Feb 1-9) — factory bypasses date validation
+    // Seed 24 flashes in the frozen year (Jan 1-15 + Feb 1-9) — the factory
+    // bypasses date validation
     for ($i = 1; $i <= 24; $i++) {
-        $month = $i <= 15 ? '01' : '02';
-        $day = $i <= 15 ? str_pad($i, 2, '0', STR_PAD_LEFT) : str_pad($i - 15, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2027-{$month}-{$day}")->create();
+        $date = $i <= 15 ? testDate($i) : testDate($i - 15, 2);
+        Flash::factory()->sailing()->forUser($user)->onDate($date)->create();
     }
 
     $page = visit('/logbook');
@@ -74,7 +72,7 @@ it('hitting 25-day milestone displays badge', function () {
     $page->assertMissing('img[alt="25 Day Award"]');
 
     // Add the 25th flash
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-02-10')->create();
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(10, 2))->create();
 
     $page2 = visit('/logbook');
     $page2->assertVisible('img[alt="25 Day Award"]');
@@ -90,14 +88,12 @@ it('hitting 50-day milestone displays badge and burgee', function () {
         'user_id' => $user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     // Seed 49 flashes
     for ($i = 1; $i <= 49; $i++) {
-        $month = str_pad(intdiv($i - 1, 28) + 1, 2, '0', STR_PAD_LEFT);
-        $day = str_pad((($i - 1) % 28) + 1, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2027-{$month}-{$day}")->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate((($i - 1) % 28) + 1, intdiv($i - 1, 28) + 1))->create();
     }
 
     $this->actingAs($user);
@@ -107,7 +103,7 @@ it('hitting 50-day milestone displays badge and burgee', function () {
     $page->assertMissing('img[alt="50 Day Award (Burgee)"]');
 
     // Add the 50th flash
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-03-01')->create();
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(1, 3))->create();
 
     $page2 = visit('/logbook');
     $page2->assertVisible('img[alt="50 Day Award (Burgee)"]');
@@ -125,13 +121,12 @@ it('deleting a flash that crossed threshold removes badge', function () {
         'user_id' => $user->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
 
     // Seed exactly 10 flashes
     for ($i = 1; $i <= 10; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate($i))->create();
     }
 
     $this->actingAs($user);

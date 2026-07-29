@@ -299,7 +299,7 @@ about class names will feel right — but there is no JIT compiler behind them.
 - ✅ **Use design tokens** - `var(--color-*)` for all brand/surface colors, never hardcoded oklch/hex
 - ✅ **Register runtime-only classes** - Classes applied purely via JS (`classList`, template strings) go in the IGNORE list of `tests/js/css-classes.test.js`
 - ❌ **Don't add a CSS framework** or reach for `!important` - layer order already makes utilities beat components
-- ❌ **Don't add project rules to the unlayered vendor-override section** at the end of `app.css` - it exists only for tom-select/flatpickr (see the comment there for why)
+- ❌ **Don't add project rules to the unlayered vendor-override section** at the end of `app.css` - it exists only for tom-select (see the comment there for why)
 
 Two things that will save you a confusing afternoon: a class-usage validator runs
 in `composer check` and **fails on any class used in Blade/JS that `app.css`
