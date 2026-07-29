@@ -2,11 +2,10 @@
 
 use App\Models\District;
 use App\Models\Fleet;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('registering with district/fleet shows them on /profile', function () {

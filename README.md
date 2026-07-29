@@ -1,6 +1,9 @@
 # G.O.T. Flashes Challenge Tracker
 
+[![CI](https://github.com/johnhringiv/gotflashes/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/johnhringiv/gotflashes/actions/workflows/check.yml)
 [![codecov](https://codecov.io/gh/johnhringiv/gotflashes/graph/badge.svg)](https://codecov.io/gh/johnhringiv/gotflashes)
+[![site](https://img.shields.io/website?url=https%3A%2F%2Fgotflashes.com%2Fup&label=site)](https://gotflashes.com)
+[![deployed](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgotflashes.com%2Fversion.json&query=%24.short&label=deployed)](https://gotflashes.com)
 
 A web application for tracking Lightning Class sailing activity and managing the G.O.T. Flashes Challenge awards program. This system helps Lightning sailors log their days on the water, track progress toward annual awards, and foster friendly competition within the sailing community.
 
@@ -128,7 +131,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Blade templates
   - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
-  - Flatpickr (multi-date calendar picker)
+  - Home-grown multi-date calendar picker (no library)
   - Tom-Select (searchable dropdowns)
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
@@ -324,7 +327,7 @@ gotflashes/
 ├── resources/
 │   ├── views/              # Blade templates
 │   ├── css/                # Stylesheet (hand-authored vanilla CSS)
-│   └── js/                 # JavaScript files (multi-date-picker, registration, etc.)
+│   └── js/                 # JavaScript files (date-picker, registration, etc.)
 ├── routes/
 │   └── web.php             # Web routes
 ├── storage/

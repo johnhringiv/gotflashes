@@ -8,7 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->district = District::first();
     $this->fleet = Fleet::where('district_id', District::first()->id)->first();
@@ -25,11 +25,10 @@ it('ranks user with more sailing days higher when totals tie', function () {
         'user_id' => $userA->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 15; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($userA)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($userA)->onDate(testDate($i))->create();
     }
 
     // User B: 10 sailing + 5 maintenance = total 15 (same total, fewer sailing days)
@@ -42,15 +41,13 @@ it('ranks user with more sailing days higher when totals tie', function () {
         'user_id' => $userB->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 10; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($userB)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($userB)->onDate(testDate($i))->create();
     }
     for ($i = 1; $i <= 5; $i++) {
-        $day = str_pad($i + 10, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->maintenance()->forUser($userB)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->maintenance()->forUser($userB)->onDate(testDate($i + 10))->create();
     }
 
     $page = visit('/leaderboard');
@@ -71,12 +68,11 @@ it('ranks user with earlier first-entry higher when totals and sailing tie', fun
         'user_id' => $userEarly->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 5; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($userEarly)->onDate("2027-01-{$day}")->create([
-            'created_at' => Carbon::parse('2027-01-01 08:00:00'),
+        Flash::factory()->sailing()->forUser($userEarly)->onDate(testDate($i))->create([
+            'created_at' => Carbon::parse(testDate(1).' 08:00:00'),
         ]);
     }
 
@@ -90,12 +86,11 @@ it('ranks user with earlier first-entry higher when totals and sailing tie', fun
         'user_id' => $userLate->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 5; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($userLate)->onDate("2027-01-{$day}")->create([
-            'created_at' => Carbon::parse('2027-01-10 08:00:00'),
+        Flash::factory()->sailing()->forUser($userLate)->onDate(testDate($i))->create([
+            'created_at' => Carbon::parse(testDate(10).' 08:00:00'),
         ]);
     }
 
@@ -117,10 +112,10 @@ it('falls back to alphabetical when everything ties', function () {
         'user_id' => $userAlpha->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($userAlpha)->onDate('2027-01-05')->create([
-        'created_at' => Carbon::parse('2027-01-05 12:00:00'),
+    Flash::factory()->sailing()->forUser($userAlpha)->onDate(testDate(5))->create([
+        'created_at' => Carbon::parse(testDate(5).' 12:00:00'),
     ]);
 
     $userBeta = User::factory()->create([
@@ -132,10 +127,10 @@ it('falls back to alphabetical when everything ties', function () {
         'user_id' => $userBeta->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($userBeta)->onDate('2027-01-05')->create([
-        'created_at' => Carbon::parse('2027-01-05 12:00:00'),
+    Flash::factory()->sailing()->forUser($userBeta)->onDate(testDate(5))->create([
+        'created_at' => Carbon::parse(testDate(5).' 12:00:00'),
     ]);
 
     $page = visit('/leaderboard');

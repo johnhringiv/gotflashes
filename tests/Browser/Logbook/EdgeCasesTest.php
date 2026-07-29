@@ -2,10 +2,9 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('shows custom 404 page for nonexistent routes', function () {
@@ -20,7 +19,7 @@ it('edit then cancel preserves original data', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    Flash::factory()->sailing()->forUser($user)->onDate('2027-01-10')->create([
+    Flash::factory()->sailing()->forUser($user)->onDate(testDate(10))->create([
         'event_type' => 'regatta',
         'location' => 'Original Lake',
     ]);
@@ -56,12 +55,10 @@ it('logbook paginates at 15 entries', function () {
 
     // Create 18 flashes across different dates
     for ($i = 1; $i <= 15; $i++) {
-        $day = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2026-12-{$day}")->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate($i, 12, -1))->create();
     }
     for ($i = 1; $i <= 3; $i++) {
-        $day = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($user)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($user)->onDate(testDate($i))->create();
     }
 
     $page = visit('/logbook');
@@ -78,13 +75,14 @@ it('rejects concurrent duplicate date submission', function () {
     $this->actingAs($user);
 
     $page = visit('/logbook');
+    $date = testDate(10);
 
     // Submit a flash via Livewire
     $page->script("
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');
         const comp = Livewire.find(wireId);
-        comp.set('dates', ['2027-01-10']);
+        comp.set('dates', ['{$date}']);
         comp.set('activity_type', 'sailing');
         comp.set('event_type', 'practice');
         comp.call('save');
@@ -96,7 +94,7 @@ it('rejects concurrent duplicate date submission', function () {
         const formEl = document.querySelector('#activity_type').closest('[wire\\\\:id]');
         const wireId = formEl.getAttribute('wire:id');
         const comp = Livewire.find(wireId);
-        comp.set('dates', ['2027-01-10']);
+        comp.set('dates', ['{$date}']);
         comp.set('activity_type', 'sailing');
         comp.set('event_type', 'regatta');
         comp.call('save');

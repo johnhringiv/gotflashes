@@ -6,10 +6,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     // Create admin user
     $this->admin = User::factory()->create([
@@ -33,11 +32,10 @@ beforeEach(function () {
         'user_id' => $this->userTier10->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     for ($i = 1; $i <= 10; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($this->userTier10)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($this->userTier10)->onDate(testDate($i))->create();
     }
 
     $this->userTier25 = User::factory()->create([
@@ -49,12 +47,11 @@ beforeEach(function () {
         'user_id' => $this->userTier25->id,
         'district_id' => $this->district->id,
         'fleet_id' => $this->fleet->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
     // Use January dates only (within grace period and frozen time)
     for ($i = 1; $i <= 15; $i++) {
-        $day = str_pad($i, 2, '0', STR_PAD_LEFT);
-        Flash::factory()->sailing()->forUser($this->userTier25)->onDate("2027-01-{$day}")->create();
+        Flash::factory()->sailing()->forUser($this->userTier25)->onDate(testDate($i))->create();
     }
 });
 
@@ -74,7 +71,7 @@ it('filters by status=processing', function () {
     // Create a processing fulfillment
     AwardFulfillment::create([
         'user_id' => $this->userTier10->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'processing',
         'updated_by_user_id' => $this->admin->id,
@@ -91,7 +88,7 @@ it('filters by status=processing', function () {
 it('filters by status=sent', function () {
     AwardFulfillment::create([
         'user_id' => $this->userTier10->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'sent',
         'updated_by_user_id' => $this->admin->id,
@@ -160,7 +157,7 @@ it('selects all processing awards via scoped button', function () {
     // Create some processing fulfillments
     AwardFulfillment::create([
         'user_id' => $this->userTier10->id,
-        'year' => 2027,
+        'year' => now()->year,
         'award_tier' => 10,
         'status' => 'processing',
         'updated_by_user_id' => $this->admin->id,

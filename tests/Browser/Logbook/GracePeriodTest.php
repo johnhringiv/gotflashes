@@ -2,21 +2,20 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 });
 
 it('hides Edit and Delete buttons on flashes outside the editable range', function () {
     $user = User::factory()->create();
 
-    Flash::factory()->forUser($user)->sailing()->onDate('2025-06-15')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(15, 6, -2))->create([
         'event_type' => 'regatta',
         'location' => 'Old Lake',
     ]);
 
-    Flash::factory()->forUser($user)->sailing()->onDate('2027-01-10')->create([
+    Flash::factory()->forUser($user)->sailing()->onDate(testDate(10))->create([
         'event_type' => 'practice',
         'location' => 'Current Lake',
     ]);
@@ -40,7 +39,7 @@ it('hides Edit and Delete buttons on flashes outside the editable range', functi
 it('returns 403 when forging an edit for an out-of-range flash', function () {
     $user = User::factory()->create();
 
-    $flash = Flash::factory()->forUser($user)->sailing()->onDate('2025-06-15')->create([
+    $flash = Flash::factory()->forUser($user)->sailing()->onDate(testDate(15, 6, -2))->create([
         'event_type' => 'regatta',
     ]);
 

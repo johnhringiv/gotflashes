@@ -5,10 +5,9 @@ use App\Models\Flash;
 use App\Models\Fleet;
 use App\Models\Member;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
 
     $this->admin = User::factory()->create([
 
@@ -33,9 +32,9 @@ beforeEach(function () {
         'user_id' => $this->sailorA->id,
         'district_id' => $this->districtA->id,
         'fleet_id' => $this->fleetA->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($this->sailorA)->onDate('2027-01-05')->create();
+    Flash::factory()->sailing()->forUser($this->sailorA)->onDate(testDate(5))->create();
 
     $this->sailorB = User::factory()->create([
 
@@ -46,9 +45,9 @@ beforeEach(function () {
         'user_id' => $this->sailorB->id,
         'district_id' => $this->districtB->id,
         'fleet_id' => $this->fleetB->id,
-        'year' => 2027,
+        'year' => now()->year,
     ]);
-    Flash::factory()->sailing()->forUser($this->sailorB)->onDate('2027-01-06')->create();
+    Flash::factory()->sailing()->forUser($this->sailorB)->onDate(testDate(6))->create();
 });
 
 it('renders table with filters', function () {

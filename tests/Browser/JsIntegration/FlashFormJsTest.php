@@ -2,10 +2,9 @@
 
 use App\Models\Flash;
 use App\Models\User;
-use Carbon\Carbon;
 
 beforeEach(function () {
-    $this->travelTo(Carbon::parse('2027-01-15 12:00:00'));
+    $this->travelTo(frozenJanuary());
     $this->user = User::factory()->create([]);
     $this->actingAs($this->user);
 });
@@ -50,7 +49,7 @@ describe('Create mode', function () {
 
 describe('Edit modal', function () {
     it('reinitializes form JS in edit modal', function () {
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create();
+        Flash::factory()->sailing()->forUser($this->user)->onDate(testDate(10))->create();
 
         $page = visit('/logbook');
         $page->click('Edit');
@@ -64,7 +63,7 @@ describe('Edit modal', function () {
     });
 
     it('edit modal form fields are pre-filled correctly', function () {
-        Flash::factory()->sailing()->forUser($this->user)->onDate('2027-01-10')->create([
+        Flash::factory()->sailing()->forUser($this->user)->onDate(testDate(10))->create([
             'event_type' => 'regatta',
             'location' => 'Test Lake',
         ]);
