@@ -137,6 +137,9 @@ it('requires district and fleet selection on registration', function () {
     $page->assertPathIs('/register');
     $page->assertSee('Please select a district');
     $page->assertSee('Please select a fleet');
+    // The red error ring reaches the controls via the .field-error wrapper
+    // (the selects sit inside wire:ignore, so @error can't class them directly)
+    $page->assertScript('document.querySelectorAll(".field-error").length', 2);
 });
 
 it('requires fleet when district is set on registration', function () {
