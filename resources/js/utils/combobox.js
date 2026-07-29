@@ -66,6 +66,11 @@ export class Combobox {
         this.input.setAttribute('aria-expanded', 'false');
         this.input.setAttribute('aria-haspopup', 'listbox');
         this.input.setAttribute('aria-autocomplete', 'list');
+        // Browse-first on touch: no virtual keyboard on the opening tap (it
+        // ate half the screen before the list was even visible). A second
+        // tap while open opts into typing. Hardware keyboards are
+        // unaffected — inputmode only governs the on-screen one.
+        this.input.inputMode = 'none';
         select.insertAdjacentElement('afterend', this.input);
         this.showSelectedLabel();
 
@@ -73,7 +78,19 @@ export class Combobox {
         // dispatch 'change' directly — keep the visible label in sync
         select.addEventListener('change', () => this.showSelectedLabel());
 
-        this.input.addEventListener('click', () => this.open());
+        this.input.addEventListener('click', () => {
+            if (!this.listbox) {
+                this.open();
+            } else if (this.input.inputMode === 'none') {
+                // Second tap while open: summon the on-screen keyboard for
+                // type-to-filter (needs a blur/focus cycle to re-read the
+                // input mode; blur does not close — only pointer/Escape/Tab do)
+                this.input.inputMode = 'text';
+                this.input.blur();
+                this.input.focus();
+                this.input.select();
+            }
+        });
         this.input.addEventListener('input', () => {
             if (!this.listbox) this.open();
             this.renderOptions(this.input.value);
@@ -103,11 +120,22 @@ export class Combobox {
         this.listbox.id = `${this.select.id}-listbox`;
         this.listbox.setAttribute('role', 'listbox');
         this.listbox.setAttribute('aria-label', this.input.placeholder || 'Options');
-        // pointerdown, not click: commit before the input's blur can revert
+        // MOUSE picks on pointerdown (commits before the input blurs, and a
+        // mouse never scroll-drags a row). TOUCH must NOT: a finger landing
+        // on a row to SCROLL would instantly select it — and preventDefault
+        // on a touch pointerdown cancels the scroll gesture itself. Touch
+        // picks on click below, which the browser only fires for a true tap.
         this.listbox.addEventListener('pointerdown', (e) => {
             const li = e.target.closest('[role="option"]');
-            if (li) {
+            if (li && e.pointerType === 'mouse') {
                 e.preventDefault();
+                this.pick(li.dataset.value);
+            }
+        });
+        this.listbox.addEventListener('click', (e) => {
+            const li = e.target.closest('[role="option"]');
+            // this.listbox is already null when the mouse path picked first
+            if (li && this.listbox) {
                 this.pick(li.dataset.value);
             }
         });
@@ -126,6 +154,20 @@ export class Combobox {
         // Select it so typing starts a fresh filter in one keystroke.
         this.input.select();
         this.renderOptions('');
+        // Ensure the popup is actually on-screen: with the virtual keyboard
+        // suppressed the browser no longer auto-scrolls a bottom-of-viewport
+        // field into view, so a popup opening below the fold would be
+        // invisible — and a touch on the page background to reach it is a
+        // light dismiss. Scroll the page just enough (input stays visible),
+        // once per open — position() must never do this or scroll → reposition
+        // would loop.
+        const rect = this.input.getBoundingClientRect();
+        const desired = Math.min(384, this.listbox.scrollHeight + 16);
+        const overflow = rect.bottom + 4 + desired + 12 - window.innerHeight;
+        if (overflow > 0) {
+            window.scrollBy(0, Math.min(overflow, Math.max(0, rect.top - 8)));
+            this.position();
+        }
         document.addEventListener('pointerdown', this.onDocumentPointerDown, true);
         window.addEventListener('scroll', this.reposition, true);
         window.addEventListener('resize', this.reposition);
@@ -136,6 +178,7 @@ export class Combobox {
         this.listbox.remove();
         this.listbox = null;
         this.activeIndex = -1;
+        this.input.inputMode = 'none'; // next open starts keyboard-less again
         this.input.setAttribute('aria-expanded', 'false');
         this.input.removeAttribute('aria-controls');
         this.input.removeAttribute('aria-activedescendant');

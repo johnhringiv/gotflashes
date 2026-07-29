@@ -118,16 +118,43 @@ describe('Combobox', () => {
         expect(optionLabels()).toEqual(['Fleet 3 - Gamma', 'None']);
     });
 
-    it('picking a row sets the select value, dispatches change, and shows the label', () => {
+    it('picking a row (tap/click) sets the select value, dispatches change, and shows the label', () => {
         const onChange = vi.fn();
         select.addEventListener('change', onChange);
         input.dispatchEvent(new Event('click'));
         const row = document.querySelector('[data-value="20"]');
-        row.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        row.dispatchEvent(new Event('click', { bubbles: true }));
         expect(select.value).toBe('20');
         expect(onChange).toHaveBeenCalledTimes(1);
         expect(input.value).toBe('Fleet 2 - Beta');
         expect(listbox()).toBeNull();
+    });
+
+    it('mouse pointerdown picks immediately; touch pointerdown does not (scroll gesture)', () => {
+        input.dispatchEvent(new Event('click'));
+        const touchDown = new Event('pointerdown', { bubbles: true });
+        Object.defineProperty(touchDown, 'pointerType', { value: 'touch' });
+        document.querySelector('[data-value="20"]').dispatchEvent(touchDown);
+        // A finger landing on a row to scroll must NOT select it
+        expect(select.value).toBe('');
+        expect(listbox()).toBeTruthy();
+
+        const mouseDown = new Event('pointerdown', { bubbles: true });
+        Object.defineProperty(mouseDown, 'pointerType', { value: 'mouse' });
+        document.querySelector('[data-value="30"]').dispatchEvent(mouseDown);
+        expect(select.value).toBe('30');
+        expect(listbox()).toBeNull();
+    });
+
+    it('suppresses the virtual keyboard until a second tap opts into typing', () => {
+        expect(input.inputMode).toBe('none'); // opening tap: browse, no keyboard
+        input.dispatchEvent(new Event('click'));
+        expect(input.inputMode).toBe('none');
+        input.dispatchEvent(new Event('click')); // second tap while open
+        expect(input.inputMode).toBe('text');
+        expect(listbox()).toBeTruthy(); // opting in never closes the list
+        combobox.close();
+        expect(input.inputMode).toBe('none'); // reset for the next open
     });
 
     it('navigates with arrows and commits with Enter', () => {
