@@ -793,6 +793,10 @@
             margin-inline: 0.5rem;
             padding: 0.5rem;
             translate: -0.5rem;
+
+            /* On-theme scrollbar, same as .combobox-listbox */
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) transparent;
         }
         :is(.select, .select select, .dp-month-select)::picker-icon { display: none; }
         :is(.select, .select select, .dp-month-select) selectedcontent {
@@ -851,6 +855,12 @@
         box-shadow: 0 20px 25px -5px oklch(0% 0 0deg / 0.1), 0 8px 10px -6px oklch(0% 0 0deg / 0.1);
         max-height: min(24rem, 70dvh);
         overflow-y: auto;
+
+        /* On-theme scrollbar: thin, brand-tinted thumb on a transparent
+           track (standard properties — degrade to the OS default where
+           unsupported). Matches the native base-select pickers. */
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) transparent;
     }
     .combobox-option {
         position: relative;
