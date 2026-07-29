@@ -778,6 +778,11 @@
         :is(.select, .select select, .dp-month-select) { appearance: base-select; align-items: center; }
         :is(.select, .select select, .dp-month-select)::picker(select) {
             appearance: base-select;
+
+            /* Never flip the option list above the control — dropdowns open
+               DOWN site-wide (user call; the combobox popup matches in JS).
+               The picker clamps/scrolls within the viewport instead. */
+            position-try-fallbacks: none;
             color: inherit;
             border: var(--border) solid var(--color-base-200);
             border-radius: var(--radius-box);
@@ -1822,14 +1827,8 @@
         font-size: 0.875rem;
     }
 
-    /* Never flip the month list above the control: on short viewports the
-       flip fallback threw it on top of the calendar. Dropping below and
-       scrolling (the picker clamps to the viewport) reads like a menu. */
-    @supports (appearance: base-select) {
-        .dp-month-select::picker(select) {
-            position-try-fallbacks: none;
-        }
-    }
+    /* (The month list's no-flip rule now rides the site-wide
+       position-try-fallbacks: none on all base-select pickers above.) */
 
     .dp-weekdays {
         display: grid;

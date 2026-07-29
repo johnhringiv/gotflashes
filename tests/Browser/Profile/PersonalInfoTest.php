@@ -44,7 +44,7 @@ it('shows district/fleet pre-selected in TomSelect', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    // The district select is native; its selected option is server-rendered
+    // The hidden district select still carries the value; selected option is server-rendered
     $page->assertScript(
         "document.getElementById('district-select').value",
         (string) $this->district->id

@@ -1,9 +1,10 @@
 import { initCombobox } from './utils/combobox';
 
 /**
- * Sailor Logs admin filters: district is a plain native select, fleet is a
- * searchable combobox (135 options). Simple logic: selecting a district
- * clears the fleet filter and vice versa.
+ * Sailor Logs admin filters: district and fleet are both searchable
+ * comboboxes (36 districts, 135 fleets). Simple logic: selecting a district
+ * clears the fleet filter and vice versa; the "All Districts"/"All Fleets"
+ * empty options are pickable rows (data-allow-empty on the selects).
  */
 function initializeSailorLogsFilters() {
     const districtSelect = document.getElementById('sailor-logs-district-select');
@@ -13,6 +14,7 @@ function initializeSailorLogsFilters() {
         return;
     }
 
+    const districtCombobox = initCombobox(districtSelect, { placeholder: 'All Districts' });
     const fleetCombobox = initCombobox(fleetSelect, { placeholder: 'All Fleets' });
 
     const syncToLivewire = (el, property, value) => {
@@ -34,7 +36,7 @@ function initializeSailorLogsFilters() {
     fleetSelect.addEventListener('change', () => {
         const value = fleetSelect.value;
         if (value) {
-            districtSelect.value = '';
+            districtCombobox.clear({ silent: true });
             syncToLivewire(districtSelect, 'selectedDistrict', '');
         }
         syncToLivewire(fleetSelect, 'selectedFleet', value);
@@ -43,7 +45,7 @@ function initializeSailorLogsFilters() {
     // Server-initiated reset (Clear Filters button): properties are already
     // null on the server, so update the UI silently
     Livewire.on('filters-cleared', () => {
-        districtSelect.value = '';
+        districtCombobox.clear({ silent: true });
         fleetCombobox.clear({ silent: true });
     });
 }

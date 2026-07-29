@@ -19,18 +19,33 @@ beforeEach(function () {
 });
 
 describe('district/fleet controls on profile', function () {
-    it('server-renders district options and enhances fleet with a combobox', function () {
+    it('server-renders options and enhances both selects with comboboxes', function () {
         $page = visit('/profile');
-        // District: plain native select with every district as an option
+        // Every district is a server-rendered option on the hidden select
         $page->assertScript(
             "document.querySelectorAll('#district-select option').length",
             District::count() + 1 // + placeholder
         );
-        // Fleet: hidden native select + visible combobox input showing the label
+        // Both native selects hidden behind combobox inputs showing the labels
+        $page->assertScript("document.getElementById('district-select').hidden", true);
         $page->assertScript("document.getElementById('fleet-select').hidden", true);
+        $page->assertScript(
+            "document.getElementById('district-select-input').value",
+            $this->district->name
+        );
         $page->assertScript(
             "document.getElementById('fleet-select-input').value",
             "Fleet {$this->fleet->fleet_number} - {$this->fleet->fleet_name}"
+        );
+    });
+
+    it('clearing the district widens the fleet list to every fleet', function () {
+        $page = visit('/profile');
+        $page->script("document.getElementById('district-select')._combobox.clear()");
+        $page->script("document.getElementById('fleet-select-input').click()");
+        $page->assertScript(
+            'document.querySelectorAll(".combobox-option").length',
+            Fleet::count()
         );
     });
 
@@ -107,6 +122,8 @@ describe('district/fleet controls on registration', function () {
         auth()->logout();
         $page = visit('/register');
         $page->assertScript("document.getElementById('district-select').value", '');
+        $page->assertScript("document.getElementById('district-select-input').placeholder", 'Select district...');
+        $page->assertScript("document.getElementById('district-select-input').value", '');
         $page->assertScript("document.getElementById('fleet-select-input').placeholder", 'Select fleet...');
         $page->assertScript("document.getElementById('fleet-select-input').value", '');
     });

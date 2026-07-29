@@ -222,11 +222,11 @@ removed):
   (in `@layer components`, brand tokens); test handle: `el._datePicker`.
 
 **District/Fleet selects** (home-grown, no library — tom-select was removed):
-- **Hybrid split**: district (~36 options) is a plain native
-  `<select class="select">` everywhere; fleet (~135 options, needs search) is
-  a home-grown combobox (`resources/js/utils/combobox.js`) — a text input +
-  filtered listbox popup enhancing a hidden native `<select>`, which stays
-  the single source of truth for value, options, and `change` events.
+- **Both are searchable comboboxes** (`resources/js/utils/combobox.js`) —
+  a text input + filtered listbox popup enhancing a hidden native
+  `<select>`, which stays the single source of truth for value, options,
+  and `change` events. District is clearable by design: emptying it lets a
+  user who doesn't know their district search across ALL fleets.
 - **Options are server-rendered** in the Blade (no API fetch —
   `/api/districts-and-fleets` and `FleetController` were deleted).
   `user-profile-fields.blade.php` queries districts/fleets in a small `@php`
@@ -249,7 +249,11 @@ removed):
 - **Selection semantics**: typing filters but never destroys the current
   selection; Escape/blur/light-dismiss reverts the text to the selected
   label. Committing an emptied field (Enter/blur) is the one clear gesture.
-  Keyboard: arrows move, Enter picks, Escape closes, Tab exits.
+  Keyboard: arrows move, Enter picks, Escape closes, Tab exits. The active
+  (grey) highlight follows the pointer — the selected row keeps only its
+  checkmark, so there is never a second grey row. Popups ALWAYS open
+  downward (height capped to viewport space; matches the site-wide
+  `position-try-fallbacks: none` on native base-select pickers).
 - Styles: `.combobox-input` / `.combobox-listbox` / `.combobox-option` block
   in `@layer components` (input clones the `.select` recipe; popup mirrors
   the base-select picker). Test handles: `select._combobox`

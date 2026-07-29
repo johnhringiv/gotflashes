@@ -200,6 +200,25 @@ describe('Combobox', () => {
         expect(input.value).toBe('');
     });
 
+    it('moves the active highlight with the pointer (no double-grey)', () => {
+        combobox.setValue('10', { silent: true });
+        input.dispatchEvent(new Event('click'));
+        const selectedRow = document.querySelector('[data-value="10"]');
+        expect(selectedRow.classList.contains('active')).toBe(true); // keyboard anchor on open
+
+        const hoveredRow = document.querySelector('[data-value="30"]');
+        hoveredRow.dispatchEvent(new Event('pointerover', { bubbles: true }));
+        expect(hoveredRow.classList.contains('active')).toBe(true);
+        expect(selectedRow.classList.contains('active')).toBe(false); // checkmark only
+        expect(selectedRow.classList.contains('selected')).toBe(true);
+    });
+
+    it('refreshes the visible label when an external driver fires change on the select', () => {
+        select.value = '20';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        expect(input.value).toBe('Fleet 2 - Beta');
+    });
+
     it('marks the selected row with aria-selected and highlights it on open', () => {
         combobox.setValue('20', { silent: true });
         input.dispatchEvent(new Event('click'));

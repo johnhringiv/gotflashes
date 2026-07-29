@@ -216,10 +216,10 @@
                     id="{{ $districtSelectId }}"
                     class="select w-full"
                     data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
-                {{-- hidden: placeholder text shows in the closed control but
-                     never as a pickable row (same pattern as the gender select;
-                     "no district" is the real Unaffiliated/None row) --}}
-                <option value="" disabled hidden @selected(! $this->district_id)>Select district...</option>
+                {{-- empty value = cleared district (combobox clear gesture):
+                     deliberately allowed so users who don't know their
+                     district can search across ALL fleets --}}
+                <option value="" @selected(! $this->district_id)>Select district...</option>
                 @foreach ($districtOptions as $district)
                     <option value="{{ $district->id }}"
                             @selected($this->district_id == $district->id)
@@ -229,7 +229,7 @@
                 @endforeach
             </select>
         </div>
-        <label for="{{ $districtSelectId }}" class="flex items-center gap-1">
+        <label for="{{ $districtSelectId }}-input" class="flex items-center gap-1">
             District
             <span class="tooltip tooltip-right" data-tip="Select 'Unaffiliated/None' if you're not in a district">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">

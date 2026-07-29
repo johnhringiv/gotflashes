@@ -68,6 +68,10 @@ export class Combobox {
         select.insertAdjacentElement('afterend', this.input);
         this.showSelectedLabel();
 
+        // External drivers (glue code, tests) may set select.value and
+        // dispatch 'change' directly — keep the visible label in sync
+        select.addEventListener('change', () => this.showSelectedLabel());
+
         this.input.addEventListener('click', () => this.open());
         this.input.addEventListener('input', () => {
             if (!this.listbox) this.open();
@@ -99,6 +103,14 @@ export class Combobox {
             if (li) {
                 e.preventDefault();
                 this.pick(li.dataset.value);
+            }
+        });
+        // The active highlight follows the pointer, so a mouse user never
+        // sees two grey rows (hovered + the keyboard-anchored selected row)
+        this.listbox.addEventListener('pointerover', (e) => {
+            const li = e.target.closest('[role="option"]');
+            if (li) {
+                this.setActive(this.visible.findIndex((o) => o.value === li.dataset.value));
             }
         });
         document.body.appendChild(this.listbox);
@@ -179,14 +191,15 @@ export class Combobox {
 
     position() {
         const rect = this.input.getBoundingClientRect();
-        const height = this.listbox.offsetHeight;
-        let top = rect.bottom + window.scrollY + 4;
-        if (rect.bottom + height + 8 > window.innerHeight && rect.top - height - 8 > 0) {
-            top = rect.top + window.scrollY - height - 4;
-        }
-        this.listbox.style.top = `${top}px`;
+        this.listbox.style.top = `${rect.bottom + window.scrollY + 4}px`;
         this.listbox.style.left = `${rect.left + window.scrollX}px`;
         this.listbox.style.width = `${rect.width}px`;
+        // ALWAYS open downward (flipping above reads wrong — user call).
+        // Cap the height to the viewport space below — ceiling 24rem (the
+        // stylesheet default, which this inline value overrides), floor
+        // 160px so the list stays usable; the page scrolls for the rest.
+        const spaceBelow = window.innerHeight - rect.bottom - 12;
+        this.listbox.style.maxHeight = `${Math.min(384, Math.max(160, spaceBelow))}px`;
     }
 
     setActive(index) {

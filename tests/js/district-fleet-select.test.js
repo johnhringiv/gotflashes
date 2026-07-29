@@ -13,7 +13,7 @@ import { initializeDistrictFleetSelects } from '../../resources/js/utils/distric
 function buildDom({ isProfile = false, districtValue = '', fleetValue = '' } = {}) {
     document.body.innerHTML = `
         <select id="district-select" data-is-profile="${isProfile}">
-            <option value="" disabled hidden selected>Select district...</option>
+            <option value="">Select district...</option>
             <option value="1">District 1</option>
             <option value="2">District 2</option>
             <option value="99" data-none>Unaffiliated/None</option>
@@ -52,12 +52,14 @@ const pickDistrict = (districtSelect, value) => {
 };
 
 describe('Initialization', () => {
-    it('enhances the fleet select with a combobox and returns handles', () => {
+    it('enhances both selects with comboboxes and returns handles', () => {
         buildDom();
         const result = init();
+        expect(result.districtCombobox).toBeDefined();
         expect(result.fleetCombobox).toBeDefined();
+        expect(document.getElementById('district-select-input')).toBeTruthy();
         expect(document.getElementById('fleet-select-input')).toBeTruthy();
-        expect(result.districtSelect.hidden).toBe(false); // district stays native
+        expect(result.districtSelect.hidden).toBe(true);
     });
 
     it('returns the existing wiring on a repeat call', () => {
@@ -81,6 +83,7 @@ describe('Profile page behavior (data-is-profile="true")', () => {
 
         expect(document.getElementById('district-select').value).toBe('99');
         expect(document.getElementById('fleet-select').value).toBe('90');
+        expect(document.getElementById('district-select-input').value).toBe('Unaffiliated/None');
         // Non-silent so the Livewire properties stay in sync with the UI
         expect(onDistrictChange).toHaveBeenCalledWith('99');
         expect(onFleetChange).toHaveBeenCalledWith('90');
@@ -101,6 +104,7 @@ describe('Signup page behavior (data-is-profile="false")', () => {
         init();
         expect(document.getElementById('district-select').value).toBe('');
         expect(document.getElementById('fleet-select').value).toBe('');
+        expect(document.getElementById('district-select-input').value).toBe('');
         expect(document.getElementById('fleet-select-input').value).toBe('');
     });
 });
@@ -132,6 +136,13 @@ describe('District change behavior', () => {
         expect(onFleetChange).toHaveBeenCalledWith(null);
     });
 
+    it('clearing the district widens the fleet list to every fleet', () => {
+        const { districtSelect } = buildDom({ districtValue: '1' });
+        init();
+        districtSelect._combobox.clear(); // the combobox empty-commit gesture
+        expect(openFleet()).toHaveLength(4);
+    });
+
     it('syncs the picked district id', () => {
         const { districtSelect } = buildDom();
         const onDistrictChange = vi.fn();
@@ -151,6 +162,7 @@ describe('Fleet change behavior', () => {
         fleetCombobox.setValue('30'); // Fleet 3 belongs to District 2
 
         expect(document.getElementById('district-select').value).toBe('2');
+        expect(document.getElementById('district-select-input').value).toBe('District 2');
         expect(document.getElementById('fleet-select').value).toBe('30');
         expect(onDistrictChange).toHaveBeenCalledWith('2');
         expect(onFleetChange).toHaveBeenCalledWith('30');
