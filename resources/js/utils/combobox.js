@@ -64,6 +64,7 @@ export class Combobox {
         this.input.autocomplete = 'off';
         this.input.setAttribute('role', 'combobox');
         this.input.setAttribute('aria-expanded', 'false');
+        this.input.setAttribute('aria-haspopup', 'listbox');
         this.input.setAttribute('aria-autocomplete', 'list');
         select.insertAdjacentElement('afterend', this.input);
         this.showSelectedLabel();
@@ -80,11 +81,15 @@ export class Combobox {
         this.input.addEventListener('keydown', (e) => this.onKeydown(e));
 
         this.onDocumentPointerDown = (e) => {
+            // Self-heal if a morph removed the field while open — close()
+            // also detaches these document/window listeners (no leak)
+            if (!this.input.isConnected) return this.close({ revert: false });
             if (this.input.contains(e.target)) return;
             if (this.listbox && this.listbox.contains(e.target)) return;
             this.close();
         };
         this.reposition = () => {
+            if (!this.input.isConnected) return this.close({ revert: false });
             if (this.listbox) this.position();
         };
     }

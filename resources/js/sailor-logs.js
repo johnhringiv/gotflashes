@@ -20,7 +20,7 @@ function initializeSailorLogsFilters() {
     const syncToLivewire = (el, property, value) => {
         const livewireComponent = Livewire.find(el.closest('[wire\\:id]')?.getAttribute('wire:id'));
         if (livewireComponent) {
-            livewireComponent.set(property, value === '' ? null : parseInt(value) || null);
+            livewireComponent.set(property, value === '' ? null : parseInt(value, 10) || null);
         }
     };
 
