@@ -15,7 +15,7 @@ const sourcePatterns = [
 ];
 
 // Classes that are real but applied at RUNTIME (never in static markup): generated
-// by tom-select, added by our JS via classList, built as template strings (toast
+// added by our JS via classList, built as template strings (toast
 // `alert-${type}`), or drawn by D3. Static scanning can't see them, so they're
 // excluded from both directions here.
 const IGNORE_PREFIXES = [];

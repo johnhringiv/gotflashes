@@ -34,7 +34,7 @@ class ValidateOnlyTest extends TestCase
     }
 
     /**
-     * When the user picks a district, TomSelect's JS auto-clears fleet
+     * When the user picks a district, the district/fleet glue JS auto-clears fleet
      * (setting it to null in Livewire). That should not silently clear
      * the existing fleet error — the user still needs to pick a fleet.
      */

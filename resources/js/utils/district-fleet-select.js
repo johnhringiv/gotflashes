@@ -62,7 +62,9 @@ export function initializeDistrictFleetSelects(config) {
 
     const fleetCombobox = initCombobox(fleetSelect, {
         placeholder: 'Select fleet...',
-        // Evaluated on every open, so it always sees the current district
+        // Evaluated on every open, so it always sees the current district.
+        // Receives the raw <option> ELEMENT (for its data-* attributes),
+        // not the combobox's mapped {value, label} object.
         extraFilter: (option) => {
             const district = districtSelect.value;
             if (!district || district === noneDistrictId) return true;

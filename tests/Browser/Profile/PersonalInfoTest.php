@@ -40,7 +40,7 @@ it('renders profile form pre-filled with user data', function () {
     $page->assertValue('[wire\\:model\\.live\\.blur="yacht_club"]', 'Seattle YC');
 });
 
-it('shows district/fleet pre-selected in TomSelect', function () {
+it('shows district/fleet pre-selected in the combobox and select', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
