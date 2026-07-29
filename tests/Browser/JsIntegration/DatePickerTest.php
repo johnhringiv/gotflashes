@@ -180,13 +180,19 @@ describe('date picker calendar', function () {
         $page->assertScript('document.querySelector(".dp-month-select").value', "{$this->prevYear}-3");
     });
 
-    it('closes on outside click and on Escape', function () {
+    it('closes on outside click, input re-click, and Escape', function () {
         $page = visit('/logbook');
         $page->click('#date-picker');
         $page->assertVisible('.date-picker');
 
         // Light dismiss: pointer down anywhere outside the calendar.
         $page->click('#location');
+        $page->assertNotPresent('.date-picker');
+
+        // A second click on the input toggles the calendar closed.
+        $page->click('#date-picker');
+        $page->assertVisible('.date-picker');
+        $page->click('#date-picker');
         $page->assertNotPresent('.date-picker');
 
         // Escape from within the calendar closes and refocuses the input.

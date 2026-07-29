@@ -219,6 +219,9 @@ class DatePicker {
         }
         this.view = { year, month };
         this.render();
+        // A 4-week month and a 6-week month differ in height; re-anchor so a
+        // calendar flipped above the input doesn't grow down over it.
+        this.position();
         if (focusSelector) {
             // The intended control may have become disabled by the re-render
             // (e.g. nav reached the range edge) — fall back to any nav button.
@@ -369,6 +372,7 @@ class DatePicker {
         if (year !== this.view.year || month !== this.view.month) {
             this.view = { year, month };
             this.render();
+            this.position(); // month height may have changed — see setView()
         }
         const btn = this.root.querySelector(`.dp-day[data-date="${iso}"]:not([disabled])`);
         if (!btn) return;
@@ -396,9 +400,15 @@ function pickerFor(input) {
 
 // Delegated activation — works for the always-present create input and the
 // edit modal's input (which Livewire adds/removes) alike, with no init step.
+// A second click on the input toggles the calendar closed, like a native
+// select (the light-dismiss pointerdown deliberately ignores the input, so
+// this click still arrives while the calendar is open).
 document.addEventListener('click', (e) => {
     const input = e.target.closest(PICKER_INPUTS);
-    if (input) pickerFor(input).open();
+    if (!input) return;
+    const picker = pickerFor(input);
+    if (picker.root) picker.close();
+    else picker.open();
 });
 
 document.addEventListener('keydown', (e) => {
