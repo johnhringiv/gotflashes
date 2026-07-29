@@ -23,10 +23,10 @@ it('registering with district/fleet shows them on /profile', function () {
         'address_line1' => '100 Test Ave', 'city' => 'Seattle', 'state' => 'WA', 'zip_code' => '98101',
     ]);
 
-    // Set district and fleet via TomSelect API
-    $page->script("document.querySelector('#district-select').tomselect.setValue('{$district->id}')");
+    // Set district (native select) and fleet (combobox)
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
-    $page->script("document.querySelector('#fleet-select').tomselect.setValue('{$fleet->id}')");
+    $page->script("document.getElementById('fleet-select')._combobox.setValue('{$fleet->id}')");
     settleLivewire($page);
 
     $page->pressAndWaitFor('Register', 8)
@@ -35,7 +35,7 @@ it('registering with district/fleet shows them on /profile', function () {
     // Navigate to profile and verify district is set
     $profilePage = visit('/profile');
     $profilePage->assertScript(
-        "document.querySelector('#district-select').tomselect.getValue()",
+        "document.getElementById('district-select').value",
         (string) $district->id
     );
 });

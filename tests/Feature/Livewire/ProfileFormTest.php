@@ -197,8 +197,8 @@ class ProfileFormTest extends TestCase
 
     public function test_no_change_save_with_district_and_none_fleet_saves_cleanly(): void
     {
-        // Regression: on profile-page load the TomSelect init re-syncs the
-        // district to Livewire as a STRING (HTML select values are strings)
+        // Regression: on profile-page load the district/fleet init re-syncs
+        // the district to Livewire as a STRING (HTML select values are strings)
         // while the fleet's visible "None" is set silently and stays null.
         // save() compared the string district to the DB's int with !== and
         // misread an unchanged district as changed, then demanded a fleet

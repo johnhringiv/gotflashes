@@ -15,10 +15,10 @@ const sourcePatterns = [
 ];
 
 // Classes that are real but applied at RUNTIME (never in static markup): generated
-// by tom-select, added by our JS via classList, built as template strings (toast
+// added by our JS via classList, built as template strings (toast
 // `alert-${type}`), or drawn by D3. Static scanning can't see them, so they're
 // excluded from both directions here.
-const IGNORE_PREFIXES = ['ts-'];
+const IGNORE_PREFIXES = [];
 
 const IGNORE = new Set([
     // JS-hook classes with no styles of their own (selectors only, toggled by JS)
@@ -27,10 +27,8 @@ const IGNORE = new Set([
     // Built as template strings in JS (toast.js: `alert alert-${type}`)
     'alert-success', 'alert-warning', 'alert-error', 'alert-info',
 
-    // tom-select parts/states surfaced by our .ts-wrapper.<state> overrides
-    'single', 'focus', 'disabled', 'active', 'item', 'option', 'optgroup-header',
-    'no-results', 'create', 'highlight', 'dropdown-content', 'has-items',
-    'input-active', 'dropdown-active', 'rtl',
+    // combobox.js runtime states (classList toggles)
+    'active',
 
     // date-picker.js day states, composed into a template string at render time
     'today', 'selected', 'has-entry', 'other-month',

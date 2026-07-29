@@ -197,19 +197,39 @@
 <div class="divider my-6">Lightning Class Info</div>
 <p class="text-sm text-base-content/70 mb-4">Choose your fleet and district—let's see who gets out there!</p>
 
+@php
+    // Options are server-rendered (the old /api/districts-and-fleets fetch is
+    // gone). Queried here rather than passed in so both callers (registration
+    // + profile Livewire forms) stay untouched; the component must remain
+    // anonymous because $this below binds to the calling Livewire component.
+    $districtOptions = \App\Models\District::query()->orderBy('name')->get(['id', 'name']);
+    $fleetOptions = \App\Models\Fleet::query()->orderBy('fleet_number')->get(['id', 'fleet_number', 'fleet_name', 'district_id']);
+    $noneDistrictId = \App\Models\District::noneId();
+    $noneFleetId = \App\Models\Fleet::noneId();
+@endphp
+
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- District -->
-    <div class="mb-6 floating-label-visible @error('district_id') ts-has-error @enderror">
+    <div class="mb-6 floating-label-visible @error('district_id') field-error @enderror">
         <div wire:ignore>
             <select name="district_id"
                     id="{{ $districtSelectId }}"
                     class="select w-full"
-                    data-value="{{ $this->district_id }}"
                     data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
-                <option value="">Select district...</option>
+                {{-- empty value = cleared district (combobox clear gesture):
+                     deliberately allowed so users who don't know their
+                     district can search across ALL fleets --}}
+                <option value="" @selected(! $this->district_id)>Select district...</option>
+                @foreach ($districtOptions as $district)
+                    <option value="{{ $district->id }}"
+                            @selected($this->district_id == $district->id)
+                            @if ($district->id === $noneDistrictId) data-none @endif>
+                        {{ $district->name }}
+                    </option>
+                @endforeach
             </select>
         </div>
-        <label for="{{ $districtSelectId }}" class="flex items-center gap-1">
+        <label for="{{ $districtSelectId }}-input" class="flex items-center gap-1">
             District
             <span class="tooltip tooltip-right" data-tip="Select 'Unaffiliated/None' if you're not in a district">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -225,17 +245,24 @@
     </div>
 
     <!-- Fleet -->
-    <div class="mb-6 floating-label-visible @error('fleet_id') ts-has-error @enderror">
+    <div class="mb-6 floating-label-visible @error('fleet_id') field-error @enderror">
         <div wire:ignore>
             <select name="fleet_id"
                     id="{{ $fleetSelectId }}"
                     class="select w-full"
-                    data-value="{{ $this->fleet_id }}"
                     data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
                 <option value="">Select fleet...</option>
+                @foreach ($fleetOptions as $fleet)
+                    <option value="{{ $fleet->id }}"
+                            @selected($this->fleet_id == $fleet->id)
+                            data-district-id="{{ $fleet->district_id }}"
+                            @if ($fleet->id === $noneFleetId) data-none @endif>
+                        {{ $fleet->id === $noneFleetId ? 'None' : 'Fleet '.$fleet->fleet_number.' - '.$fleet->fleet_name }}
+                    </option>
+                @endforeach
             </select>
         </div>
-        <label for="{{ $fleetSelectId }}" class="flex items-center gap-1">
+        <label for="{{ $fleetSelectId }}-input" class="flex items-center gap-1">
             Fleet
             <span class="tooltip tooltip-right" data-tip="Search by name or number, or select 'None' if unaffiliated">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content/70 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">

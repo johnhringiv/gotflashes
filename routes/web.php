@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\FleetController;
 use App\Http\Controllers\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\Login;
 use App\Http\Controllers\Auth\Logout;
@@ -25,13 +24,6 @@ Route::get('/leaderboard', [LeaderboardController::class, 'index'])
 // Public community statistics page
 Route::view('/stats', 'stats.index')
     ->name('stats');
-
-// API routes for fleets and districts
-// Cache for 1 hour, then revalidate with ETag (balances freshness and performance)
-// No rate limiting needed - these are lightweight read-only endpoints with browser caching
-Route::prefix('api')->middleware(['cache.headers:public;max_age=3600;etag'])->group(function () {
-    Route::get('/districts-and-fleets', [FleetController::class, 'districtsAndFleets']);
-});
 
 // Logbook routes - Note: store/update/destroy are handled by Livewire components
 // Only index and edit use traditional routes
