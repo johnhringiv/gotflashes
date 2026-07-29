@@ -1,79 +1,52 @@
-import TomSelect from 'tom-select';
-
-let districtTomSelect = null;
-let fleetTomSelect = null;
+import { initCombobox } from './utils/combobox';
 
 /**
- * Initialize Tom Select dropdowns for Sailor Logs filters
- * Simple logic: selecting district clears fleet, selecting fleet clears district
+ * Sailor Logs admin filters: district and fleet are both searchable
+ * comboboxes (36 districts, 135 fleets). Simple logic: selecting a district
+ * clears the fleet filter and vice versa; the "All Districts"/"All Fleets"
+ * empty options are pickable rows (data-allow-empty on the selects).
  */
 function initializeSailorLogsFilters() {
     const districtSelect = document.getElementById('sailor-logs-district-select');
     const fleetSelect = document.getElementById('sailor-logs-fleet-select');
 
-    if (!districtSelect || !fleetSelect) {
+    if (!districtSelect || !fleetSelect || fleetSelect._combobox) {
         return;
     }
 
-    // Prevent duplicate initialization
-    if (districtSelect.tomselect || fleetSelect.tomselect) {
-        districtTomSelect = districtSelect.tomselect;
-        fleetTomSelect = fleetSelect.tomselect;
-        return;
-    }
+    const districtCombobox = initCombobox(districtSelect, { placeholder: 'All Districts' });
+    const fleetCombobox = initCombobox(fleetSelect, { placeholder: 'All Fleets' });
 
-    // Initialize District Select
-    districtTomSelect = new TomSelect('#sailor-logs-district-select', {
-        placeholder: 'All Districts',
-        allowEmptyOption: true,
-        maxOptions: null,
-        dropdownParent: 'body',
-        onChange: function(value) {
-            if (value) this.blur();
-
-            // Clear fleet selection when district is selected
-            if (value && value !== '') {
-                fleetTomSelect.clear();
-            }
-
-            // Sync with Livewire
-            const livewireComponent = Livewire.find(districtSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));
-            if (livewireComponent) {
-                livewireComponent.set('selectedDistrict', value === '' ? null : parseInt(value) || null);
-            }
+    const syncToLivewire = (el, property, value) => {
+        const livewireComponent = Livewire.find(el.closest('[wire\\:id]')?.getAttribute('wire:id'));
+        if (livewireComponent) {
+            livewireComponent.set(property, value === '' ? null : parseInt(value, 10) || null);
         }
+    };
+
+    districtSelect.addEventListener('change', () => {
+        const value = districtSelect.value;
+        if (value) {
+            fleetCombobox.clear({ silent: true });
+            syncToLivewire(fleetSelect, 'selectedFleet', '');
+        }
+        syncToLivewire(districtSelect, 'selectedDistrict', value);
     });
 
-    // Initialize Fleet Select
-    fleetTomSelect = new TomSelect('#sailor-logs-fleet-select', {
-        placeholder: 'All Fleets',
-        allowEmptyOption: true,
-        maxOptions: null,
-        dropdownParent: 'body',
-        onChange: function(value) {
-            if (value) this.blur();
-
-            // Clear district selection when fleet is selected
-            if (value && value !== '') {
-                districtTomSelect.clear();
-            }
-
-            // Sync with Livewire
-            const livewireComponent = Livewire.find(fleetSelect.closest('[wire\\:id]')?.getAttribute('wire:id'));
-            if (livewireComponent) {
-                livewireComponent.set('selectedFleet', value === '' ? null : parseInt(value) || null);
-            }
+    fleetSelect.addEventListener('change', () => {
+        const value = fleetSelect.value;
+        if (value) {
+            districtCombobox.clear({ silent: true });
+            syncToLivewire(districtSelect, 'selectedDistrict', '');
         }
+        syncToLivewire(fleetSelect, 'selectedFleet', value);
     });
 
-    // Listen for clear filters event from Livewire
+    // Server-initiated reset (Clear Filters button): properties are already
+    // null on the server, so update the UI silently
     Livewire.on('filters-cleared', () => {
-        if (districtTomSelect) {
-            districtTomSelect.clear();
-        }
-        if (fleetTomSelect) {
-            fleetTomSelect.clear();
-        }
+        districtCombobox.clear({ silent: true });
+        fleetCombobox.clear({ silent: true });
     });
 }
 

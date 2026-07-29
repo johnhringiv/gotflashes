@@ -50,7 +50,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Select multiple dates with the same activity details
   - Existing entries marked with lightning logo (cannot be re-selected)
   - Future dates grayed out and disabled
-  - Year selector dropdown (shows only allowed years based on grace period)
+  - Single month dropdown listing only selectable months (spans the year boundary during the January grace period)
   - All-or-nothing validation (if any date has an error, no entries are created)
   - Calendar styled with Lightning Class brand colors
   - **Dynamic date ranges**: Livewire automatically refreshes allowed dates if page left open (prevents stale grace period boundaries)
@@ -80,7 +80,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - CSV export with all activity data
   - Audit logging for all exports
 - **Year-Specific Memberships**: Track district/fleet affiliations per year with automatic carry-forward (see [membership-year-end-logic.md](docs/membership-year-end-logic.md))
-- **Dynamic Fleet Selection**: Real-time fleet lookup based on district during registration
+- **Smart Fleet Selection**: Searchable district/fleet comboboxes with cross-filtering — picking a fleet auto-fills its district; clearing the district searches all fleets
 - **Three Leaderboards**:
   - **Sailor**: Individual rankings by total flashes with year-specific memberships
   - **Fleet**: Fleet-level rankings with member counts
@@ -110,7 +110,7 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
 - **Secure Authentication**: Laravel's built-in session-based authentication
 - **Authorization Policies**: Enforces user ownership of activity records
 - **Year-Based Membership System**: Separate memberships table tracks district/fleet affiliations per year
-- **Dynamic API Endpoints**: Real-time fleet lookup with 1-hour cache + ETag support
+- **Server-Rendered Options**: District/fleet choices render with the page and enhance into searchable comboboxes (no API round-trip)
 - **Database Constraints**: Unique indexes prevent duplicate entries per user per date/year
 - **Date Validation**: Prevents future date entries (with timezone tolerance)
 - **Optimized Queries**: Efficient aggregations with proper indexing for leaderboard performance
@@ -127,12 +127,11 @@ The G.O.T. Flashes Challenge encourages Lightning Class sailors to get on the wa
   - Password reset emails
   - 24-hour token expiration for security
 - **Frontend**:
-  - Hand-authored vanilla CSS (framework-free, OKLCH design tokens, ~13 kB gzipped)
+  - Hand-authored vanilla CSS (framework-free, OKLCH design tokens, ~9 kB gzipped)
   - Blade templates
   - Livewire v4 (reactive components for dynamic date range updates)
   - Vanilla JavaScript with native `fetch()` API
-  - Home-grown multi-date calendar picker (no library)
-  - Tom-Select (searchable dropdowns)
+  - Home-grown multi-date calendar picker and searchable comboboxes (no widget libraries)
 - **Authentication**: Laravel's built-in session-based authentication
 - **Asset Bundling**: Vite
 - **Deployment**: Docker (Alpine Linux + PHP-FPM + Nginx + Supervisor)
@@ -240,8 +239,7 @@ composer test
 - Livewire tests: FlashForm and ProfileForm components with dynamic date range refresh, grace period boundary crossing, membership updates, email change verification
 - Admin dashboard tests: Authorization, award status management, bulk operations, filtering, CSV export
 - Email verification tests: Registration verification, email change with pending_email, token expiration, resend/cancel flows
-- JavaScript tests: Registration form validation and dynamic fleet selection, multi-date picker logic
-- Multi-date picker tests: All-or-nothing validation, duplicate detection, grace period logic
+- JavaScript tests (Vitest): CSS class-usage validation, combobox widget + district/fleet glue, date-picker calendar math
 - Uses in-memory SQLite for fast test execution
 
 **Test Organization:**

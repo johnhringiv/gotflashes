@@ -40,13 +40,13 @@ it('renders profile form pre-filled with user data', function () {
     $page->assertValue('[wire\\:model\\.live\\.blur="yacht_club"]', 'Seattle YC');
 });
 
-it('shows district/fleet pre-selected in TomSelect', function () {
+it('shows district/fleet pre-selected in the combobox and select', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    // TomSelect renders selected values as .item elements inside .ts-control
+    // The hidden district select still carries the value; selected option is server-rendered
     $page->assertScript(
-        "document.querySelector('#district-select')?.tomselect?.getValue()",
+        "document.getElementById('district-select').value",
         (string) $this->district->id
     );
 });

@@ -138,3 +138,13 @@ function frozenJanuary(): Carbon\Carbon
 {
     return Carbon\Carbon::create(now()->year + 1, 1, 15, 12);
 }
+
+/**
+ * JS snippet that sets a native <select> the way a user pick would: value +
+ * a bubbling change event (so delegated glue like district-fleet-select.js
+ * reacts). For combobox-enhanced selects use el._combobox.setValue() instead.
+ */
+function selectNativeJs(string $elementId, int|string $value): string
+{
+    return "(() => { const s = document.getElementById('{$elementId}'); s.value = '{$value}'; s.dispatchEvent(new Event('change', { bubbles: true })); })()";
+}

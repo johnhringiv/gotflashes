@@ -1,422 +1,202 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { initializeDistrictFleetSelects } from '../../resources/js/utils/district-fleet-select.js';
 
-// Mock TomSelect
-vi.mock('tom-select', () => {
-    return {
-        default: vi.fn().mockImplementation(function(selector, options) {
-            this.selector = selector;
-            this.options = options;
-            this.value = null;
-            // Initialize optionsList with options passed during construction
-            this.optionsList = options.options ? [...options.options] : [];
+/**
+ * Exercises the REAL glue + REAL combobox against real <select>s in happy-dom —
+ * no TomSelect mock, no fetch mock (options are server-rendered now).
+ *
+ * Fixture mirrors user-profile-fields.blade.php: Unaffiliated/None is a real
+ * district (99) and fleet (90) row marked data-none; per-fleet district ids
+ * ride on data-district-id.
+ */
 
-            this.addOption = vi.fn((option) => {
-                this.optionsList.push(option);
-            });
+function buildDom({ isProfile = false, districtValue = '', fleetValue = '' } = {}) {
+    document.body.innerHTML = `
+        <select id="district-select" data-is-profile="${isProfile}">
+            <option value="">Select district...</option>
+            <option value="1">District 1</option>
+            <option value="2">District 2</option>
+            <option value="99" data-none>Unaffiliated/None</option>
+        </select>
+        <select id="fleet-select" data-is-profile="${isProfile}">
+            <option value="">Select fleet...</option>
+            <option value="90" data-district-id="99" data-none>None</option>
+            <option value="10" data-district-id="1">Fleet 1 - Fleet One</option>
+            <option value="20" data-district-id="1">Fleet 2 - Fleet Two</option>
+            <option value="30" data-district-id="2">Fleet 3 - Fleet Three</option>
+        </select>
+    `;
+    const districtSelect = document.getElementById('district-select');
+    const fleetSelect = document.getElementById('fleet-select');
+    if (districtValue) districtSelect.value = districtValue;
+    if (fleetValue) fleetSelect.value = fleetValue;
+    return { districtSelect, fleetSelect };
+}
 
-            this.clearOptions = vi.fn(() => {
-                this.optionsList = [];
-            });
+function init(callbacks = {}) {
+    return initializeDistrictFleetSelects({
+        districtSelectId: 'district-select',
+        fleetSelectId: 'fleet-select',
+        ...callbacks,
+    });
+}
 
-            this.refreshOptions = vi.fn();
+const openFleet = () => {
+    document.getElementById('fleet-select-input').dispatchEvent(new Event('click'));
+    return Array.from(document.querySelectorAll('.combobox-option')).map((li) => li.textContent);
+};
 
-            this.setValue = vi.fn((value, silent) => {
-                this.value = value;
-                if (!silent && this.options.onChange) {
-                    this.options.onChange.call(this, value);
-                }
-            });
+const pickDistrict = (districtSelect, value) => {
+    districtSelect.value = value;
+    districtSelect.dispatchEvent(new Event('change', { bubbles: true }));
+};
 
-            this.getValue = vi.fn(() => {
-                return this.value;
-            });
+describe('Initialization', () => {
+    it('enhances both selects with comboboxes and returns handles', () => {
+        buildDom();
+        const result = init();
+        expect(result.districtCombobox).toBeDefined();
+        expect(result.fleetCombobox).toBeDefined();
+        expect(document.getElementById('district-select-input')).toBeTruthy();
+        expect(document.getElementById('fleet-select-input')).toBeTruthy();
+        expect(result.districtSelect.hidden).toBe(true);
+    });
 
-            this.clear = vi.fn(() => {
-                this.value = null;
-            });
+    it('returns the existing wiring on a repeat call', () => {
+        buildDom();
+        const first = init();
+        expect(init().fleetCombobox).toBe(first.fleetCombobox);
+    });
 
-            this.blur = vi.fn();
-
-            return this;
-        })
-    };
+    it('returns null if the selects are missing', () => {
+        document.body.innerHTML = '';
+        expect(init()).toBeNull();
+    });
 });
 
-// Mock fetch API
-global.fetch = vi.fn();
+describe('Profile page behavior (data-is-profile="true")', () => {
+    it('falls back to the None district and fleet when values are empty', () => {
+        buildDom({ isProfile: true });
+        const onDistrictChange = vi.fn();
+        const onFleetChange = vi.fn();
+        init({ onDistrictChange, onFleetChange });
 
-describe('District and Fleet TomSelect Integration', () => {
-    let districtSelect;
-    let fleetSelect;
-    let mockDistricts;
-    let mockFleets;
-    let onDistrictChangeSpy;
-    let onFleetChangeSpy;
-
-    beforeEach(() => {
-        // Setup mock data
-        // Unaffiliated/None is a real district (id 99) and fleet (id 90,
-        // fleet_number 0); the API reports their ids alongside the lists
-        mockDistricts = [
-            { id: 1, name: 'District 1' },
-            { id: 2, name: 'District 2' },
-            { id: 99, name: 'Unaffiliated/None' }
-        ];
-
-        mockFleets = [
-            { id: 1, fleet_number: '1', fleet_name: 'Fleet One', district_id: 1, district_name: 'District 1' },
-            { id: 2, fleet_number: '2', fleet_name: 'Fleet Two', district_id: 1, district_name: 'District 1' },
-            { id: 3, fleet_number: '3', fleet_name: 'Fleet Three', district_id: 2, district_name: 'District 2' },
-            { id: 90, fleet_number: 0, fleet_name: 'None', district_id: 99, district_name: 'Unaffiliated/None' }
-        ];
-
-        // Mock fetch response
-        global.fetch.mockResolvedValue({
-            ok: true,
-            json: async () => ({
-                districts: mockDistricts,
-                fleets: mockFleets,
-                none_district_id: 99,
-                none_fleet_id: 90
-            })
-        });
-
-        // Setup DOM
-        document.body.innerHTML = `
-            <select id="district-select" data-value="" data-is-profile="false"></select>
-            <select id="fleet-select" data-value="" data-is-profile="false"></select>
-        `;
-
-        districtSelect = document.getElementById('district-select');
-        fleetSelect = document.getElementById('fleet-select');
-
-        // Create spies for callbacks
-        onDistrictChangeSpy = vi.fn();
-        onFleetChangeSpy = vi.fn();
+        expect(document.getElementById('district-select').value).toBe('99');
+        expect(document.getElementById('fleet-select').value).toBe('90');
+        expect(document.getElementById('district-select-input').value).toBe('Unaffiliated/None');
+        // Non-silent so the Livewire properties stay in sync with the UI
+        expect(onDistrictChange).toHaveBeenCalledWith('99');
+        expect(onFleetChange).toHaveBeenCalledWith('90');
     });
 
-    afterEach(() => {
-        vi.clearAllMocks();
-        document.body.innerHTML = '';
+    it('preserves existing values', () => {
+        buildDom({ isProfile: true, districtValue: '1', fleetValue: '20' });
+        init();
+        expect(document.getElementById('district-select').value).toBe('1');
+        expect(document.getElementById('fleet-select').value).toBe('20');
+        expect(document.getElementById('fleet-select-input').value).toBe('Fleet 2 - Fleet Two');
+    });
+});
+
+describe('Signup page behavior (data-is-profile="false")', () => {
+    it('leaves empty values alone so placeholders show', () => {
+        buildDom();
+        init();
+        expect(document.getElementById('district-select').value).toBe('');
+        expect(document.getElementById('fleet-select').value).toBe('');
+        expect(document.getElementById('district-select-input').value).toBe('');
+        expect(document.getElementById('fleet-select-input').value).toBe('');
+    });
+});
+
+describe('District change behavior', () => {
+    it('narrows the fleet list to that district plus the None fleet', () => {
+        const { districtSelect } = buildDom();
+        init();
+        pickDistrict(districtSelect, '1');
+        expect(openFleet()).toEqual(['None', 'Fleet 1 - Fleet One', 'Fleet 2 - Fleet Two']);
     });
 
-    describe('Initialization', () => {
-        it('should fetch districts and fleets from API', async () => {
-            await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(global.fetch).toHaveBeenCalledWith('/api/districts-and-fleets');
-        });
-
-        it('should initialize both TomSelect instances', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result).toBeTruthy();
-            expect(result.districtTomSelect).toBeDefined();
-            expect(result.fleetTomSelect).toBeDefined();
-        });
-
-        it('should include the Unaffiliated/None district from the API data', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            const districtOptions = result.districtTomSelect.optionsList;
-            const noneOption = districtOptions.find(opt => opt.value === 99);
-
-            expect(noneOption).toBeDefined();
-            expect(noneOption.text).toBe('Unaffiliated/None');
-        });
-
-        it('should label the None fleet row "None"', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            const fleetOptions = result.fleetTomSelect.optionsList;
-            const noneOption = fleetOptions.find(opt => opt.value === 90);
-
-            expect(noneOption).toBeDefined();
-            expect(noneOption.text).toBe('None');
-        });
+    it('shows every fleet for the Unaffiliated/None district', () => {
+        const { districtSelect } = buildDom();
+        const onDistrictChange = vi.fn();
+        init({ onDistrictChange });
+        pickDistrict(districtSelect, '99');
+        expect(onDistrictChange).toHaveBeenCalledWith('99');
+        expect(openFleet()).toHaveLength(4);
     });
 
-    describe('Profile Page Behavior (data-is-profile="true")', () => {
-        beforeEach(() => {
-            districtSelect.dataset.isProfile = 'true';
-            fleetSelect.dataset.isProfile = 'true';
-        });
-
-        it('should fall back to the None district when value is empty on profile page', async () => {
-            districtSelect.dataset.value = '';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            // Non-silent so the Livewire property stays in sync with the UI
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('99');
-        });
-
-        it('should fall back to the None fleet when value is empty on profile page', async () => {
-            fleetSelect.dataset.value = '';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result.fleetTomSelect.setValue).toHaveBeenCalledWith('90');
-        });
-
-        it('should preserve existing district value on profile page', async () => {
-            districtSelect.dataset.value = '1';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('1');
-        });
-
-        it('should preserve existing fleet value on profile page', async () => {
-            fleetSelect.dataset.value = '2';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result.fleetTomSelect.setValue).toHaveBeenCalledWith('2');
-        });
+    it('clears the fleet selection and syncs null', () => {
+        const { districtSelect, fleetSelect } = buildDom({ districtValue: '1', fleetValue: '10' });
+        const onFleetChange = vi.fn();
+        init({ onFleetChange });
+        pickDistrict(districtSelect, '2');
+        expect(fleetSelect.value).toBe('');
+        expect(document.getElementById('fleet-select-input').value).toBe('');
+        expect(onFleetChange).toHaveBeenCalledWith(null);
     });
 
-    describe('Signup Page Behavior (data-is-profile="false")', () => {
-        it('should NOT set district to "none" when value is empty on signup', async () => {
-            districtSelect.dataset.value = '';
-            districtSelect.dataset.isProfile = 'false';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            // Should not fall back to the None district for empty values on signup
-            const setValueCalls = result.districtTomSelect.setValue.mock.calls;
-            const noneCall = setValueCalls.find(call => call[0] === '99');
-            expect(noneCall).toBeUndefined();
-        });
-
-        it('should NOT set fleet to "none" when value is empty on signup', async () => {
-            fleetSelect.dataset.value = '';
-            fleetSelect.dataset.isProfile = 'false';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            // Should not fall back to the None fleet for empty values on signup
-            const setValueCalls = result.fleetTomSelect.setValue.mock.calls;
-            const noneCall = setValueCalls.find(call => call[0] === '90');
-            expect(noneCall).toBeUndefined();
-        });
+    it('clearing the district widens the fleet list to every fleet', () => {
+        const { districtSelect } = buildDom({ districtValue: '1' });
+        init();
+        districtSelect._combobox.clear(); // the combobox empty-commit gesture
+        expect(openFleet()).toHaveLength(4);
     });
 
-    describe('Special Case: Auto-populate District when Fleet is None', () => {
-        it('should set district to None when fleet is set to None and district is empty', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select',
-                onDistrictChange: onDistrictChangeSpy,
-                onFleetChange: onFleetChangeSpy
-            });
+    it('syncs the picked district id', () => {
+        const { districtSelect } = buildDom();
+        const onDistrictChange = vi.fn();
+        init({ onDistrictChange });
+        pickDistrict(districtSelect, '1');
+        expect(onDistrictChange).toHaveBeenCalledWith('1');
+    });
+});
 
-            // Simulate user selecting the None fleet when district is empty
-            result.districtTomSelect.getValue.mockReturnValue('');
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
+describe('Fleet change behavior', () => {
+    it('auto-fills the district from the picked fleet without clearing the pick', () => {
+        buildDom();
+        const onDistrictChange = vi.fn();
+        const onFleetChange = vi.fn();
+        const { fleetCombobox } = init({ onDistrictChange, onFleetChange });
 
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith('99', true);
-            expect(onDistrictChangeSpy).toHaveBeenCalledWith('99');
-        });
+        fleetCombobox.setValue('30'); // Fleet 3 belongs to District 2
 
-        it('should NOT change district when fleet is set to None and district already has a value', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            // Simulate district already having a value
-            result.districtTomSelect.getValue.mockReturnValue('1');
-
-            // Clear previous setValue calls
-            result.districtTomSelect.setValue.mockClear();
-
-            // Simulate user selecting the None fleet
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
-
-            // Should NOT call setValue on district since it already has a value
-            expect(result.districtTomSelect.setValue).not.toHaveBeenCalled();
-        });
-
-        it('should call onFleetChange with the None fleet id when fleet is set to None', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select',
-                onFleetChange: onFleetChangeSpy
-            });
-
-            result.districtTomSelect.getValue.mockReturnValue('');
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '90');
-
-            // The real None fleet id syncs like any other pick; the server
-            // distinguishes an explicit choice from an auto-cleared field by
-            // the value being non-empty.
-            expect(onFleetChangeSpy).toHaveBeenCalledWith('90');
-        });
+        expect(document.getElementById('district-select').value).toBe('2');
+        expect(document.getElementById('district-select-input').value).toBe('District 2');
+        expect(document.getElementById('fleet-select').value).toBe('30');
+        expect(onDistrictChange).toHaveBeenCalledWith('2');
+        expect(onFleetChange).toHaveBeenCalledWith('30');
     });
 
-    describe('District Change Behavior', () => {
-        it('should filter fleets when district changes', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
+    it('sets the district to None when the None fleet is picked with a blank district', () => {
+        buildDom();
+        const onDistrictChange = vi.fn();
+        const onFleetChange = vi.fn();
+        const { fleetCombobox } = init({ onDistrictChange, onFleetChange });
 
-            // Clear initial calls
-            result.fleetTomSelect.clearOptions.mockClear();
-            result.fleetTomSelect.addOption.mockClear();
+        fleetCombobox.setValue('90');
 
-            // Simulate district change to District 1
-            result.districtTomSelect.options.onChange.call(result.districtTomSelect, '1');
-
-            expect(result.fleetTomSelect.clearOptions).toHaveBeenCalled();
-
-            // Should add District 1's fleets plus the always-available None fleet
-            const addedOptions = result.fleetTomSelect.addOption.mock.calls.map(call => call[0]);
-            const realFleets = addedOptions.filter(opt => opt.value !== 90);
-
-            expect(realFleets.length).toBe(2); // Fleet 1 and Fleet 2
-            expect(realFleets.every(opt => opt.district_id === 1)).toBe(true);
-            expect(addedOptions.some(opt => opt.value === 90)).toBe(true);
-        });
-
-        it('should clear fleet selection when district changes', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            result.districtTomSelect.options.onChange.call(result.districtTomSelect, '2');
-
-            expect(result.fleetTomSelect.clear).toHaveBeenCalled();
-        });
-
-        it('should call onDistrictChange callback with correct value', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select',
-                onDistrictChange: onDistrictChangeSpy
-            });
-
-            result.districtTomSelect.options.onChange.call(result.districtTomSelect, '1');
-
-            expect(onDistrictChangeSpy).toHaveBeenCalledWith('1');
-        });
-
-        it('should sync the None district id and offer all fleets when Unaffiliated/None is selected', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select',
-                onDistrictChange: onDistrictChangeSpy
-            });
-
-            result.fleetTomSelect.addOption.mockClear();
-            result.districtTomSelect.options.onChange.call(result.districtTomSelect, '99');
-
-            // The None district is a real row; its id syncs like any other pick,
-            // and every fleet stays selectable (picking one auto-sets its district)
-            expect(onDistrictChangeSpy).toHaveBeenCalledWith('99');
-            const added = result.fleetTomSelect.addOption.mock.calls.map(c => c[0]);
-            expect(added.length).toBe(mockFleets.length);
-        });
+        expect(document.getElementById('district-select').value).toBe('99');
+        expect(onDistrictChange).toHaveBeenCalledWith('99');
+        expect(onFleetChange).toHaveBeenCalledWith('90');
     });
 
-    describe('Fleet Change Behavior', () => {
-        it('should set district based on selected fleet', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
+    it('leaves an already-chosen district alone when the None fleet is picked', () => {
+        buildDom({ districtValue: '1' });
+        const onDistrictChange = vi.fn();
+        const { fleetCombobox } = init({ onDistrictChange });
 
-            // Clear initial setValue calls
-            result.districtTomSelect.setValue.mockClear();
+        fleetCombobox.setValue('90');
 
-            // Simulate selecting Fleet 3 (which belongs to District 2)
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '3');
-
-            expect(result.districtTomSelect.setValue).toHaveBeenCalledWith(2, true);
-        });
-
-        it('should call onFleetChange callback with correct value', async () => {
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select',
-                onFleetChange: onFleetChangeSpy
-            });
-
-            result.fleetTomSelect.options.onChange.call(result.fleetTomSelect, '2');
-
-            expect(onFleetChangeSpy).toHaveBeenCalledWith('2');
-        });
+        expect(document.getElementById('district-select').value).toBe('1');
+        expect(onDistrictChange).not.toHaveBeenCalled();
     });
 
-    describe('Error Handling', () => {
-        it('should handle API fetch failure gracefully', async () => {
-            global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result).toBeNull();
-            expect(districtSelect.disabled).toBe(true);
-            expect(fleetSelect.disabled).toBe(true);
-        });
-
-        it('should display error message when API fails', async () => {
-            global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-            await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            const errorAlert = document.querySelector('.alert-error');
-            expect(errorAlert).toBeTruthy();
-            expect(errorAlert.textContent).toContain('Unable to load districts and fleets');
-        });
-
-        it('should return null if select elements do not exist', async () => {
-            document.body.innerHTML = '';
-
-            const result = await initializeDistrictFleetSelects({
-                districtSelectId: 'district-select',
-                fleetSelectId: 'fleet-select'
-            });
-
-            expect(result).toBeNull();
-        });
+    it('syncs null when the fleet is cleared', () => {
+        buildDom({ fleetValue: '10' });
+        const onFleetChange = vi.fn();
+        const { fleetCombobox } = init({ onFleetChange });
+        fleetCombobox.clear();
+        expect(onFleetChange).toHaveBeenCalledWith(null);
     });
 });

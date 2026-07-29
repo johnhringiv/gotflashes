@@ -26,9 +26,11 @@
                     <label class="label">
                         <span class="label-text font-semibold">District <span class="text-xs font-normal text-base-content/50">(clears fleet)</span></span>
                     </label>
+                    {{-- data-allow-empty: "All Districts" is a pickable row in
+                         the combobox, not just placeholder text --}}
                     <select id="sailor-logs-district-select"
                             class="select"
-                            data-value="{{ $selectedDistrict }}">
+                            data-allow-empty="true">
                         <option value="">All Districts</option>
                         @foreach($availableDistricts as $district)
                             <option value="{{ $district->id }}" {{ $selectedDistrict == $district->id ? 'selected' : '' }}>
@@ -43,9 +45,11 @@
                     <label class="label">
                         <span class="label-text font-semibold">Fleet <span class="text-xs font-normal text-base-content/50">(clears district)</span></span>
                     </label>
+                    {{-- data-allow-empty: "All Fleets" is a pickable row in the
+                         combobox, not just placeholder text --}}
                     <select id="sailor-logs-fleet-select"
                             class="select"
-                            data-value="{{ $selectedFleet }}">
+                            data-allow-empty="true">
                         <option value="">All Fleets</option>
                         @foreach($availableFleets as $fleet)
                             <option value="{{ $fleet->id }}"

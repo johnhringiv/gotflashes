@@ -256,7 +256,7 @@ class SailorLogs extends AdminComponent
         $this->searchQuery = '';
         $this->resetPage();
 
-        // Dispatch event to clear TomSelect dropdowns
+        // Dispatch event so the district/fleet comboboxes clear their UI
         $this->dispatch('filters-cleared');
     }
 }

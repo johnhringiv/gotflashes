@@ -70,26 +70,14 @@ it('clears fleet filter when district changes', function () {
     $page = visit('/admin/sailor-logs');
 
     // Set fleet first
-    $page->script("
-        const fleetSelect = document.getElementById('sailor-logs-fleet-select');
-        if (fleetSelect && fleetSelect.tomselect) {
-            fleetSelect.tomselect.setValue('{$this->fleetA->id}');
-        }
-    ");
+    $page->script("document.getElementById('sailor-logs-fleet-select')._combobox.setValue('{$this->fleetA->id}')");
     $page->wait(1);
 
     // Now change district - should clear fleet
-    $page->script("
-        const distSelect = document.getElementById('sailor-logs-district-select');
-        if (distSelect && distSelect.tomselect) {
-            distSelect.tomselect.setValue('{$this->districtB->id}');
-        }
-    ");
-    // Fleet should be cleared - verify by checking the TomSelect value
-    $page->assertScript(
-        "(() => { const s = document.getElementById('sailor-logs-fleet-select'); return s?.tomselect ? s.tomselect.getValue() : ''; })()",
-        ''
-    );
+    $page->script(selectNativeJs('sailor-logs-district-select', $this->districtB->id));
+    // Fleet should be cleared - both the hidden select and the visible input
+    $page->assertScript("document.getElementById('sailor-logs-fleet-select').value", '');
+    $page->assertScript("document.getElementById('sailor-logs-fleet-select-input').value", '');
 });
 
 it('clears all filters via Clear button', function () {

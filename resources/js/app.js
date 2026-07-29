@@ -5,5 +5,6 @@ import './date-picker';
 import './toast';
 import './sailor-logs';
 import './password-toggle';
+import './select-touch-fix';
 import './verification-banner';
 import './stats-charts';
