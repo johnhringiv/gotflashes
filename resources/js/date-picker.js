@@ -247,6 +247,10 @@ class DatePicker {
         if (rect.bottom + height + 4 > window.innerHeight && rect.top - height - 4 > 0) {
             top = rect.top + window.scrollY - height - 4;
         }
+        // Never above the viewport top (a calendar taller than the space on
+        // BOTH sides of the input would otherwise clip its header off-screen;
+        // overlapping the input is the lesser evil).
+        top = Math.max(top, window.scrollY + 8);
         const maxLeft = window.scrollX + document.documentElement.clientWidth - width - 8;
         const left = Math.max(window.scrollX + 8, Math.min(rect.left + window.scrollX, maxLeft));
 
@@ -319,8 +323,7 @@ class DatePicker {
             // Refocus the input and let the browser's default Tab move on from
             // there — forward lands on the field after the input, Shift+Tab
             // before it.
-            this.close();
-            this.input.focus();
+            this.close({ refocusInput: true });
             return;
         }
 
