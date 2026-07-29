@@ -39,7 +39,12 @@ class DatePicker {
         this.input = input;
         this.root = null; // calendar element, exists only while open
         // Seed from the rendered value: edit mode's input carries the flash's
-        // date server-side; create mode starts empty.
+        // date server-side; create mode starts empty. This seeding happens
+        // ONCE — afterwards only select()/clear() mutate the selection, which
+        // relies on Livewire never morphing the input's value attribute (true
+        // today: neither mode server-renders a value after mount). If that
+        // ever changes, selected and the displayed value would silently
+        // desync.
         this.selected = input.value ? input.value.split(', ') : [];
         this.view = null; // { year, month } while open
 
@@ -292,9 +297,16 @@ class DatePicker {
      */
     sync(prop, value) {
         const componentRoot = this.input.closest('[wire\\:id]');
-        if (!componentRoot || !window.Livewire) return;
-        const component = window.Livewire.find(componentRoot.getAttribute('wire:id'));
-        if (component) component.set(prop, value);
+        const component =
+            componentRoot && window.Livewire && window.Livewire.find(componentRoot.getAttribute('wire:id'));
+        if (!component) {
+            // Loud, like the existing-dates parse failure: a missing component
+            // here means selections silently never reach the server.
+            // eslint-disable-next-line no-console
+            console.error('Date picker: no Livewire component found to sync', prop);
+            return;
+        }
+        component.set(prop, value);
     }
 
     // --- events ------------------------------------------------------------

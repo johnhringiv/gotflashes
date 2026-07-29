@@ -637,6 +637,11 @@ composer check     # Run tests + all quality checks
 ```
 
 ### Common Pitfalls
+- `@playwright/test` is pinned `~1.61.1`: 1.62.0 hangs pest-plugin-browser at
+  boot (client protocol mismatch — the browser suite produces zero output).
+  Don't bump past 1.61.x until the plugin catches up, and validate any
+  lockfile change with `npx -y npm@latest ci --dry-run` (CI runs npm 12;
+  incremental npm-11 lock edits go stale)
 - Every class written in Blade/JS must have a rule in `resources/css/app.css` — there is no CSS framework and no JIT. The utility set is closed; the CSS validator test fails `composer check` on undefined classes
 - CSS edits are invisible without a rebuild when the Vite dev server isn't running (`public/build/` is stale) — run `npm run build` or use `composer dev`
 - Don't forget the unique constraint on (user_id, date) for flashes

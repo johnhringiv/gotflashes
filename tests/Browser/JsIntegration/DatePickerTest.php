@@ -2,6 +2,7 @@
 
 use App\Models\Flash;
 use App\Models\User;
+use Carbon\Carbon;
 
 // Server time is frozen mid-January so the grace period is active (min =
 // Jan 1 of the previous year, max = frozen today +1). Every date below is
@@ -229,6 +230,39 @@ describe('date picker calendar', function () {
             'document.activeElement.dataset.date > window.__dpBefore',
             true,
         );
+    });
+
+    it('supports Home/End/PageUp/PageDown and Tab-to-exit', function () {
+        // Expected targets derived from the frozen clock (Sunday-first weeks,
+        // matching the grid), so nothing here hardcodes a year or weekday.
+        $mid = testDate(14);
+        $weekStart = Carbon::parse($mid)->startOfWeek(Carbon::SUNDAY)->toDateString();
+        $weekEnd = Carbon::parse($mid)->endOfWeek(Carbon::SATURDAY)->toDateString();
+        $monthBack = Carbon::parse($weekEnd)->subMonthNoOverflow()->toDateString();
+
+        $page = visit('/logbook');
+        $page->click('#date-picker');
+        $page->script("document.querySelector('#date-picker')._datePicker.focusDay('{$mid}')");
+        $page->assertScript('document.activeElement.dataset.date', $mid);
+
+        $key = fn (string $key) => $page->script(
+            "document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: '{$key}', bubbles: true }))",
+        );
+
+        $key('Home');
+        $page->assertScript('document.activeElement.dataset.date', $weekStart);
+        $key('End');
+        $page->assertScript('document.activeElement.dataset.date', $weekEnd);
+        $key('PageUp');
+        $page->assertScript('document.activeElement.dataset.date', $monthBack);
+        $key('PageDown');
+        $page->assertScript('document.activeElement.dataset.date', $weekEnd);
+
+        // Tab closes the calendar and hands focus back to the input (the
+        // browser's default Tab then moves on from there).
+        $key('Tab');
+        $page->assertNotPresent('.date-picker');
+        $page->assertScript('document.activeElement.id', 'date-picker');
     });
 });
 
