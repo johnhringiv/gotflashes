@@ -115,6 +115,8 @@ export function initializeDistrictFleetSelects(config) {
     });
 
     const isProfilePage = districtSelect.dataset.isProfile === 'true';
+    // Order matters: setting the district non-silently CLEARS the fleet via
+    // the district change handler, so the fleet fallback must run second.
     if (isProfilePage && !districtSelect.value) {
         districtCombobox.setValue(noneDistrictId);
     }

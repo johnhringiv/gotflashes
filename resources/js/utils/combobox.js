@@ -97,6 +97,7 @@ export class Combobox {
         this.listbox.className = 'combobox-listbox';
         this.listbox.id = `${this.select.id}-listbox`;
         this.listbox.setAttribute('role', 'listbox');
+        this.listbox.setAttribute('aria-label', this.input.placeholder || 'Options');
         // pointerdown, not click: commit before the input's blur can revert
         this.listbox.addEventListener('pointerdown', (e) => {
             const li = e.target.closest('[role="option"]');
@@ -225,9 +226,10 @@ export class Combobox {
     // --- selection ---------------------------------------------------------
 
     pick(value) {
+        // setValue updates the visible label itself (and a second, idempotent
+        // time via the select's own change listener) — no extra call needed
         this.setValue(value);
         this.close({ revert: false });
-        this.showSelectedLabel();
     }
 
     /** Programmatic set: updates select + input, dispatches 'change' unless silent. */
