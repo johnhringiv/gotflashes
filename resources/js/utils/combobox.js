@@ -210,7 +210,7 @@ export class Combobox {
         if (index >= 0) {
             const li = this.listbox.children[this.indexOffset() + index];
             li.classList.add('active');
-            li.scrollIntoView?.({ block: 'nearest' }); // absent in jsdom
+            li.scrollIntoView?.({ block: 'nearest' }); // absent in happy-dom
             this.input.setAttribute('aria-activedescendant', li.id);
         } else {
             this.input.removeAttribute('aria-activedescendant');

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { initializeDistrictFleetSelects } from '../../resources/js/utils/district-fleet-select.js';
 
 /**
- * Exercises the REAL glue + REAL combobox against real <select>s in jsdom —
+ * Exercises the REAL glue + REAL combobox against real <select>s in happy-dom —
  * no TomSelect mock, no fetch mock (options are server-rendered now).
  *
  * Fixture mirrors user-profile-fields.blade.php: Unaffiliated/None is a real

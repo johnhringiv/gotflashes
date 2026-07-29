@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { filterOptions, initCombobox } from '../../resources/js/utils/combobox.js';
 
 /**
- * Exercises the REAL Combobox against a real <select> in jsdom — no mocks.
+ * Exercises the REAL Combobox against a real <select> in happy-dom — no mocks.
  */
 
 function buildSelect({ allowEmpty = false } = {}) {
