@@ -44,9 +44,9 @@ it('shows district/fleet pre-selected in TomSelect', function () {
     $this->actingAs($this->user);
 
     $page = visit('/profile');
-    // TomSelect renders selected values as .item elements inside .ts-control
+    // The district select is native; its selected option is server-rendered
     $page->assertScript(
-        "document.querySelector('#district-select')?.tomselect?.getValue()",
+        "document.getElementById('district-select').value",
         (string) $this->district->id
     );
 });

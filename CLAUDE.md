@@ -221,10 +221,45 @@ removed):
 - Styles are the `.date-picker` / `.dp-*` component block in `app.css`
   (in `@layer components`, brand tokens); test handle: `el._datePicker`.
 
+**District/Fleet selects** (home-grown, no library — tom-select was removed):
+- **Hybrid split**: district (~36 options) is a plain native
+  `<select class="select">` everywhere; fleet (~135 options, needs search) is
+  a home-grown combobox (`resources/js/utils/combobox.js`) — a text input +
+  filtered listbox popup enhancing a hidden native `<select>`, which stays
+  the single source of truth for value, options, and `change` events.
+- **Options are server-rendered** in the Blade (no API fetch —
+  `/api/districts-and-fleets` and `FleetController` were deleted).
+  `user-profile-fields.blade.php` queries districts/fleets in a small `@php`
+  block (it must stay an anonymous component: `$this` in it binds to the
+  calling Livewire form). Cross-field data rides on option attributes:
+  `data-district-id` per fleet, `data-none` on the Unaffiliated/None rows;
+  `data-allow-empty="true"` on a select makes its empty option a pickable
+  row (admin "All Fleets") instead of placeholder-only.
+- **Livewire-proof the date-picker way**: the combobox re-reads its options
+  from the live `<option>` DOM on EVERY open and appends the listbox to
+  `document.body` only while open. Selects sit in `wire:ignore`; glue
+  listens for native bubbling `change` events.
+- **Glue** (`resources/js/utils/district-fleet-select.js`, used by
+  registration + profile): district change clears fleet and narrows its
+  options (via the combobox `extraFilter` hook); picking a fleet auto-fills
+  its district (silently + explicit Livewire sync); None fleet with blank
+  district fills district as None; profile falls back to None for missing
+  values, signup keeps placeholders. `resources/js/sailor-logs.js` is the
+  admin variant: district and fleet filters simply clear each other.
+- **Selection semantics**: typing filters but never destroys the current
+  selection; Escape/blur/light-dismiss reverts the text to the selected
+  label. Committing an emptied field (Enter/blur) is the one clear gesture.
+  Keyboard: arrows move, Enter picks, Escape closes, Tab exits.
+- Styles: `.combobox-input` / `.combobox-listbox` / `.combobox-option` block
+  in `@layer components` (input clones the `.select` recipe; popup mirrors
+  the base-select picker). Test handles: `select._combobox`
+  (`setValue`/`clear`/`open`/`getValue`) and the shared Pest helper
+  `selectNativeJs()` for native selects.
+
 **CSS (hand-authored, framework-free — `resources/css/app.css`):**
 
 There is NO CSS framework. Tailwind and DaisyUI were removed; `app.css` is the
-single, complete source of truth for all styling (~1,900 lines source, ~13 kB
+single, complete source of truth for all styling (~1,900 lines source, ~9 kB
 gzipped built). When in doubt about what a class does, read its rule in
 `app.css` — do not reason from Tailwind/DaisyUI documentation or memory.
 
@@ -249,14 +284,12 @@ gzipped built). When in doubt about what a class does, read its rule in
   `tests/js/utils/css-validator.js`, runs in `npm test` / `composer check`):
   FAILS the build on any class used in Blade/JS that no rule defines; warns
   (informational only) on defined-but-unused rules. Classes applied purely at
-  runtime (vendor-generated `ts-*`, `classList` toggles, template strings like
-  toast's `alert-${type}` or the date picker's day states) go in the test's
-  IGNORE list. This replaces Tailwind's `@source inline()` safelist mechanism
-  entirely.
-- **One deliberate unlayered exception**: the tom-select overrides at the end
-  of `app.css` must stay unlayered to outrank the vendor's own unlayered
-  `@import`ed CSS (the `!important` cascade reverses across layers). They only
-  target `.ts-*`. Never add project rules there.
+  runtime (`classList` toggles, template strings like toast's `alert-${type}`
+  or the date picker's day states) go in the test's IGNORE list. This
+  replaces Tailwind's `@source inline()` safelist mechanism entirely.
+- **Every rule is layered.** There is no vendor CSS and no unlayered
+  exception (the last one — tom-select's overrides — died when tom-select was
+  replaced by the home-grown combobox). Never add unlayered rules.
 - **Stale-build gotcha**: without `public/hot` (i.e., Vite dev server not
   running), pages serve the static bundle in `public/build/` — CSS edits are
   invisible until `npm run build`. Use `composer dev` for HMR, or rebuild
@@ -421,6 +454,7 @@ This allows tracking of:
 - ✅ Activity ordering by date (newest first)
 - ✅ "Just logged" badge for entries created today
 - ✅ UI restyled on hand-authored, framework-free vanilla CSS (Tailwind + DaisyUI removed; CSS bundle 169 kB → 63 kB raw, 28 kB → 13 kB gzipped)
+- ✅ Vendor-free frontend: flatpickr replaced by a home-grown date picker, tom-select by a home-grown combobox + native selects (JS bundle 177 kB → 80 kB, CSS 50 kB → 42 kB; zero unlayered CSS)
 - ✅ Award tier calculations (10, 25, 50 days)
 - ✅ Holistic progress bar (0-50+ days with milestone markers and filled circles)
 - ✅ Award badge images (got_10_transparent.png, got_25_transparent.png, got_50_transparent.png, burgee_50_transparent.png)
@@ -625,9 +659,9 @@ Example tests in `FlashCalendarIntegrationTest`:
 - **Leaderboards** (`tests/Feature`): sailor/fleet/district, year scoping, tie-breaking, pagination
 - **Admin** (`tests/Feature`): award fulfillment + batch ops + CSV, sailor logs filters, role-based access, award-sent email (verified vs unverified, status-change-only)
 - **Profile / export** (`tests/Feature`, `tests/Browser/Profile`): profile edit, email change, user-data CSV export
-- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (date picker, TomSelect, toasts), multi-page flows
+- **Browser / E2E** (`tests/Browser`): full auth, logbook CRUD + grace-period 403s, leaderboard tabs, admin flows, JS integration (date picker, district/fleet combobox, toasts), multi-page flows
 - **Unit** (`tests/Unit`): User/Flash/Member models, `FlashPolicy`, `DateRangeService` grace logic
-- **JS unit** (`tests/js`, Vitest): CSS class-usage validation (used-but-undefined fails the build, dead CSS warns), district/fleet select, date-picker calendar math, register form
+- **JS unit** (`tests/js`, Vitest): CSS class-usage validation (used-but-undefined fails the build, dead CSS warns), combobox widget + district/fleet glue (real components in happy-dom, no mocks), date-picker calendar math
 - Known gap: `MailAllowlistProvider` (dev-only mail safety net) has no dedicated test
 
 **Running Tests:**

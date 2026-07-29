@@ -20,8 +20,8 @@ it('registers a new user with district + fleet and lands on /logbook', function 
     $unique = Str::random(8);
     $page = visit('/register');
 
-    // Wait for TomSelect to initialize (it fetches data from /api/districts-and-fleets)
-    $page->assertPresent('.ts-wrapper');
+    // Wait for the fleet combobox to enhance the select (DOMContentLoaded init)
+    $page->assertPresent('.combobox-input');
 
     fillRegistrationForm($page, [
         'first_name' => 'TestUser', 'last_name' => 'Reg'.$unique,
@@ -31,10 +31,10 @@ it('registers a new user with district + fleet and lands on /logbook', function 
         'address_line1' => '123 Test Ave', 'city' => 'Testville', 'state' => 'TX', 'zip_code' => '12345',
     ]);
 
-    // Set district + fleet via TomSelect programmatically
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    // Set district + fleet programmatically
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('{$fleet->id}')");
+    $page->script("document.getElementById('fleet-select')._combobox.setValue('{$fleet->id}')");
     settleLivewire($page);
     fillLive($page, '[wire\\:model\\.live\\.blur="yacht_club"]', 'Test YC');
 
@@ -49,7 +49,7 @@ it('registers a new user with district and fleet set to None', function () {
 
     $unique = Str::random(8);
     $page = visit('/register');
-    $page->assertPresent('.ts-wrapper');
+    $page->assertPresent('.combobox-input');
 
     fillRegistrationForm($page, [
         'first_name' => 'NoFleet', 'last_name' => 'User'.$unique,
@@ -60,9 +60,9 @@ it('registers a new user with district and fleet set to None', function () {
     ]);
 
     // Set district, then explicitly pick None for fleet
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
+    $page->script('document.getElementById("fleet-select")._combobox.setValue("'.Fleet::noneId().'")');
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
@@ -81,9 +81,9 @@ it('registers a fully unaffiliated user', function () {
     ]);
 
     // Explicitly select None for both district and fleet (unaffiliated)
-    $page->script("document.getElementById('district-select').tomselect.setValue('".District::noneId()."')");
+    $page->script(selectNativeJs('district-select', District::noneId()));
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
+    $page->script('document.getElementById("fleet-select")._combobox.setValue("'.Fleet::noneId().'")');
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook');
@@ -153,7 +153,7 @@ it('requires fleet when district is set on registration', function () {
     ]);
 
     // Set district but skip fleet (fleet auto-clears to null)
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 5);
     $page->assertPathIs('/register');
@@ -182,7 +182,7 @@ it('clears district error when district is selected after error', function () {
 
     // Select a district
     $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
     $page->assertDontSee('Please select a district');
 });
@@ -198,7 +198,7 @@ it('keeps fleet error visible after picking district (fleet auto-clears, must st
 
     // Pick a district — JS auto-clears fleet, but error must stay
     $district = District::where('name', '!=', District::NONE_NAME)->firstOrFail();
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
     $page->assertDontSee('Please select a district');
     $page->assertSee('Please select a fleet');
@@ -215,9 +215,9 @@ it('clears fleet error when user picks a fleet after district', function () {
     $page->assertSee('Please select a fleet');
 
     // Pick district then fleet
-    $page->script("document.getElementById('district-select').tomselect.setValue('{$district->id}')");
+    $page->script(selectNativeJs('district-select', $district->id));
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('{$fleet->id}')");
+    $page->script("document.getElementById('fleet-select')._combobox.setValue('{$fleet->id}')");
     settleLivewire($page);
     $page->assertDontSee('Please select a fleet');
 });
@@ -235,9 +235,9 @@ it('shows verification banner immediately after registration', function () {
     ]);
 
     // Explicitly select None for both
-    $page->script("document.getElementById('district-select').tomselect.setValue('".District::noneId()."')");
+    $page->script(selectNativeJs('district-select', District::noneId()));
     settleLivewire($page);
-    $page->script("document.getElementById('fleet-select').tomselect.setValue('".Fleet::noneId()."')");
+    $page->script('document.getElementById("fleet-select")._combobox.setValue("'.Fleet::noneId().'")');
     settleLivewire($page);
     $page->pressAndWaitFor('Register', 8)
         ->assertPathIs('/logbook')

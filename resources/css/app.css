@@ -13,15 +13,12 @@
  *   components  — component classes + all project CSS (floating labels, focus
  *                 rings, leaderboard table, lightning-fill hero, /stats charts)
  *   utilities   — the atomic helpers the markup uses (flex, spacing, colour…)
- *   (unlayered) — ONLY third-party widget overrides (tom-select): they must
- *                 outrank the unlayered vendor CSS imported below, and the
- *                 !important cascade reverses across layers, so they cannot
- *                 safely be layered. See the block at the end of this file.
+ *
+ * Every rule lives in a layer — there is no vendor CSS and no unlayered
+ * exception (the last one died with tom-select).
  *
  * Design tokens live in :root. Colours are OKLCH (Lightning Class brand).
  */
-
-@import 'tom-select/dist/css/tom-select.css';
 
 @layer reset, base, components, utilities;
 
@@ -64,9 +61,9 @@
     --border: 1px;
     --spacing: 0.25rem;
 
-    /* Dropdown caret — single rounded chevron, shared by .select, .ts-control
-       and the calendar's month select (one SVG replaces the old two-gradient
-       square trick). background-image SVGs can't use currentcolor/var(), so
+    /* Dropdown caret — single rounded chevron, shared by .select, the
+       combobox input and the calendar's month select (one SVG replaces the
+       old two-gradient trick). background-image SVGs can't use currentcolor/var(), so
        the two strokes are baked: the dark one mirrors --color-base-content,
        the inverse is white for the navy calendar header. Keep in sync with
        the tokens. */
@@ -771,8 +768,9 @@
 
     /* Chrome customizable <select> (Chrome 130+, appearance: base-select):
        render the native dropdown as a styled popup — rounded, padded, shadowed
-       — so the gender dropdown matches the tom-select ones. The @supports guard
-       degrades to the OS popup on browsers without it (Safari/Firefox). */
+       — so the gender/district dropdowns match the combobox listbox. The
+       @supports guard degrades to the OS popup on browsers without it
+       (Safari/Firefox). */
     @supports (appearance: base-select) {
         /* align-items: center — a base-select control is display:flex with the
            UA default align-items:normal (stretch), which floats the value's text
@@ -800,21 +798,85 @@
         }
     }
     .input-error, .select-error, .textarea-error { border-color: var(--color-error); }
+
+    /* Validation error ring for controls living inside wire:ignore: the
+       @error class can't reach them, so it goes on the field's wrapper div
+       (user-profile-fields.blade.php district/fleet). */
+    .field-error .select,
+    .field-error .combobox-input {
+        border-color: var(--color-error);
+    }
     .select-disabled, .input:disabled, .select:disabled, .textarea:disabled {
         border-color: var(--color-base-200);
         background-color: var(--color-base-200);
         cursor: not-allowed;
     }
-    /* TomSelect copies the .select class onto its wrapper; suppress our native
-       .select box there so only the inner .ts-control (custom block) renders —
-       otherwise the wrapper draws a second, taller box with its own arrow. */
-    .ts-wrapper.select {
-        height: auto;
-        min-height: 0;
-        padding: 0;
-        border: none;
-        background: none;
-        box-shadow: none;
+
+    /* --- Combobox (home-grown tom-select replacement) --------------------- */
+    /* A text input + filtered listbox popup over a hidden native <select>
+       (resources/js/utils/combobox.js). The input clones the .select recipe
+       rather than taking the class — the base-select @supports rules above
+       must not try to apply to an <input>. The popup is appended to
+       document.body while open and mirrors the native base-select picker. */
+    .combobox-input {
+        width: 100%;
+        height: 2.5rem;
+        background-color: var(--color-base-100);
+        border: var(--border) solid var(--color-base-300);
+        border-radius: var(--radius-field);
+        color: var(--color-base-content);
+        font-size: 0.875rem;
+        padding-inline: 0.75rem 1.75rem;
+        text-overflow: ellipsis;
+        background-image: var(--caret-chevron);
+        background-position: calc(100% - 10px) calc(50% + 1px);
+        background-size: 13px 13px;
+        background-repeat: no-repeat;
+    }
+    .combobox-listbox {
+        position: absolute;
+        z-index: 9999;
+        margin: 0;
+        padding: 0.5rem;
+        list-style: none;
+        color: var(--color-base-content);
+        background-color: var(--color-base-100);
+        border: var(--border) solid var(--color-base-200);
+        border-radius: var(--radius-box);
+        box-shadow: 0 20px 25px -5px oklch(0% 0 0deg / 0.1), 0 8px 10px -6px oklch(0% 0 0deg / 0.1);
+        max-height: min(24rem, 70dvh);
+        overflow-y: auto;
+    }
+    .combobox-option {
+        position: relative;
+        padding-block: 0.375rem;
+        padding-inline: 0.75rem;
+        border-radius: var(--radius-field);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: color 0.2s, background-color 0.2s;
+    }
+    /* Gray hover / keyboard highlight; the chosen row gets a checkmark, not a
+       fill — same convention as the native base-select picker. */
+    .combobox-option:hover,
+    .combobox-option.active {
+        background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    }
+    .combobox-option.selected { padding-right: 2rem; }
+    .combobox-option.selected::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        right: 0.75rem;
+        transform: translateY(-50%);
+        font-weight: 700;
+        color: var(--color-primary);
+    }
+    .combobox-empty {
+        padding-block: 0.375rem;
+        padding-inline: 0.75rem;
+        font-size: 0.875rem;
+        color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
     }
 
     /* --- Checkbox --------------------------------------------------------- */
@@ -1183,18 +1245,20 @@
     .select:focus,
     .select:focus-within,
     .textarea:focus,
-    .textarea:focus-within {
+    .textarea:focus-within,
+    .combobox-input:focus {
         outline-color: var(--color-secondary);
     }
 
-    /* Error-state fields keep an error-colored focus, mirroring
-       .ts-has-error .ts-wrapper.focus .ts-control below. */
+    /* Error-state fields keep an error-colored focus */
     .input-error:focus,
     .input-error:focus-within,
     .select-error:focus,
     .select-error:focus-within,
     .textarea-error:focus,
-    .textarea-error:focus-within {
+    .textarea-error:focus-within,
+    .field-error .select:focus,
+    .field-error .combobox-input:focus {
         outline-color: var(--color-error);
     }
 
@@ -1867,168 +1931,3 @@
     }
 }
 
-/* ==========================================================================
-   Third-party widget overrides — INTENTIONALLY UNLAYERED.
-
-   tom-select ships its own CSS (imported unlayered at the top of this file).
-   Unlayered normal declarations outrank every @layer, so these overrides must
-   also stay unlayered to win. Pulling the vendor CSS into a layer is not safe
-   either: the !important cascade REVERSES across layers (an earlier layer's
-   !important beats a later one's), and tom-select ships !important on
-   properties we override (background/color/padding), so a layered vendor
-   could beat us. These rules only ever target .ts-* widgets, never our own
-   elements, so being unlayered cannot shadow a component/utility by surprise.
-   This is the one exception.
-   ========================================================================== */
-
-/* TomSelect customization with Lightning Class theme colors */
-.ts-dropdown {
-    position: absolute;
-    z-index: 9999 !important;
-    background: var(--color-base-100);
-    border: 1px solid var(--color-base-300);
-    border-radius: var(--radius-selector);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.ts-dropdown .option {
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    color: var(--color-base-content);
-    transition: background-color 0.15s ease;
-
-    /* Inset rounded rows so the highlight matches the native select picker */
-    margin: 0.125rem 0.25rem;
-    border-radius: var(--radius-selector);
-
-    /* Anchors the .selected checkmark */
-    position: relative;
-}
-
-/* Gray hover / keyboard highlight (matches the native select options);
-   the chosen row is marked with a checkmark, not a fill — same convention
-   as the native picker. */
-.ts-dropdown .option:hover,
-.ts-dropdown .option.active {
-    background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
-}
-
-.ts-dropdown .option.selected {
-    padding-right: 2rem;
-}
-
-.ts-dropdown .option.selected::after {
-    content: "✓";
-    position: absolute;
-    top: 50%;
-    right: 0.75rem;
-    transform: translateY(-50%);
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.ts-dropdown .optgroup-header {
-    padding: 0.5rem 0.75rem;
-    font-weight: 600;
-    color: var(--color-secondary);
-}
-
-.ts-control {
-    /* Match the native .select height (2.5rem) so a TomSelect-ified field lines
-       up with the plain selects beside it — e.g. the sailor-logs / fulfillment
-       filter rows, where a 3rem control stood taller than the year select. */
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-
-    /* Dropdown caret, matching the native .select. TomSelect's own arrow lives
-       on the .select-classed wrapper, which we suppress (.ts-wrapper.select), so
-       re-add it here; the right-padding that clears it lives on
-       .ts-wrapper.single .ts-control (it can out-specify TomSelect's own rule). */
-    background-image: var(--caret-chevron);
-    background-position: calc(100% - 10px) calc(50% + 1px);
-    background-size: 13px 13px;
-    background-repeat: no-repeat;
-}
-
-.ts-wrapper .item {
-    line-height: normal;
-
-    /* Keep a selected item on one line; long fleet names ("12 - Buffalo Canoe
-       Club") must not wrap and grow the control when it is re-focused and the
-       search input appears. */
-    white-space: nowrap;
-}
-
-.ts-wrapper.single .ts-control {
-    background-color: var(--color-base-100) !important;
-    border: 1px solid var(--color-base-300);
-    border-radius: var(--radius-selector);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-    /* Clear the caret added on .ts-control. This selector matches TomSelect's own
-       `.ts-control:not(.rtl){padding-right:… !important}` specificity (0,2,0) and
-       comes later, so our padding wins. */
-    padding-inline-end: 1.75rem !important;
-
-    /* Keep the selected item and the search input on one line. Without this,
-       focusing an already-selected single select on a narrow (mobile) viewport
-       wraps the input onto a second line and grows the control. */
-    flex-wrap: nowrap;
-    overflow: hidden;
-}
-
-.ts-wrapper.single .ts-control input {
-    color: var(--color-base-content) !important;
-}
-
-.ts-wrapper.focus .ts-control {
-    /* Match the crisp secondary auto focus ring the native inputs get
-       (.input:focus below): keep the base border, no soft glow — an auto
-       outline in the brand secondary. */
-    box-shadow: none;
-    outline: 1px auto var(--color-secondary);
-    outline-offset: 1px;
-    background-color: var(--color-base-100) !important;
-}
-
-.ts-wrapper.disabled .ts-control,
-.ts-wrapper.disabled .ts-control * {
-    cursor: not-allowed !important;
-    opacity: 0.5;
-}
-
-.ts-wrapper.single .ts-control:hover {
-    border-color: var(--color-primary);
-}
-
-/* Error state — red ring on the TomSelect box, mirroring DaisyUI select-error.
-   Toggled via the .ts-has-error class on the field's @error wrapper in
-   user-profile-fields.blade.php (the native <select> is hidden, so the class
-   must live on a parent the validation error can reach).
-   The single visible border lives on .ts-wrapper (TomSelect copies DaisyUI's
-   .select.select-bordered there, which is full-width and matches the text
-   inputs). Its inset box-shadows draw top/bottom lines that hide a plain red
-   border, so we replace them with a flat error ring on all four edges. On focus
-   the ring is the 1px auto outline drawn on .ts-control (.ts-wrapper.focus
-   above), so we recolor that to the error color (same as .input-error on the
-   text fields). The inner .ts-control is taller and horizontally inset, so we
-   strip its border/ring to avoid a misaligned double line. */
-.ts-has-error .ts-wrapper.select {
-    border-color: var(--color-error);
-    box-shadow: 0 0 0 1px var(--color-error);
-}
-
-.ts-has-error .ts-wrapper.focus .ts-control {
-    outline-color: var(--color-error);
-}
-
-.ts-has-error .ts-wrapper.single .ts-control,
-.ts-has-error .ts-wrapper.focus .ts-control,
-.ts-has-error .ts-wrapper.single .ts-control:hover {
-    border-color: transparent;
-    box-shadow: none;
-}
