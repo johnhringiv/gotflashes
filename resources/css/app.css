@@ -779,10 +779,14 @@
         :is(.select, .select select, .dp-month-select)::picker(select) {
             appearance: base-select;
 
-            /* Never flip the option list above the control — dropdowns open
-               DOWN site-wide (user call; the combobox popup matches in JS).
-               The picker clamps/scrolls within the viewport instead. */
-            position-try-fallbacks: none;
+            /* NO position-try-fallbacks: none here. It was briefly applied
+               site-wide (open-down preference), but when a control sits at
+               the bottom of a small viewport Chrome then CLAMPS the picker
+               on top of its own control — taps hit the picker instead of
+               the control, so it can't be closed (mobile flash form bug).
+               Chrome's default already opens downward when there is room
+               and flips only at the viewport edge. The comboboxes handle
+               strict open-down themselves by shrinking to fit. */
             color: inherit;
             border: var(--border) solid var(--color-base-200);
             border-radius: var(--radius-box);
@@ -1837,8 +1841,17 @@
         font-size: 0.875rem;
     }
 
-    /* (The month list's no-flip rule now rides the site-wide
-       position-try-fallbacks: none on all base-select pickers above.) */
+    /* Never flip the month list above the control: on short viewports the
+       flip fallback threw it on top of the calendar. Dropping below and
+       scrolling (the picker clamps to the viewport) reads like a menu.
+       Safe HERE because the month select sits at the top of the calendar,
+       so the clamp-over-control failure the site-wide version of this rule
+       caused (see ::picker(select) above) cannot occur. */
+    @supports (appearance: base-select) {
+        .dp-month-select::picker(select) {
+            position-try-fallbacks: none;
+        }
+    }
 
     .dp-weekdays {
         display: grid;
