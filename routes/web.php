@@ -10,6 +10,7 @@ use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\VerifyEmailChangeController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -95,6 +96,32 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::view('/settings', 'admin.settings')->name('admin.settings');
 });
+
+// Browser-JS coverage collector — exists ONLY under APP_ENV=testing with
+// COVERAGE=true (the coverage CI workflow). The layout's harvest script POSTs
+// window.__coverage__ snapshots here, keyed by a per-page id; Istanbul
+// counters are monotonic, so overwriting with the latest snapshot per page
+// (LOCK_EX, atomic across 32 parallel Pest workers) is lossless and keeps
+// disk usage at one file per page instead of an ever-growing append log.
+// The closure is safe for route:cache because production never registers it.
+if (app()->environment('testing') && config('app.coverage')) {
+    Route::post('/__coverage__', function (Request $request) {
+        $pageId = (string) $request->query('page', '');
+        $payload = (string) @gzdecode($request->getContent());
+
+        if (preg_match('/^[0-9a-f-]{36}$/', $pageId) && str_starts_with($payload, '{')) {
+            $dir = storage_path('app/coverage');
+
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+
+            file_put_contents($dir."/page-{$pageId}.json", $payload, LOCK_EX);
+        }
+
+        return response()->noContent();
+    });
+}
 
 // Fallback route for 404 errors - must be last
 // This ensures 404 pages go through the web middleware stack (session, auth, etc.)

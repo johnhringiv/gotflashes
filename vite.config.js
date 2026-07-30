@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import istanbul from 'vite-plugin-istanbul';
 
 export default defineConfig(({ command, mode }) => ({
     plugins: [
@@ -8,6 +9,16 @@ export default defineConfig(({ command, mode }) => ({
             laravel({
                 input: ['resources/css/app.css', 'resources/js/app.js'],
                 refresh: true,
+            }),
+        ] : []),
+        // Browser-JS coverage: COVERAGE=true builds an Istanbul-instrumented
+        // bundle (window.__coverage__), harvested by the /__coverage__ beacon
+        // during browser tests. Never enabled for normal/prod builds.
+        ...(process.env.COVERAGE === 'true' ? [
+            istanbul({
+                include: 'resources/js/**',
+                extension: ['.js'],
+                forceBuildInstrument: true,
             }),
         ] : []),
     ],
@@ -19,13 +30,8 @@ export default defineConfig(({ command, mode }) => ({
         include: ['tests/js/**/*.test.js'],
         coverage: {
             provider: 'v8',
-            reporter: ['text', 'json', 'html'],
-            exclude: [
-                'node_modules/',
-                'tests/',
-                'vendor/',
-                'bootstrap/',
-            ],
+            include: ['resources/js/**'],
+            reporter: ['text', 'lcov'],
         },
     },
 }));

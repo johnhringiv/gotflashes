@@ -191,5 +191,46 @@
     </div>
 </footer>
 @livewireScripts(['nonce' => app('csp-nonce')])
+@if (app()->environment('testing') && config('app.coverage'))
+    <!-- Browser-JS coverage harvest (testing + COVERAGE=true only). Playwright
+         closes test pages without firing pagehide, so waiting for page exit
+         would lose everything: instead POST the Istanbul counters immediately
+         and every 100ms while they grow (counters are monotonic — the sum only
+         increases when code ran; most test pages live only a few hundred ms).
+         Keyed by a per-page id so the server keeps just the LATEST
+         snapshot per page. Payload is gzipped (≈500 KB → ≈57 KB): the plugin's
+         in-process Amp server hard-stalls on bodies over its 128 KiB limit,
+         and sendBeacon's 64 KB quota rules it out too. pagehide still
+         triggers a best-effort final flush. -->
+    <script @cspNonce data-coverage-harvest>
+        (function () {
+            const pageId = crypto.randomUUID();
+            let lastTotal = -1;
+            const totalHits = function (cov) {
+                let total = 0;
+                for (const file of Object.values(cov)) {
+                    for (const n of Object.values(file.s)) total += n;
+                    for (const n of Object.values(file.f)) total += n;
+                }
+                return total;
+            };
+            const send = function () {
+                const cov = window.__coverage__;
+                if (!cov) return;
+                const total = totalHits(cov);
+                if (total === lastTotal) return;
+                lastTotal = total;
+                new Response(
+                    new Blob([JSON.stringify(cov)]).stream().pipeThrough(new CompressionStream('gzip'))
+                ).blob().then(function (gz) {
+                    return fetch('/__coverage__?page=' + pageId, { method: 'POST', body: gz });
+                }).catch(function () {});
+            };
+            send();
+            setInterval(send, 100);
+            window.addEventListener('pagehide', send);
+        })();
+    </script>
+@endif
 </body>
 </html>

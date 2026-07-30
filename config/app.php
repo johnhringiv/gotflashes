@@ -43,6 +43,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Browser-JS Coverage Harvest
+    |--------------------------------------------------------------------------
+    |
+    | When true (COVERAGE=true, set only by the coverage CI workflow or a
+    | local coverage run) AND the app is in the testing environment, the
+    | layout injects a sendBeacon script and routes/web.php registers the
+    | /__coverage__ collector endpoint. Never enabled in production.
+    |
+    */
+
+    'coverage' => (bool) env('COVERAGE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

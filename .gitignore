@@ -33,6 +33,8 @@ Thumbs.db
 
 todo.md
 /coverage
+# Merged browser-JS lcov (scripts/merge-browser-coverage.mjs output)
+/coverage-browser-js
 *.img
 docs/*-plan.md
 
