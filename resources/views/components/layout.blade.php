@@ -197,9 +197,9 @@
         <!-- Browser-JS coverage harvest (testing + COVERAGE=true only). Playwright
          closes test pages without firing pagehide, so waiting for page exit
          would lose everything: instead POST the Istanbul counters immediately
-         and every 100ms while they grow (counters are monotonic — the sum only
-         increases when code ran; most test pages live only a few hundred ms).
-         Keyed by a per-page id so the server keeps just the LATEST
+         and then on idle moments while they grow (counters are monotonic — the
+         sum only increases when code ran; most test pages live only a few
+         hundred ms). Keyed by a per-page id so the server keeps just the LATEST
          snapshot per page. Payload is gzipped (≈500 KB → ≈57 KB): the plugin's
          in-process Amp server hard-stalls on bodies over its 128 KiB limit,
          and sendBeacon's 64 KB quota rules it out too. pagehide still
@@ -225,14 +225,36 @@
                     new Response(
                         new Blob([JSON.stringify(cov)]).stream().pipeThrough(new CompressionStream('gzip'))
                     ).blob().then(function(gz) {
+                        // credentials:'omit' is LOAD-BEARING: with the session
+                        // cookie attached, every harvest POST runs StartSession
+                        // and AGES the flash data — eating login errors, old
+                        // input, and toasts before the page that should show
+                        // them renders. Harvest must never join the session.
                         return fetch('/__coverage__?page=' + pageId, {
                             method: 'POST',
-                            body: gz
+                            body: gz,
+                            credentials: 'omit'
                         });
                     }).catch(function() {});
                 };
+                // Harvest on idle, not on a raw interval: the stringify+gzip of a
+                // ~500 KB map steals main-thread time exactly when the app is
+                // busiest, which flaked timing-sensitive Livewire assertions on
+                // slow CI runners. requestIdleCallback defers sends to quiet
+                // moments; the 1s timeout bounds staleness under sustained load.
+                const scheduleSend = function() {
+                    const idle = window.requestIdleCallback || function(cb) {
+                        setTimeout(cb, 250);
+                    };
+                    idle(function() {
+                        send();
+                        setTimeout(scheduleSend, 250);
+                    }, {
+                        timeout: 1000
+                    });
+                };
                 send();
-                setInterval(send, 100);
+                scheduleSend();
                 window.addEventListener('pagehide', send);
             })();
         </script>

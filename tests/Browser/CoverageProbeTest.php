@@ -8,7 +8,7 @@ it('harvests browser-JS coverage snapshots', function () {
     $page = visit('/');
     $page->assertScript("typeof window.__coverage__ === 'object' && Object.keys(window.__coverage__).length > 0", true);
     $page->assertScript("document.querySelector('script[data-coverage-harvest]') !== null", true);
-    // The harvest script sends immediately and re-sends every 100ms; give it
+    // The harvest script sends immediately and re-sends on idle; give it
     // a beat, then confirm at least one snapshot reached the collector.
     $page->script('new Promise((resolve) => setTimeout(resolve, 500))');
     expect(glob(storage_path('app/coverage/page-*.json')))->not->toBeEmpty();

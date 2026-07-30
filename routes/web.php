@@ -11,7 +11,9 @@ use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\VerifyEmailChangeController;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::get('/', function () {
     return view('home');
@@ -105,6 +107,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
 // disk usage at one file per page instead of an ever-growing append log.
 // The closure is safe for route:cache because production never registers it.
 if (app()->environment('testing') && config('app.coverage')) {
+    // No session for harvest requests (the fetch also omits credentials):
+    // StartSession on these POSTs would age flash data out from under the
+    // real page and add SQLite session-write contention across 32 workers.
     Route::post('/__coverage__', function (Request $request) {
         $pageId = (string) $request->query('page', '');
         $payload = (string) @gzdecode($request->getContent());
@@ -120,7 +125,10 @@ if (app()->environment('testing') && config('app.coverage')) {
         }
 
         return response()->noContent();
-    });
+    })->withoutMiddleware([
+        StartSession::class,
+        ShareErrorsFromSession::class,
+    ]);
 }
 
 // Fallback route for 404 errors - must be last
