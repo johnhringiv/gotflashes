@@ -56,10 +56,6 @@
             "APP_ENV=testing php artisan config:clear --ansi",
             "APP_ENV=testing php artisan test"
         ],
-        "test:tia": [
-            "APP_ENV=testing php artisan config:clear --ansi",
-            "APP_ENV=testing vendor/bin/pest --tia"
-        ],
         "check": [
             "APP_ENV=testing php artisan config:clear --ansi",
             "vendor/bin/pint --test",

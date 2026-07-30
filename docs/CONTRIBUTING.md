@@ -73,12 +73,7 @@ composer fix
 
 # Run tests only
 composer test
-
-# Local iteration: only the tests affected by your changes (Pest 5 TIA)
-composer test:tia
 ```
-
-`composer test:tia` is an explicit opt-in for fast local iteration — `composer check`, the pre-commit hook, and CI always run the full suite.
 
 The project uses automated pre-commit hooks via Husky. If checks fail, your commit will be blocked until issues are fixed.
 

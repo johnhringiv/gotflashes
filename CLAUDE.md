@@ -25,7 +25,6 @@ composer fix                      # Auto-fixes: Pint, ESLint, Stylelint, blade-f
 
 # Testing
 composer test                     # Runs PHPUnit test suite (with APP_ENV=testing)
-composer test:tia                 # Local iteration: only tests affected by your changes (Pest 5 TIA)
 php artisan test --filter=TestName  # Run specific test
 
 # IMPORTANT: When running tests manually, always use:
@@ -672,11 +671,10 @@ Example tests in `FlashCalendarIntegrationTest`:
 **Running Tests:**
 ```bash
 composer test      # Run full test suite
-composer test:tia  # Pest 5 Test Impact Analysis — reruns only tests affected by uncommitted/recent changes
 composer check     # Run tests + all quality checks
 ```
 
-TIA is explicit opt-in (`--tia`) for local iteration only — `composer check`, the pre-commit hook, and CI always run the full suite. The dependency graph lives in `~/.pest/tia/`; run `vendor/bin/pest --tia --fresh` if it ever looks stale.
+Pest 5's Test Impact Analysis (`--tia`) is NOT adoptable here yet: it requires every test to be Pest-style, and all 43 Unit/Feature test files are PHPUnit classes (it also needs `XDEBUG_MODE=coverage` or pcov to record its graph). Tracked in issue #79 — don't re-add a `test:tia` script without converting the suite first.
 
 **Coverage reporting (Codecov, four flags → two components):** PHP coverage uploads as `phpunit` + `browser` flags (clover, pcov); JS coverage as `vitest` (`npm run test:coverage` → lcov) + `browser-js`. The `browser-js` tier measures browser-only files (date-picker, toast, stats-charts…) that Vitest can't reach: `COVERAGE=true npm run build` produces an Istanbul-instrumented bundle (`vite-plugin-istanbul`, never active otherwise), a layout-injected harvest script POSTs gzipped `window.__coverage__` snapshots to a testing-env-only `/__coverage__` route (per-page latest-snapshot files in `storage/app/coverage/`), and `scripts/merge-browser-coverage.mjs` merges them into lcov. Design constraints that shaped this (don't regress them): Playwright closes pages without firing `pagehide`, so harvesting is interval-based (immediate + 100ms, sends only when Istanbul's monotonic counters grew); payloads are gzipped because the plugin's in-process Amp server stalls on request bodies over 128 KiB (and `sendBeacon` caps at 64 KB). Expect minor tail loss (the final <100ms of each page). `tests/Browser/CoverageProbeTest.php` guards the pipeline (skips unless `COVERAGE=true`). `codecov.yml` defines `php`/`js` components (per-area rows in PR comments; JS statuses informational) with `carryforward` on all flags; the badge stays blended.
 
