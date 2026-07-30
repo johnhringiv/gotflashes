@@ -25,6 +25,7 @@ composer fix                      # Auto-fixes: Pint, ESLint, Stylelint
 
 # Testing
 composer test                     # Runs PHPUnit test suite (with APP_ENV=testing)
+composer test:tia                 # Local iteration: only tests affected by your changes (Pest 5 TIA)
 php artisan test --filter=TestName  # Run specific test
 
 # IMPORTANT: When running tests manually, always use:
@@ -671,15 +672,25 @@ Example tests in `FlashCalendarIntegrationTest`:
 **Running Tests:**
 ```bash
 composer test      # Run full test suite
+composer test:tia  # Pest 5 Test Impact Analysis — reruns only tests affected by uncommitted/recent changes
 composer check     # Run tests + all quality checks
 ```
+
+TIA is explicit opt-in (`--tia`) for local iteration only — `composer check`, the pre-commit hook, and CI always run the full suite. The dependency graph lives in `~/.pest/tia/`; run `vendor/bin/pest --tia --fresh` if it ever looks stale.
 
 ### Common Pitfalls
 - `@playwright/test` is pinned `~1.61.1`: 1.62.0 hangs pest-plugin-browser at
   boot (client protocol mismatch — the browser suite produces zero output).
-  Don't bump past 1.61.x until the plugin catches up, and validate any
-  lockfile change with `npx -y npm@latest ci --dry-run` (CI runs npm 12;
-  incremental npm-11 lock edits go stale)
+  Verified still broken with plugin v5.0.0 on 2026-07-30, even though the
+  plugin's own package.json allows `^1.61.1`. Don't bump past 1.61.x until
+  the plugin actually speaks the newer protocol, and validate any lockfile
+  change with `npx -y npm@latest ci --dry-run` (CI runs npm 12; incremental
+  npm-11 lock edits go stale). Related recovery moves when the browser suite
+  fails oddly: kill leaked `playwright run-server` processes, delete
+  `vendor/pestphp/pest-plugin-browser/.temp/playwright-server.json` (stale
+  persisted server state), and re-run `npx playwright install chromium`
+  after any Playwright version change (a missing headless-shell build
+  surfaces as `PlaywrightOutdatedException` on every test)
 - Every class written in Blade/JS must have a rule in `resources/css/app.css` — there is no CSS framework and no JIT. The utility set is closed; the CSS validator test fails `composer check` on undefined classes
 - CSS edits are invisible without a rebuild when the Vite dev server isn't running (`public/build/` is stale) — run `npm run build` or use `composer dev`
 - Don't forget the unique constraint on (user_id, date) for flashes

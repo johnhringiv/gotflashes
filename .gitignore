@@ -9,6 +9,8 @@
 deploy/*.env
 .phpactor.json
 .phpunit.result.cache
+# Pest 5 TIA graph fallback (normally lives in ~/.pest/tia)
+/.pest
 /.fleet
 /.idea
 /.nova
