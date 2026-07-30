@@ -22,10 +22,10 @@
         "laravel/tinker": "^3.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "pestphp/pest": "^4.7",
-        "pestphp/pest-plugin-browser": "^4.3",
-        "pestphp/pest-plugin-laravel": "^4.1",
-        "phpunit/phpunit": "^12"
+        "pestphp/pest": "^5.0",
+        "pestphp/pest-plugin-browser": "^5.0",
+        "pestphp/pest-plugin-laravel": "^5.0",
+        "phpunit/phpunit": "^13"
     },
     "autoload": {
         "psr-4": {
@@ -67,7 +67,8 @@
         "fix": [
             "vendor/bin/pint",
             "npm run lint:js -- --fix",
-            "npm run lint:css -- --fix"
+            "npm run lint:css -- --fix",
+            "npm run fix:blade"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

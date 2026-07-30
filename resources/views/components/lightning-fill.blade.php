@@ -1,8 +1,8 @@
 @props([
-    'percentage' => null,       // current / goal, 0–100 (null = no goal set)
-    'priorPercentage' => null,  // prior-year total / goal, 0–100 (null/0 = hide line)
-    'goalLabel' => null,        // formatted goal, e.g. "3,000"
-    'priorYear' => null,        // e.g. 2025, for the benchmark chip
+    'percentage' => null, // current / goal, 0–100 (null = no goal set)
+    'priorPercentage' => null, // prior-year total / goal, 0–100 (null/0 = hide line)
+    'goalLabel' => null, // formatted goal, e.g. "3,000"
+    'priorYear' => null, // e.g. 2025, for the benchmark chip
 ])
 
 @php
@@ -12,10 +12,7 @@
     $priorFrac = $showPrior ? max(0, min(100, $priorPercentage)) / 100 : 0;
 @endphp
 
-<div {{ $attributes->merge(['class' => 'lightning-fill'.($complete ? ' lightning-fill-complete' : '')]) }}
-     style="--lf-fill: {{ $fill }}%; --lf-prior: {{ $priorFrac }};"
-     role="img"
-     aria-label="Community goal progress: {{ $percentage === null ? 'no goal set' : round($fill).'% of goal' }}{{ $showPrior && $priorYear ? ', '.$priorYear.' benchmark shown' : '' }}">
+<div {{ $attributes->merge(['class' => 'lightning-fill' . ($complete ? ' lightning-fill-complete' : '')]) }} style="--lf-fill: {{ $fill }}%; --lf-prior: {{ $priorFrac }};" role="img" aria-label="Community goal progress: {{ $percentage === null ? 'no goal set' : round($fill) . '% of goal' }}{{ $showPrior && $priorYear ? ', ' . $priorYear . ' benchmark shown' : '' }}">
     @if ($goalLabel !== null)
         <div class="lightning-fill-goal">{{ $goalLabel }} <span>goal</span></div>
     @endif

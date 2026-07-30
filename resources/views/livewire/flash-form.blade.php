@@ -4,28 +4,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <!-- Date(s) - order-1 on mobile, col 1 on desktop -->
             <div class="mb-6 floating-label-visible order-1">
-                @if($mode === 'edit')
+                @if ($mode === 'edit')
                     {{-- Single date picker for edit mode --}}
-                    <input type="text" id="date-picker-single"
-                           name="date"
-                           data-mode="single"
-                           data-default-date="{{ $date }}"
-                           data-min-date="{{ $minDate->format('Y-m-d') }}"
-                           data-max-date="{{ $maxDate->format('Y-m-d') }}"
-                           data-existing-dates="{{ json_encode($existingDates) }}"
-                           value="{{ $date }}"
-                           placeholder="Select date"
-                           class="input w-full @error('date') input-error @enderror" required readonly>
+                    <input type="text" id="date-picker-single" name="date" data-mode="single" data-default-date="{{ $date }}" data-min-date="{{ $minDate->format('Y-m-d') }}" data-max-date="{{ $maxDate->format('Y-m-d') }}" data-existing-dates="{{ json_encode($existingDates) }}" value="{{ $date }}" placeholder="Select date" class="input w-full @error('date') input-error @enderror" required readonly>
                     <label for="date-picker-single">Date</label>
                 @else
                     {{-- Multi-date picker for create mode --}}
-                    <input type="text" id="date-picker"
-                           data-mode="multiple"
-                           data-existing-dates="{{ json_encode($existingDates) }}"
-                           data-min-date="{{ $minDate->format('Y-m-d') }}"
-                           data-max-date="{{ $maxDate->format('Y-m-d') }}"
-                           placeholder="Select date(s)"
-                           class="input w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
+                    <input type="text" id="date-picker" data-mode="multiple" data-existing-dates="{{ json_encode($existingDates) }}" data-min-date="{{ $minDate->format('Y-m-d') }}" data-max-date="{{ $maxDate->format('Y-m-d') }}" placeholder="Select date(s)" class="input w-full @error('dates') input-error @enderror @error('dates.*') input-error @enderror" required readonly>
                     <label for="date-picker">Date(s)</label>
                 @endif
                 @error('date')
@@ -68,9 +53,7 @@
 
             <!-- Sailing Type - order-3 on mobile, col 1 on desktop -->
             <div class="mb-6 floating-label-visible order-3 md:order-5 md:max-w-xs">
-                <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}"
-                        class="select w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}"
-                        {{ $activity_type === 'sailing' ? 'required' : 'disabled' }}>
+                <select wire:model.live="event_type" id="{{ $mode === 'edit' ? 'sailing_type_edit' : 'sailing_type' }}" class="select w-full @error('event_type') select-error @enderror {{ $activity_type === 'sailing' ? '' : 'select-disabled' }}" {{ $activity_type === 'sailing' ? 'required' : 'disabled' }}>
                     {{-- hidden: same placeholder pattern as activity type above --}}
                     <option value="" disabled hidden {{ $event_type ? '' : 'selected' }}>
                         {{ $activity_type === 'sailing' ? 'Select sailing type - All count equally' : 'Not applicable' }}
@@ -98,29 +81,20 @@
 
             <!-- Location - order-4 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-4 md:order-2">
-                <input type="text" wire:model.live.blur="location"
-                       id="{{ $mode === 'edit' ? 'location_edit' : 'location' }}"
-                       placeholder="Lake Norman, NC"
-                       class="input w-full" maxlength="255">
+                <input type="text" wire:model.live.blur="location" id="{{ $mode === 'edit' ? 'location_edit' : 'location' }}" placeholder="Lake Norman, NC" class="input w-full" maxlength="255">
                 <label for="{{ $mode === 'edit' ? 'location_edit' : 'location' }}">Location (optional)</label>
             </div>
 
             <!-- Sail Number - order-5 on mobile, col 2 on desktop -->
             <div class="mb-6 floating-label-visible order-5 md:order-4">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.live.blur="sail_number"
-                       id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}"
-                       placeholder="15234"
-                       class="input w-full">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" wire:model.live.blur="sail_number" id="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}" placeholder="15234" class="input w-full">
                 <label for="{{ $mode === 'edit' ? 'sail_number_edit' : 'sail_number' }}">Sail Number (optional)</label>
             </div>
         </div>
 
         <!-- Notes -->
         <div class="mb-6 floating-label-visible">
-            <textarea wire:model.live.blur="notes" rows="3"
-                      id="{{ $mode === 'edit' ? 'notes_edit' : 'notes' }}"
-                      placeholder="Tell us about your day on the water..."
-                      class="textarea w-full"></textarea>
+            <textarea wire:model.live.blur="notes" rows="3" id="{{ $mode === 'edit' ? 'notes_edit' : 'notes' }}" placeholder="Tell us about your day on the water..." class="textarea w-full"></textarea>
             <label for="{{ $mode === 'edit' ? 'notes_edit' : 'notes' }}">Notes (optional)</label>
         </div>
 
@@ -130,7 +104,7 @@
                 <button type="submit" class="btn btn-primary">
                     {{ $submitText }}
                 </button>
-                @if($mode === 'edit')
+                @if ($mode === 'edit')
                     <button type="button" wire:click="$dispatch('close-edit-modal')" class="btn btn-error">
                         Cancel
                     </button>

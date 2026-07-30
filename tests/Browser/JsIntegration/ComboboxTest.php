@@ -116,6 +116,38 @@ describe('district/fleet controls on profile', function () {
     });
 });
 
+describe('district/fleet controls on mobile', function () {
+    // Real taps in a touch context (hasTouch) — these hit the pointerType-aware
+    // paths that plain click() cannot reach. Drag-scroll gestures stay in the
+    // standalone CDP script (scratchpad/mobile-combobox.mjs); the plugin has no
+    // gesture API.
+    it('opening tap browses with the virtual keyboard suppressed', function () {
+        $page = visit('/profile')->on()->mobile()->assertPresent('#fleet-select-input');
+        $page->page()->locator('#fleet-select-input')->tap();
+        $page->assertPresent('.combobox-listbox');
+        $page->assertScript("document.getElementById('fleet-select-input').inputMode", 'none');
+    });
+
+    it('tapping a row picks it and closes the list', function () {
+        $page = visit('/profile')->on()->mobile()->assertPresent('#fleet-select-input');
+        $page->page()->locator('#fleet-select-input')->tap();
+        $page->assertPresent('.combobox-listbox');
+        $noneId = Fleet::noneId();
+        $page->page()->locator(".combobox-option[data-value=\"{$noneId}\"]")->tap();
+        $page->assertNotPresent('.combobox-listbox');
+        $page->assertScript("document.getElementById('fleet-select').value", (string) $noneId);
+    });
+
+    it('a second tap on the input opts into typing', function () {
+        $page = visit('/profile')->on()->mobile()->assertPresent('#fleet-select-input');
+        $page->page()->locator('#fleet-select-input')->tap();
+        $page->assertPresent('.combobox-listbox');
+        $page->page()->locator('#fleet-select-input')->tap();
+        $page->assertScript("document.getElementById('fleet-select-input').inputMode", 'text');
+        $page->assertPresent('.combobox-listbox'); // opting in never closes the list
+    });
+});
+
 describe('district/fleet controls on registration', function () {
     it('shows placeholders for both selects on the registration form', function () {
         // Need to be anonymous to visit /register (guest middleware)

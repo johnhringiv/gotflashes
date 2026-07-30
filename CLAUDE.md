@@ -20,8 +20,8 @@ composer dev                      # Runs: Laravel server, queue worker, Pail log
 # Access at http://localhost:8000
 
 # Code quality (use before committing)
-composer check                    # Runs: Pint, PHPStan, ESLint, Stylelint
-composer fix                      # Auto-fixes: Pint, ESLint, Stylelint
+composer check                    # Runs: Pint, PHPStan, ESLint, Stylelint, blade-formatter check
+composer fix                      # Auto-fixes: Pint, ESLint, Stylelint, blade-formatter --write
 
 # Testing
 composer test                     # Runs PHPUnit test suite (with APP_ENV=testing)
@@ -356,7 +356,7 @@ gzipped built). When in doubt about what a class does, read its rule in
 - **PHP**: Laravel Pint (PSR-12) + PHPStan (level 5) via Larastan
 - **JavaScript**: ESLint with recommended rules
 - **CSS**: Stylelint (`stylelint-config-standard`; `.stylelintrc.json` relaxes only the cosmetic rules that fight app.css's compact one-declaration-per-line utility idiom and Tailwind-escaped class names — all error-catching rules stay on)
-- **Blade**: blade-formatter for template formatting
+- **Blade**: blade-formatter, ENFORCED — `npm run lint:blade` (`--check-formatted`) runs in the `lint` chain / `composer check` / pre-commit; `composer fix` rewrites via `fix:blade`. Config gotchas (`.bladeformatterrc.json`): `wrapLineLength` stays 999 because the formatter splits text nodes mid-phrase when wrapping (breaks `assertSee` on multi-word labels, and split text is never re-joined); `sortTailwindcssClasses` stays false (Tailwind sort order is meaningless against hand-authored CSS and breaks class-string assertions)
 
 ### PHPStan Configuration
 - Level 5 static analysis
@@ -674,12 +674,23 @@ composer test      # Run full test suite
 composer check     # Run tests + all quality checks
 ```
 
+Pest 5's Test Impact Analysis (`--tia`) is NOT adoptable here yet: it requires every test to be Pest-style, and all 43 Unit/Feature test files are PHPUnit classes (it also needs `XDEBUG_MODE=coverage` or pcov to record its graph). Tracked in issue #79 — don't re-add a `test:tia` script without converting the suite first.
+
+**Coverage reporting (Codecov, four flags → two components):** PHP coverage uploads as `phpunit` + `browser` flags (clover, pcov); JS coverage as `vitest` (`npm run test:coverage` → lcov) + `browser-js`. The `browser-js` tier measures browser-only files (date-picker, toast, stats-charts…) that Vitest can't reach: `COVERAGE=true npm run build` produces an Istanbul-instrumented bundle (`vite-plugin-istanbul`, never active otherwise), a layout-injected harvest script POSTs gzipped `window.__coverage__` snapshots to a testing-env-only `/__coverage__` route (per-page latest-snapshot files in `storage/app/coverage/`), and `scripts/merge-browser-coverage.mjs` merges them into lcov. Design constraints that shaped this (don't regress them): Playwright closes pages without firing `pagehide`, so harvesting is snapshot-based (immediate send + resend on `requestIdleCallback` with a 1s staleness bound, only when Istanbul's monotonic counters grew) — idle-driven rather than a raw interval because the ~500 KB stringify+gzip stole main-thread time during interactions and flaked timing-sensitive Livewire assertions on slow CI runners; payloads are gzipped because the plugin's in-process Amp server stalls on request bodies over 128 KiB (and `sendBeacon` caps at 64 KB). Expect minor tail loss (the final moments of each page). `tests/Browser/CoverageProbeTest.php` guards the pipeline (skips unless `COVERAGE=true`). `codecov.yml` defines `php`/`js` components (per-area rows in PR comments; JS statuses informational) with `carryforward` on all flags; the badge stays blended.
+
 ### Common Pitfalls
 - `@playwright/test` is pinned `~1.61.1`: 1.62.0 hangs pest-plugin-browser at
   boot (client protocol mismatch — the browser suite produces zero output).
-  Don't bump past 1.61.x until the plugin catches up, and validate any
-  lockfile change with `npx -y npm@latest ci --dry-run` (CI runs npm 12;
-  incremental npm-11 lock edits go stale)
+  Verified still broken with plugin v5.0.0 on 2026-07-30, even though the
+  plugin's own package.json allows `^1.61.1`. Don't bump past 1.61.x until
+  the plugin actually speaks the newer protocol, and validate any lockfile
+  change with `npx -y npm@latest ci --dry-run` (CI runs npm 12; incremental
+  npm-11 lock edits go stale). Related recovery moves when the browser suite
+  fails oddly: kill leaked `playwright run-server` processes, delete
+  `vendor/pestphp/pest-plugin-browser/.temp/playwright-server.json` (stale
+  persisted server state), and re-run `npx playwright install chromium`
+  after any Playwright version change (a missing headless-shell build
+  surfaces as `PlaywrightOutdatedException` on every test)
 - Every class written in Blade/JS must have a rule in `resources/css/app.css` — there is no CSS framework and no JIT. The utility set is closed; the CSS validator test fails `composer check` on undefined classes
 - CSS edits are invisible without a rebuild when the Vite dev server isn't running (`public/build/` is stale) — run `npm run build` or use `composer dev`
 - Don't forget the unique constraint on (user_id, date) for flashes

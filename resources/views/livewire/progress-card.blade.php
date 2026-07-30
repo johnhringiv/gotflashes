@@ -1,6 +1,6 @@
 <div>
     <!-- Earned Awards Card -->
-    @if(count($earnedAwards) > 0)
+    @if (count($earnedAwards) > 0)
         <div class="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg mb-6 border-2 border-primary/20">
             <div class="card-body py-6">
                 <div class="flex items-center justify-between">
@@ -9,13 +9,13 @@
                         <p class="text-sm text-base-content/70">Congratulations on your achievements!</p>
                     </div>
                     <div class="flex gap-6">
-                        @foreach($earnedAwards as $award)
+                        @foreach ($earnedAwards as $award)
                             @php
-                                [$badgeImage, $title] = match($award) {
+                                [$badgeImage, $title] = match ($award) {
                                     10 => ['got_10_transparent.png', '10 Day Award'],
                                     25 => ['got_25_transparent.png', '25 Day Award'],
                                     50 => ['got_50_transparent.png', '50 Day Award (Burgee)'],
-                                    default => ['got_50_transparent.png', 'Award']
+                                    default => ['got_50_transparent.png', 'Award'],
                                 };
                             @endphp
                             <div class="flex flex-col items-center gap-2">
@@ -41,7 +41,7 @@
                     <div class="stat-desc text-xs">{{ $sailingCount }} sailing + {{ $nonSailingCount }} non-sailing</div>
                 </div>
 
-                @if($nextMilestone)
+                @if ($nextMilestone)
                     <div class="stat p-0 flex-1">
                         <div class="stat-title text-xs">Next Award</div>
                         <div class="stat-value text-3xl">{{ $nextMilestone }}</div>

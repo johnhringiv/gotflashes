@@ -4,7 +4,7 @@
     'cancelMethod' => 'cancelConfirmation',
 ])
 
-@if($show)
+@if ($show)
     <div class="modal modal-open" role="dialog">
         <div class="modal-box">
             <button wire:click="{{ $cancelMethod }}" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>

@@ -16,12 +16,7 @@
     {{-- A. Lightning fill-up hero --}}
     <div class="card bg-base-100 shadow-md mb-6" wire:key="hero-{{ $selectedYear }}">
         <div class="card-body items-center text-center">
-            <x-lightning-fill
-                :percentage="$goal ? $goalPercent : null"
-                :prior-percentage="$priorPercent"
-                :goal-label="$goal ? number_format($goal) : null"
-                :prior-year="$priorPercent !== null ? $selectedYear - 1 : null"
-                class="w-48 sm:w-60" />
+            <x-lightning-fill :percentage="$goal ? $goalPercent : null" :prior-percentage="$priorPercent" :goal-label="$goal ? number_format($goal) : null" :prior-year="$priorPercent !== null ? $selectedYear - 1 : null" class="w-48 sm:w-60" />
             @if ($goal)
                 <p class="text-2xl font-bold mt-2">
                     {{ number_format($counters['totalQualifying']) }}
@@ -56,13 +51,7 @@
 
     {{-- B. Key counters --}}
     @php
-        $counterTiles = [
-            ['title' => 'Qualifying Days', 'value' => $counters['totalQualifying'], 'desc' => 'Sailing + capped non-sailing'],
-            ['title' => 'Active Sailors', 'value' => $counters['activeSailors'], 'desc' => 'Logged at least one day'],
-            ['title' => 'Active Fleets', 'value' => $counters['activeFleets'], 'desc' => 'Represented on the water'],
-            ['title' => 'Active Districts', 'value' => $counters['activeDistricts'], 'desc' => 'Represented on the water'],
-            ['title' => 'Award Achievers', 'value' => $counters['awardAchievers'], 'desc' => 'Reached 10+ days', 'span' => 'col-span-2 md:col-span-1'],
-        ];
+        $counterTiles = [['title' => 'Qualifying Days', 'value' => $counters['totalQualifying'], 'desc' => 'Sailing + capped non-sailing'], ['title' => 'Active Sailors', 'value' => $counters['activeSailors'], 'desc' => 'Logged at least one day'], ['title' => 'Active Fleets', 'value' => $counters['activeFleets'], 'desc' => 'Represented on the water'], ['title' => 'Active Districts', 'value' => $counters['activeDistricts'], 'desc' => 'Represented on the water'], ['title' => 'Award Achievers', 'value' => $counters['awardAchievers'], 'desc' => 'Reached 10+ days', 'span' => 'col-span-2 md:col-span-1']];
     @endphp
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         @foreach ($counterTiles as $i => $tile)
@@ -80,9 +69,7 @@
     @if ($hasActivity)
         <div class="space-y-6" wire:loading.class="opacity-50 transition-opacity">
             {{-- D. Activity heatmap --}}
-            <x-chart-card chart-id="chart-heatmap"
-                          title="When the community sails"
-                          subtitle="Every day of {{ $selectedYear }} — darker means more flashes">
+            <x-chart-card chart-id="chart-heatmap" title="When the community sails" subtitle="Every day of {{ $selectedYear }} — darker means more flashes">
                 @if ($stats['busiestDay'])
                     <x-slot:caption>
                         Busiest day:
@@ -92,10 +79,18 @@
                 @endif
                 <x-slot:table>
                     <table class="table table-xs">
-                        <thead><tr><th>Date</th><th class="text-right">Flashes</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th class="text-right">Flashes</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach ($stats['heatmap'] as $day => $count)
-                                <tr><td>{{ $day }}</td><td class="text-right">{{ $count }}</td></tr>
+                                <tr>
+                                    <td>{{ $day }}</td>
+                                    <td class="text-right">{{ $count }}</td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -106,9 +101,7 @@
                  activity block: it extends the hero's qualifying-days thread.
                  Table twin: flashes per month × activity type (the chart is
                  filterable, so the twin gives the full aggregate). --}}
-            <x-chart-card chart-id="chart-flash-filter"
-                          title="Flashes over the season"
-                          subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share">
+            <x-chart-card chart-id="chart-flash-filter" title="Flashes over the season" subtitle="Running total of every flash in {{ $selectedYear }} — toggle activity types, genders, age groups, or count vs share">
                 <x-slot:table>
                     @php
                         $monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -120,7 +113,7 @@
                             $monthTotals[$m] = ($monthTotals[$m] ?? 0) + $r['count'];
                             $catTotals[$r['category']] = ($catTotals[$r['category']] ?? 0) + $r['count'];
                         }
-                        $activeMonths = array_filter(range(1, 12), fn ($m) => ($monthTotals[$m] ?? 0) > 0);
+                        $activeMonths = array_filter(range(1, 12), fn($m) => ($monthTotals[$m] ?? 0) > 0);
                     @endphp
                     <table class="table table-xs">
                         <thead>
@@ -155,15 +148,21 @@
             </x-chart-card>
 
             {{-- Community growth — cumulative sailors, stackable (defaults to age) --}}
-            <x-chart-card chart-id="chart-cumulative"
-                          title="Community growth"
-                          subtitle="Running total of registered sailors through {{ $selectedYear }} — stack by age or gender, count or share">
+            <x-chart-card chart-id="chart-cumulative" title="Community growth" subtitle="Running total of registered sailors through {{ $selectedYear }} — stack by age or gender, count or share">
                 <x-slot:table>
                     <table class="table table-xs">
-                        <thead><tr><th>Date</th><th class="text-right">Total sailors</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th class="text-right">Total sailors</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach ($stats['sailorGrowth']['totals'] as $point)
-                                <tr><td>{{ $point['date'] }}</td><td class="text-right">{{ $point['total'] }}</td></tr>
+                                <tr>
+                                    <td>{{ $point['date'] }}</td>
+                                    <td class="text-right">{{ $point['total'] }}</td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -174,9 +173,7 @@
                  one card's data table doesn't push its grid neighbor down. --}}
             <div class="grid md:grid-cols-2 gap-6 items-start stats-duo">
                 {{-- G. Age distribution --}}
-                <x-chart-card chart-id="chart-ages"
-                              title="Sailor ages"
-                              subtitle="Active sailors in {{ $selectedYear }}, by Lightning Class age division and gender">
+                <x-chart-card chart-id="chart-ages" title="Sailor ages" subtitle="Active sailors in {{ $selectedYear }}, by Lightning Class age division and gender">
                     <x-slot:table>
                         <table class="table table-xs">
                             <thead>
@@ -207,19 +204,23 @@
                 </x-chart-card>
 
                 {{-- H. Award tier funnel --}}
-                <x-chart-card chart-id="chart-funnel"
-                              title="From sign-up to award"
-                              subtitle="How far {{ $selectedYear }} sailors climb — registered, active, then each award">
+                <x-chart-card chart-id="chart-funnel" title="From sign-up to award" subtitle="How far {{ $selectedYear }} sailors climb — registered, active, then each award">
                     <x-slot:table>
                         <table class="table table-xs">
-                            <thead><tr><th>Stage</th><th class="text-right">Sailors</th><th class="text-right">% of registered</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Stage</th>
+                                    <th class="text-right">Sailors</th>
+                                    <th class="text-right">% of registered</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 @php $registered = $stats['funnel'][0]['count'] ?? 0; @endphp
                                 @foreach ($stats['funnel'] as $stage)
                                     <tr>
                                         <td>{{ $stage['label'] }}</td>
                                         <td class="text-right">{{ $stage['count'] }}</td>
-                                        <td class="text-right opacity-70">{{ $registered ? round($stage['count'] / $registered * 100) : 0 }}%</td>
+                                        <td class="text-right opacity-70">{{ $registered ? round(($stage['count'] / $registered) * 100) : 0 }}%</td>
                                     </tr>
                                 @endforeach
                             </tbody>

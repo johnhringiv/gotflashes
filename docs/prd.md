@@ -21,7 +21,7 @@ New users create accounts with the following information:
 
 **Affiliation Fields (selection required, "Unaffiliated/None" valid):**
 - District (Lightning Class geographic region, or "Unaffiliated/None")
-- Fleet (dynamically filtered by selected district, or "None"). Every fleet belongs to a district, so a fleet can only be chosen when a district is selected — a fleet without its district is rejected.
+- Fleet (searchable combobox, or "None"). Every fleet belongs to a district, and the form keeps the pair consistent from either direction: picking a fleet auto-fills its district, selecting a district narrows the fleet list, and clearing the district lets the user search across all fleets (the fleet then restores the district). Server-side, a fleet without its district is still rejected at submit — the auto-fill makes that state unreachable in the UI.
 
 **Optional Fields:**
 - Yacht Club
@@ -57,7 +57,12 @@ District and fleet affiliations are tracked per calendar year. When users regist
   - Users can request password reset link via email
   - Reset links expire after 60 minutes for security
   - Branded email notifications with G.O.T. Flashes styling
-  - Request throttling to prevent abuse (60 seconds between requests)
+  - Request throttling to prevent abuse (60 seconds between requests per email)
+- Rate limiting (all keyed on the real client IP; hits logged to the security channel):
+  - Login: 5 failures per minute per email+IP (cleared on success), plus a 25-per-15-minutes per-IP backstop — keyed on email+IP so a shared club/family connection can't lock out unrelated members
+  - Password reset request: 5 per hour per IP, counted only when mail is actually sent
+  - Password reset submit: 10 per hour per IP (token-guessing defense-in-depth)
+  - Registration and verification resend: per-IP/per-user caps
 
 ### 1.3 Profile Management
 Users can view and edit their profile information through a dedicated profile page:
@@ -181,8 +186,7 @@ Users log activities using a simple form:
 - Notes (free-form text)
 
 **Form Features & Validation:**
-- System displays remaining non-sailing days counter (e.g., "3 of 5 remaining")
-- Warning shown when logging 6th+ non-sailing day that won't count toward awards
+- A heads-up warning toast is shown after logging a non-sailing day beyond the 5-day cap (the entry still saves; it just won't count toward awards)
 - Date picker enforces restrictions from Section 2.1 (no future dates, no duplicates, respects grace period)
 - Edit/delete buttons only appear for activities within editable date range (see Section 2.1 for grace period rules)
 
@@ -199,16 +203,10 @@ Users log activities using a simple form:
 
 ### 3.3 Progress Tracking
 Users should see their current annual progress:
-- Total sailing days (current year)
-- Total non-sailing days logged
-- Non-sailing days remaining (X of 5 available)
-- Total qualifying days (toward awards)
+- Total qualifying days (toward awards), with a "N sailing + M non-sailing" breakdown in the progress card (M is capped at the 5 that count)
 - Visual progress indicators toward each award tier (10, 25, 50)
 - Awards earned in current year
 - Which award tier they've achieved
-- Clear messaging about non-sailing day status:
-    - If non-sailing days remaining: "X of 5 non-sailing days remaining"
-    - If all 5 used: "All 5 non-sailing days used this year"
 
 **Progress Display Thresholds:**
 - Below 10 days: No award badges shown (not even empty placeholders)
@@ -349,12 +347,12 @@ Admin users only.
 
 ## 8. System Requirements
 
-### 7.1 Platform
+### 8.1 Platform
 - Web-based application accessible on desktop and mobile devices
 - Self-hosted deployment
 - Responsive design for various screen sizes
 
-### 7.2 Data Management
+### 8.2 Data Management
 - User accounts and activity data persist across sessions
 - Historical data retained indefinitely (read-only after grace period)
 - One activity per date per user (duplicate prevention enforced)
@@ -369,7 +367,7 @@ Admin users only.
 - **Retention**: 90 days (`RETENTION_DAYS` constant); the retention pass also removes orphaned `-wal`/`-shm` sidecar files. Pass `--no-cleanup` to skip retention
 - **Monitoring**: Successes and failures are logged to the `backup` log channel (`storage/logs/backup.log`); failures log at error level
 
-### 7.3 Security
+### 8.3 Security
 - Secure user authentication and password protection
 - Email verification system with expiring tokens
 - Role-based access control (regular users and award administrators)
@@ -423,4 +421,4 @@ Admin users only.
 
 ## Document Control
 
-**Last Updated**: July 21, 2026
+**Last Updated**: July 30, 2026
