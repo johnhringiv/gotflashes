@@ -116,6 +116,24 @@ docker exec -it gotflashes sh
 - Using a `data` subdirectory keeps database files persistent while preserving migrations in the container
 - SQLite WAL files (`.sqlite-wal`, `.sqlite-shm`) automatically persist alongside the main database file
 
+## Observability
+
+All HTTP requests are logged with structured context (request ID, user, duration, memory),
+including automatic Livewire component context (method calls, property updates). Uncaught
+exceptions log with user/request context and a trimmed stack trace.
+
+**Log channels** (written to `storage/logs/`; `php artisan pail` tails live, `docker logs -f
+gotflashes` in production):
+- `structured` - all requests/responses with JSON context
+- `security` - authentication events, rate-limit hits, admin audit trail
+- `performance` - slow query/request warnings
+- `backup` - daily SQLite backup success/failure
+
+**Tuning** (defaults in `.env.example` / `docker/.env.docker`):
+- `LOG_SLOW_QUERIES` - log database queries exceeding the threshold (default: enabled)
+- `SLOW_QUERY_THRESHOLD_MS` - slow query threshold (default: 100)
+- `SLOW_REQUEST_THRESHOLD_MS` - slow HTTP request threshold (default: 300)
+
 ## Cloudflare Maintenance Worker
 
 A Cloudflare Worker (`workers/worker.js`, deployed via `workers/wrangler.toml`) serves a branded
