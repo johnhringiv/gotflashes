@@ -37,8 +37,15 @@ for (const file of files) {
         merged++;
     } catch {
         // A snapshot torn by a mid-write page kill is expected tail loss.
+        console.warn(`skipping unparseable snapshot: ${file}`);
         skipped++;
     }
+}
+
+// A few torn snapshots are normal; a large share means something systemic
+// (bad build, collector regression) is masquerading as tail loss.
+if (skipped > files.length / 10) {
+    console.error(`WARNING: ${skipped}/${files.length} snapshots unparseable — this exceeds normal tail loss; check the instrumented build and collector.`);
 }
 
 // Normalize absolute build-machine paths to repo-relative so Codecov can
