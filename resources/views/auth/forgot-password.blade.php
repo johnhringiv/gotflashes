@@ -17,14 +17,7 @@
 
                         <!-- Email -->
                         <div class="mb-6 floating-label-visible">
-                            <input type="email"
-                                   id="email"
-                                   name="email"
-                                   placeholder="mail@example.com"
-                                   value="{{ old('email') }}"
-                                   class="input w-full"
-                                   required
-                                   autofocus>
+                            <input type="email" id="email" name="email" placeholder="mail@example.com" value="{{ old('email') }}" class="input w-full" required autofocus>
                             <label for="email">Email</label>
                         </div>
                         <div id="email-error" class="label -mt-4 mb-2 hidden">

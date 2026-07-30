@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
             line-height: 1.6;
             background-color: #f3f4f6;
         }
+
         .email-container {
             max-width: 600px;
             margin: 40px auto;
@@ -20,30 +22,36 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .email-header {
             background-color: #09466F;
             padding: 40px 20px;
             text-align: center;
         }
+
         .email-header h1 {
             color: #ffffff;
             margin: 0;
             font-size: 24px;
             font-weight: 600;
         }
+
         .email-body {
             padding: 40px 30px;
             color: #374151;
         }
+
         .email-body h2 {
             color: #1f2937;
             font-size: 20px;
             margin: 0 0 20px 0;
         }
+
         .email-body p {
             margin: 0 0 16px 0;
             font-size: 16px;
         }
+
         .award-box {
             background: linear-gradient(135deg, #09466F 0%, #0a5a8a 100%);
             padding: 32px;
@@ -52,22 +60,26 @@
             margin: 32px 0;
             box-shadow: 0 4px 6px rgba(9, 70, 111, 0.2);
         }
+
         .award-box h3 {
             color: #ffffff;
             font-size: 32px;
             margin: 0 0 8px 0;
             font-weight: 700;
         }
+
         .award-box p {
             color: #e0f2fe;
             font-size: 18px;
             margin: 0;
         }
+
         .celebration {
             text-align: center;
             font-size: 48px;
             margin: 24px 0;
         }
+
         .info-box {
             background-color: #f0f9ff;
             border-left: 4px solid #0284c7;
@@ -76,13 +88,16 @@
             font-size: 14px;
             color: #0c4a6e;
         }
+
         .info-box p {
             margin: 8px 0;
         }
+
         .button-container {
             text-align: center;
             margin: 32px 0;
         }
+
         .view-button {
             display: inline-block;
             padding: 14px 32px;
@@ -94,23 +109,27 @@
             font-size: 16px;
             box-shadow: 0 2px 4px rgba(9, 70, 111, 0.3);
         }
+
         .email-footer {
             background-color: #f9fafb;
             padding: 30px;
             text-align: center;
             border-top: 1px solid #e5e7eb;
         }
+
         .email-footer p {
             margin: 8px 0;
             font-size: 14px;
             color: #6b7280;
         }
+
         .email-footer strong {
             color: #09466F;
             font-weight: 600;
         }
     </style>
 </head>
+
 <body>
     <div class="email-container">
         <!-- Header -->
@@ -162,4 +181,5 @@
         </div>
     </div>
 </body>
+
 </html>

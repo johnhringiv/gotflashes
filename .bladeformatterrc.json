@@ -1,7 +1,7 @@
 {
     "indentSize": 4,
-    "wrapLineLength": 120,
+    "wrapLineLength": 999,
     "wrapAttributes": "auto",
-    "sortTailwindcssClasses": true,
+    "sortTailwindcssClasses": false,
     "endWithNewline": true
 }

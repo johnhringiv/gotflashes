@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="lightning">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -41,158 +42,159 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles(['nonce' => app('csp-nonce')])
 </head>
-<body class="min-h-screen flex flex-col bg-base-200 font-sans">
-<nav class="navbar shadow-md">
-    <div class="navbar-start">
-        <!-- Mobile menu dropdown -->
-        <div class="dropdown lg:hidden">
-            <button type="button" tabindex="0" class="btn btn-ghost btn-circle text-white" aria-label="Menu">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-            <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-3 shadow-lg bg-base-100 rounded-box w-56 text-base-content">
-                <li><a href="/" class="text-base py-3 {{ request()->path() === '/' ? 'active font-bold text-accent' : '' }}">Home</a></li>
-                @auth
-                    <li><a href="/logbook" class="text-base py-3 {{ str_starts_with(request()->path(), 'logbook') ? 'active font-bold text-accent' : '' }}">Logbook</a></li>
-                @endauth
-                <li><a href="/stats" class="text-base py-3 {{ str_starts_with(request()->path(), 'stats') ? 'active font-bold text-accent' : '' }}">Stats</a></li>
-                <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
-                @auth
-                    @if(auth()->user()->is_admin)
-                        <li><a href="/admin/fulfillment" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'active font-bold text-accent' : '' }}">Award Fulfillment</a></li>
-                        <li><a href="/admin/sailor-logs" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'active font-bold text-accent' : '' }}">Sailor Logs</a></li>
-                    @endif
-                    @if(auth()->user()->isSuperAdmin())
-                        <li><a href="/admin/settings" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/settings') ? 'active font-bold text-accent' : '' }}">Settings</a></li>
-                    @endif
-                @endauth
 
+<body class="min-h-screen flex flex-col bg-base-200 font-sans">
+    <nav class="navbar shadow-md">
+        <div class="navbar-start">
+            <!-- Mobile menu dropdown -->
+            <div class="dropdown lg:hidden">
+                <button type="button" tabindex="0" class="btn btn-ghost btn-circle text-white" aria-label="Menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-3 shadow-lg bg-base-100 rounded-box w-56 text-base-content">
+                    <li><a href="/" class="text-base py-3 {{ request()->path() === '/' ? 'active font-bold text-accent' : '' }}">Home</a></li>
+                    @auth
+                        <li><a href="/logbook" class="text-base py-3 {{ str_starts_with(request()->path(), 'logbook') ? 'active font-bold text-accent' : '' }}">Logbook</a></li>
+                    @endauth
+                    <li><a href="/stats" class="text-base py-3 {{ str_starts_with(request()->path(), 'stats') ? 'active font-bold text-accent' : '' }}">Stats</a></li>
+                    <li><a href="/leaderboard" class="text-base py-3 {{ str_starts_with(request()->path(), 'leaderboard') ? 'active font-bold text-accent' : '' }}">Leaderboard</a></li>
+                    @auth
+                        @if (auth()->user()->is_admin)
+                            <li><a href="/admin/fulfillment" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'active font-bold text-accent' : '' }}">Award Fulfillment</a></li>
+                            <li><a href="/admin/sailor-logs" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'active font-bold text-accent' : '' }}">Sailor Logs</a></li>
+                        @endif
+                        @if (auth()->user()->isSuperAdmin())
+                            <li><a href="/admin/settings" class="text-base py-3 {{ str_starts_with(request()->path(), 'admin/settings') ? 'active font-bold text-accent' : '' }}">Settings</a></li>
+                        @endif
+                    @endauth
+
+                    @auth
+                        <li class="menu-title mt-2 text-xs opacity-70">Account</li>
+                        <li><a href="/profile" class="text-base py-3 text-warning font-semibold {{ request()->path() === 'profile' ? 'active font-bold text-accent' : '' }}">{{ auth()->user()->name }}</a></li>
+                        <li>
+                            <form method="POST" action="/logout">
+                                @csrf
+                                <button type="submit" class="text-base py-3 text-error font-semibold">Logout</button>
+                            </form>
+                        </li>
+                    @else
+                        <li class="menu-title mt-2"></li>
+                        <li><a href="/login" class="text-base py-3 {{ request()->path() === 'login' ? 'active font-bold text-accent' : '' }}">Sign In</a></li>
+                        <li><a href="/register" class="text-base py-3 {{ request()->path() === 'register' ? 'active font-bold text-accent' : '' }}">Sign Up</a></li>
+                    @endauth
+                </ul>
+            </div>
+
+            <!-- Logo -->
+            <a href="/" class="flex items-center px-2">
+                <img src="/images/got_flashes.png" alt="G.O.T. Flashes Challenge Tracker" class="h-12 rounded">
+            </a>
+        </div>
+
+        <!-- Desktop menu (centered) -->
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
                 @auth
-                    <li class="menu-title mt-2 text-xs opacity-70">Account</li>
-                    <li><a href="/profile" class="text-base py-3 text-warning font-semibold {{ request()->path() === 'profile' ? 'active font-bold text-accent' : '' }}">{{ auth()->user()->name }}</a></li>
-                    <li>
-                        <form method="POST" action="/logout">
-                            @csrf
-                            <button type="submit" class="text-base py-3 text-error font-semibold">Logout</button>
-                        </form>
-                    </li>
-                @else
-                    <li class="menu-title mt-2"></li>
-                    <li><a href="/login" class="text-base py-3 {{ request()->path() === 'login' ? 'active font-bold text-accent' : '' }}">Sign In</a></li>
-                    <li><a href="/register" class="text-base py-3 {{ request()->path() === 'register' ? 'active font-bold text-accent' : '' }}">Sign Up</a></li>
+                    <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
+                @endauth
+                <li><a href="/stats" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'stats') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Stats</a></li>
+                <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
+                @auth
+                    @if (auth()->user()->is_admin)
+                        <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
+                        <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
+                    @endif
+                    @if (auth()->user()->isSuperAdmin())
+                        <li><a href="/admin/settings" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/settings') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Settings</a></li>
+                    @endif
                 @endauth
             </ul>
         </div>
 
-        <!-- Logo -->
-        <a href="/" class="flex items-center px-2">
-            <img src="/images/got_flashes.png" alt="G.O.T. Flashes Challenge Tracker" class="h-12 rounded">
-        </a>
-    </div>
-
-    <!-- Desktop menu (centered) -->
-    <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
-            <li><a href="/" class="btn btn-ghost btn-sm hover:bg-white/10 {{ request()->path() === '/' ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Home</a></li>
+        <!-- Auth buttons (desktop only) -->
+        <div class="navbar-end gap-2 hidden lg:flex">
             @auth
-                <li><a href="/logbook" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'logbook') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Logbook</a></li>
+                <a href="/profile" class="text-sm text-warning font-semibold hover:underline {{ request()->path() === 'profile' ? 'underline decoration-error decoration-2' : '' }}">{{ auth()->user()->name }}</a>
+                <form method="POST" action="/logout" class="inline">
+                    @csrf
+                    <button type="submit" class="btn btn-error btn-sm">Logout</button>
+                </form>
+            @else
+                <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10 {{ request()->path() === 'login' ? 'font-bold underline decoration-accent decoration-2 underline-offset-4' : '' }}">Sign In</a>
+                <a href="/register" class="btn btn-accent btn-sm {{ request()->path() === 'register' ? 'font-bold underline decoration-white decoration-2 underline-offset-4' : '' }}">Sign Up</a>
             @endauth
-            <li><a href="/stats" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'stats') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Stats</a></li>
-            <li><a href="/leaderboard" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'leaderboard') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Leaderboard</a></li>
-            @auth
-                @if(auth()->user()->is_admin)
-                    <li><a href="/admin/fulfillment" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/fulfillment') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Award Fulfillment</a></li>
-                    <li><a href="/admin/sailor-logs" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/sailor-logs') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Sailor Logs</a></li>
-                @endif
-                @if(auth()->user()->isSuperAdmin())
-                    <li><a href="/admin/settings" class="btn btn-ghost btn-sm hover:bg-white/10 {{ str_starts_with(request()->path(), 'admin/settings') ? 'text-white font-bold underline decoration-accent decoration-2 underline-offset-4' : 'text-white/80' }}">Settings</a></li>
-                @endif
-            @endauth
-        </ul>
-    </div>
-
-    <!-- Auth buttons (desktop only) -->
-    <div class="navbar-end gap-2 hidden lg:flex">
-        @auth
-            <a href="/profile" class="text-sm text-warning font-semibold hover:underline {{ request()->path() === 'profile' ? 'underline decoration-error decoration-2' : '' }}">{{ auth()->user()->name }}</a>
-            <form method="POST" action="/logout" class="inline">
-                @csrf
-                <button type="submit" class="btn btn-error btn-sm">Logout</button>
-            </form>
-        @else
-            <a href="/login" class="btn btn-ghost btn-sm text-white hover:bg-white/10 {{ request()->path() === 'login' ? 'font-bold underline decoration-accent decoration-2 underline-offset-4' : '' }}">Sign In</a>
-            <a href="/register" class="btn btn-accent btn-sm {{ request()->path() === 'register' ? 'font-bold underline decoration-white decoration-2 underline-offset-4' : '' }}">Sign Up</a>
-        @endauth
-    </div>
-</nav>
-
-<!-- Email Verification Banner -->
-@auth
-    <div class="container mx-auto px-4 pt-4">
-        <livewire:email-verification-banner />
-    </div>
-@endauth
-
-<main class="flex-1 container mx-auto px-4 py-8">
-    <!-- JavaScript Required Notice -->
-    <noscript>
-        <div class="alert alert-error shadow-lg mb-6 max-w-2xl mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-                <h3 class="font-bold">JavaScript Required</h3>
-                <p class="text-sm">This application requires JavaScript to function properly. Please enable JavaScript in your browser settings and reload the page.</p>
-            </div>
         </div>
-    </noscript>
+    </nav>
 
-    <!-- Toast Container (for both session and Livewire toasts) -->
-    <div id="toast-container" class="toast toast-top toast-center z-50 top-20"></div>
+    <!-- Email Verification Banner -->
+    @auth
+        <div class="container mx-auto px-4 pt-4">
+            <livewire:email-verification-banner />
+        </div>
+    @endauth
 
-    <!-- Success Toast (Session-based - for page reloads) -->
-    @if (session('success'))
-        <script @cspNonce>
-            document.addEventListener('DOMContentLoaded', function() {
-                showToast('success', {{ Js::from(session('success')) }});
-            });
-        </script>
-    @endif
+    <main class="flex-1 container mx-auto px-4 py-8">
+        <!-- JavaScript Required Notice -->
+        <noscript>
+            <div class="alert alert-error shadow-lg mb-6 max-w-2xl mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <h3 class="font-bold">JavaScript Required</h3>
+                    <p class="text-sm">This application requires JavaScript to function properly. Please enable JavaScript in your browser settings and reload the page.</p>
+                </div>
+            </div>
+        </noscript>
 
-    <!-- Warning Toast (Session-based - for page reloads) -->
-    @if (session('warning'))
-        <script @cspNonce>
-            document.addEventListener('DOMContentLoaded', function() {
-                showToast('warning', {{ Js::from(session('warning')) }});
-            });
-        </script>
-    @endif
+        <!-- Toast Container (for both session and Livewire toasts) -->
+        <div id="toast-container" class="toast toast-top toast-center z-50 top-20"></div>
 
-    <!-- Error Toast (Session-based - for page reloads) -->
-    @if (session('error'))
-        <script @cspNonce>
-            document.addEventListener('DOMContentLoaded', function() {
-                showToast('error', {{ Js::from(session('error')) }});
-            });
-        </script>
-    @endif
+        <!-- Success Toast (Session-based - for page reloads) -->
+        @if (session('success'))
+            <script @cspNonce>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showToast('success', {{ Js::from(session('success')) }});
+                });
+            </script>
+        @endif
 
-    {{ $slot }}
-</main>
+        <!-- Warning Toast (Session-based - for page reloads) -->
+        @if (session('warning'))
+            <script @cspNonce>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showToast('warning', {{ Js::from(session('warning')) }});
+                });
+            </script>
+        @endif
 
-<footer class="footer footer-center p-5 bg-base-300 text-base-content text-xs">
-    <div>
-        <p>© 2025-{{ date('Y') }} <a href="https://www.lightningclass.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Lightning Class Association</a> - G.O.T. Flashes Challenge Tracker</p>
-        <p class="text-xs opacity-70">TRACK YOUR SAILING DAYS • EARN AWARDS • BUILD THE LIGHTNING COMMUNITY</p>
-        <p class="text-xs opacity-60 mt-2">
-            Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>
-        </p>
-    </div>
-</footer>
-@livewireScripts(['nonce' => app('csp-nonce')])
-@if (app()->environment('testing') && config('app.coverage'))
-    <!-- Browser-JS coverage harvest (testing + COVERAGE=true only). Playwright
+        <!-- Error Toast (Session-based - for page reloads) -->
+        @if (session('error'))
+            <script @cspNonce>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showToast('error', {{ Js::from(session('error')) }});
+                });
+            </script>
+        @endif
+
+        {{ $slot }}
+    </main>
+
+    <footer class="footer footer-center p-5 bg-base-300 text-base-content text-xs">
+        <div>
+            <p>© 2025-{{ date('Y') }} <a href="https://www.lightningclass.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Lightning Class Association</a> - G.O.T. Flashes Challenge Tracker</p>
+            <p class="text-xs opacity-70">TRACK YOUR SAILING DAYS • EARN AWARDS • BUILD THE LIGHTNING COMMUNITY</p>
+            <p class="text-xs opacity-60 mt-2">
+                Created by <a href="https://johnhringiv.com/" target="_blank" rel="noopener noreferrer" class="link link-hover">John Ring</a>
+            </p>
+        </div>
+    </footer>
+    @livewireScripts(['nonce' => app('csp-nonce')])
+    @if (app()->environment('testing') && config('app.coverage'))
+        <!-- Browser-JS coverage harvest (testing + COVERAGE=true only). Playwright
          closes test pages without firing pagehide, so waiting for page exit
          would lose everything: instead POST the Istanbul counters immediately
          and every 100ms while they grow (counters are monotonic — the sum only
@@ -202,35 +204,39 @@
          in-process Amp server hard-stalls on bodies over its 128 KiB limit,
          and sendBeacon's 64 KB quota rules it out too. pagehide still
          triggers a best-effort final flush. -->
-    <script @cspNonce data-coverage-harvest>
-        (function () {
-            const pageId = crypto.randomUUID();
-            let lastTotal = -1;
-            const totalHits = function (cov) {
-                let total = 0;
-                for (const file of Object.values(cov)) {
-                    for (const n of Object.values(file.s)) total += n;
-                    for (const n of Object.values(file.f)) total += n;
-                }
-                return total;
-            };
-            const send = function () {
-                const cov = window.__coverage__;
-                if (!cov) return;
-                const total = totalHits(cov);
-                if (total === lastTotal) return;
-                lastTotal = total;
-                new Response(
-                    new Blob([JSON.stringify(cov)]).stream().pipeThrough(new CompressionStream('gzip'))
-                ).blob().then(function (gz) {
-                    return fetch('/__coverage__?page=' + pageId, { method: 'POST', body: gz });
-                }).catch(function () {});
-            };
-            send();
-            setInterval(send, 100);
-            window.addEventListener('pagehide', send);
-        })();
-    </script>
-@endif
+        <script @cspNonce data-coverage-harvest>
+            (function() {
+                const pageId = crypto.randomUUID();
+                let lastTotal = -1;
+                const totalHits = function(cov) {
+                    let total = 0;
+                    for (const file of Object.values(cov)) {
+                        for (const n of Object.values(file.s)) total += n;
+                        for (const n of Object.values(file.f)) total += n;
+                    }
+                    return total;
+                };
+                const send = function() {
+                    const cov = window.__coverage__;
+                    if (!cov) return;
+                    const total = totalHits(cov);
+                    if (total === lastTotal) return;
+                    lastTotal = total;
+                    new Response(
+                        new Blob([JSON.stringify(cov)]).stream().pipeThrough(new CompressionStream('gzip'))
+                    ).blob().then(function(gz) {
+                        return fetch('/__coverage__?page=' + pageId, {
+                            method: 'POST',
+                            body: gz
+                        });
+                    }).catch(function() {});
+                };
+                send();
+                setInterval(send, 100);
+                window.addEventListener('pagehide', send);
+            })();
+        </script>
+    @endif
 </body>
+
 </html>

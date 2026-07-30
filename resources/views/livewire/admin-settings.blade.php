@@ -25,14 +25,7 @@
                     <label class="label" for="community-goal">
                         <span class="label-text font-medium">Goal (community sailing days)</span>
                     </label>
-                    <input type="number"
-                           id="community-goal"
-                           wire:model="goal"
-                           min="1"
-                           max="1000000"
-                           step="1"
-                           placeholder="e.g. 2000"
-                           class="input w-full max-w-xs @error('goal') input-error @enderror">
+                    <input type="number" id="community-goal" wire:model="goal" min="1" max="1000000" step="1" placeholder="e.g. 2000" class="input w-full max-w-xs @error('goal') input-error @enderror">
                     @error('goal')
                         <p class="text-error text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -42,13 +35,15 @@
                     Community total so far in {{ $selectedYear }}:
                     <span class="font-bold">{{ number_format($currentTotal) }}</span> qualifying days
                     @if ($goal && $goal > 0)
-                        — <span class="font-bold">{{ (int) round(min(100, $currentTotal / $goal * 100)) }}%</span> of this goal
+                        — <span class="font-bold">{{ (int) round(min(100, ($currentTotal / $goal) * 100)) }}%</span> of this goal
                     @endif
                 </div>
 
                 @if ($priorTotal > 0)
                     <div class="text-sm opacity-70">
-                        For reference, {{ $priorYear }} finished at {{ number_format($priorTotal) }} days @if ($priorIsHistorical)(from the pre-launch process)@endif
+                        For reference, {{ $priorYear }} finished at {{ number_format($priorTotal) }} days @if ($priorIsHistorical)
+                            (from the pre-launch process)
+                        @endif
                     </div>
                 @endif
 

@@ -14,14 +14,7 @@
 
                         <!-- Email -->
                         <div class="mb-6 floating-label-visible">
-                            <input type="email"
-                                   id="email"
-                                   name="email"
-                                   placeholder="mail@example.com"
-                                   value="{{ old('email') }}"
-                                   class="input w-full @error('email') input-error @enderror"
-                                   required
-                                   autofocus>
+                            <input type="email" id="email" name="email" placeholder="mail@example.com" value="{{ old('email') }}" class="input w-full @error('email') input-error @enderror" required autofocus>
                             <label for="email">Email</label>
                             @error('email')
                                 <div class="label">
@@ -45,9 +38,7 @@
                         <div class="form-control mt-4">
                             <div class="flex justify-between items-center">
                                 <label class="label cursor-pointer justify-start p-0">
-                                    <input type="checkbox"
-                                           name="remember"
-                                           class="checkbox checkbox-primary">
+                                    <input type="checkbox" name="remember" class="checkbox checkbox-primary">
                                     <span class="label-text ml-2">Remember me</span>
                                 </label>
                                 <a href="{{ route('password.request') }}" class="link link-primary text-sm">

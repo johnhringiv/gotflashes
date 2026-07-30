@@ -14,7 +14,7 @@
                         <span class="label-text font-semibold">Year</span>
                     </label>
                     <select wire:model.live="selectedYear" class="select">
-                        @foreach($availableYears as $year)
+                        @foreach ($availableYears as $year)
                             <option value="{{ $year }}">{{ $year }}</option>
                         @endforeach
                     </select>
@@ -52,10 +52,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Search</span>
                     </label>
-                    <input type="text"
-                           wire:model.live.debounce.300ms="searchQuery"
-                           placeholder="Name or email..."
-                           class="input">
+                    <input type="text" wire:model.live.debounce.300ms="searchQuery" placeholder="Name or email..." class="input">
                 </div>
             </div>
         </div>
@@ -89,20 +86,18 @@
     </div>
 
     <!-- Awards Table -->
-    @if($awards->count() > 0)
+    @if ($awards->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto mb-20">
             <table class="table">
                 <thead class="bg-base-300 border-b-2 border-base-content/20">
                     <tr>
                         <th class="w-24">
-                            @if($this->selectedCount === $awards->count() && $awards->count() > 0)
-                                <button wire:click="clearSelection"
-                                        class="btn btn-sm btn-error">
+                            @if ($this->selectedCount === $awards->count() && $awards->count() > 0)
+                                <button wire:click="clearSelection" class="btn btn-sm btn-error">
                                     Clear
                                 </button>
                             @else
-                                <button wire:click="selectAllByStatus('all')"
-                                        class="btn btn-sm btn-primary">
+                                <button wire:click="selectAllByStatus('all')" class="btn btn-sm btn-primary">
                                     Select All
                                 </button>
                             @endif
@@ -120,32 +115,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($awards as $award)
+                    @foreach ($awards as $award)
                         @php
                             $user = $award['user'];
                             $membership = $award['membership']; // Precomputed in component
                         @endphp
                         <tr class="hover" wire:key="award-{{ $award['id'] }}">
                             <td>
-                                <input type="checkbox"
-                                       class="checkbox checkbox-primary checkbox-sm"
-                                       wire:model.live="selectedAwards"
-                                       value="{{ $award['id'] }}">
+                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" wire:model.live="selectedAwards" value="{{ $award['id'] }}">
                             </td>
                             <td class="font-medium">
-                                <a href="{{ route('admin.sailor-logs', ['selectedYear' => $selectedYear, 'searchQuery' => $user->email]) }}"
-                                   class="link link-hover text-primary">
+                                <a href="{{ route('admin.sailor-logs', ['selectedYear' => $selectedYear, 'searchQuery' => $user->email]) }}" class="link link-hover text-primary">
                                     {{ $user->name }}
                                 </a>
-                                @if($award['discrepancy'])
+                                @if ($award['discrepancy'])
                                     <div class="tooltip" data-tip="User currently has {{ $award['total_days'] }} days but was processed for {{ $award['tier'] }}-day award">
                                         <span class="badge badge-warning badge-sm ml-2">⚠</span>
                                     </div>
                                 @endif
                             </td>
                             <td class="text-sm">
-                                @if($user->address_line1)
-                                    {{ $user->address_line1 }}@if($user->address_line2), {{ $user->address_line2 }}@endif
+                                @if ($user->address_line1)
+                                    {{ $user->address_line1 }}@if ($user->address_line2)
+                                        , {{ $user->address_line2 }}
+                                    @endif
                                     <br>
                                     {{ $user->city }}, {{ $user->state }} {{ $user->zip_code }}
                                 @else
@@ -154,16 +147,16 @@
                             </td>
                             <td class="text-sm">
                                 {{ $user->email }}
-                                @if($user->email_verified_at)
+                                @if ($user->email_verified_at)
                                     <div class="tooltip tooltip-right" data-tip="Email verified">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1 text-success" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                 @else
                                     <div class="tooltip tooltip-right" data-tip="Email not verified (no notification sent)">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
                                     </div>
                                 @endif
@@ -182,7 +175,7 @@
                                 <span class="badge badge-accent">{{ $award['total_days'] }}</span>
                             </td>
                             <td class="text-center">
-                                @if($award['status'] === 'earned')
+                                @if ($award['status'] === 'earned')
                                     <span class="badge badge-warning">Earned</span>
                                 @elseif($award['status'] === 'processing')
                                     <span class="badge badge-info">Processing</span>
@@ -194,7 +187,7 @@
                                 {{ $award['threshold_date'] ? $award['threshold_date']->format('M j, Y') : '—' }}
                             </td>
                             <td class="text-center text-sm">
-                                @if($award['fulfillment'])
+                                @if ($award['fulfillment'])
                                     <div>{{ $award['fulfillment']->updatedBy?->name ?? '—' }}</div>
                                     <div class="text-xs text-base-content/60">{{ $award['fulfillment']->updated_at->format('M j, Y') }}</div>
                                 @else
@@ -216,7 +209,7 @@
     @endif
 
     <!-- Bulk Action Bar (Sticky) -->
-    @if($this->selectedCount > 0)
+    @if ($this->selectedCount > 0)
         <div class="fixed bottom-0 left-0 right-0 bg-base-200 border-t-2 border-base-300 shadow-xl z-50">
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between flex-wrap gap-4">
@@ -261,7 +254,7 @@
 
     <!-- Mark as Processing Confirmation Modal -->
     <x-admin.confirmation-modal :show="$confirmingAction === 'processing'" title="Mark as Processing">
-        @if($showDowngradeWarning)
+        @if ($showDowngradeWarning)
             <div class="alert alert-warning mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -291,9 +284,7 @@
         </div>
 
         <x-slot:action>
-            <button wire:click="bulkMarkAsProcessing"
-                    class="btn btn-info"
-                    @disabled($showDowngradeWarning && !$confirmDowngrade)>
+            <button wire:click="bulkMarkAsProcessing" class="btn btn-info" @disabled($showDowngradeWarning && !$confirmDowngrade)>
                 Mark as Processing
             </button>
         </x-slot:action>
@@ -301,7 +292,7 @@
 
     <!-- Mark as Sent Confirmation Modal -->
     <x-admin.confirmation-modal :show="$confirmingAction === 'sent'" title="Mark as Sent">
-        @if($showEarnedToSentWarning)
+        @if ($showEarnedToSentWarning)
             <div class="alert alert-warning mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -331,9 +322,7 @@
         </div>
 
         <x-slot:action>
-            <button wire:click="bulkMarkAsSent"
-                    class="btn btn-success"
-                    @disabled($showEarnedToSentWarning && !$confirmEarnedToSent)>
+            <button wire:click="bulkMarkAsSent" class="btn btn-success" @disabled($showEarnedToSentWarning && !$confirmEarnedToSent)>
                 Mark as Sent
             </button>
         </x-slot:action>
@@ -370,9 +359,7 @@
         </div>
 
         <x-slot:action>
-            <button wire:click="bulkRemoveFromDatabase"
-                    class="btn btn-warning"
-                    @disabled(!$confirmRemove)>
+            <button wire:click="bulkRemoveFromDatabase" class="btn btn-warning" @disabled(!$confirmRemove)>
                 Reset {{ $removeCount }} Award(s)
             </button>
         </x-slot:action>

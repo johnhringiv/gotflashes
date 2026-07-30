@@ -3,12 +3,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- First Name -->
     <div class="mb-6 floating-label-visible">
-        <input type="text"
-               id="first_name"
-               wire:model.live.blur="first_name"
-               placeholder="John"
-               class="input w-full @error('first_name') input-error @enderror"
-               required>
+        <input type="text" id="first_name" wire:model.live.blur="first_name" placeholder="John" class="input w-full @error('first_name') input-error @enderror" required>
         <label for="first_name">First Name</label>
         @error('first_name')
             <div class="label">
@@ -19,12 +14,7 @@
 
     <!-- Last Name -->
     <div class="mb-6 floating-label-visible">
-        <input type="text"
-               id="last_name"
-               wire:model.live.blur="last_name"
-               placeholder="Doe"
-               class="input w-full @error('last_name') input-error @enderror"
-               required>
+        <input type="text" id="last_name" wire:model.live.blur="last_name" placeholder="Doe" class="input w-full @error('last_name') input-error @enderror" required>
         <label for="last_name">Last Name</label>
         @error('last_name')
             <div class="label">
@@ -36,12 +26,7 @@
 
 <!-- Email -->
 <div class="mb-6 floating-label-visible">
-    <input type="email"
-           id="email"
-           wire:model.live.blur="email"
-           placeholder="mail@example.com"
-           class="input w-full @error('email') input-error @enderror"
-           required>
+    <input type="email" id="email" wire:model.live.blur="email" placeholder="mail@example.com" class="input w-full @error('email') input-error @enderror" required>
     <label for="email">Email</label>
     @error('email')
         <div class="label">
@@ -52,9 +37,7 @@
         <div class="label" wire:key="email-suggestion">
             <span class="label-text-alt">
                 Did you mean
-                <button type="button"
-                        wire:click="applyEmailSuggestion"
-                        class="link link-primary font-semibold">{{ $emailSuggestion }}</button>?
+                <button type="button" wire:click="applyEmailSuggestion" class="link link-primary font-semibold">{{ $emailSuggestion }}</button>?
             </span>
         </div>
     @endif
@@ -65,13 +48,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
     <!-- Date of Birth -->
     <div class="mb-6 floating-label-visible">
-        <input type="text"
-               id="date_of_birth"
-               wire:model.live.blur="date_of_birth"
-               placeholder="YYYY-MM-DD"
-               class="input w-full @error('date_of_birth') input-error @enderror"
-               maxlength="10"
-               required>
+        <input type="text" id="date_of_birth" wire:model.live.blur="date_of_birth" placeholder="YYYY-MM-DD" class="input w-full @error('date_of_birth') input-error @enderror" maxlength="10" required>
         <label for="date_of_birth">Date of Birth</label>
         @error('date_of_birth')
             <div class="label">
@@ -104,12 +81,7 @@
 
 <!-- Street Address -->
 <div class="mb-6 floating-label-visible">
-    <input type="text"
-           id="address_line1"
-           wire:model.live.blur="address_line1"
-           placeholder="123 Main Street"
-           class="input w-full @error('address_line1') input-error @enderror"
-           required>
+    <input type="text" id="address_line1" wire:model.live.blur="address_line1" placeholder="123 Main Street" class="input w-full @error('address_line1') input-error @enderror" required>
     <label for="address_line1">Street Address</label>
     @error('address_line1')
         <div class="label">
@@ -120,23 +92,14 @@
 
 <!-- Address Line 2 -->
 <div class="mb-6 floating-label-visible">
-    <input type="text"
-           id="address_line2"
-           wire:model.live.blur="address_line2"
-           placeholder="Apt 4B"
-           class="input w-full">
+    <input type="text" id="address_line2" wire:model.live.blur="address_line2" placeholder="Apt 4B" class="input w-full">
     <label for="address_line2">Address Line 2 (optional)</label>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4">
     <!-- City -->
     <div class="mb-6 floating-label-visible md:col-span-1">
-        <input type="text"
-               id="city"
-               wire:model.live.blur="city"
-               placeholder="San Diego"
-               class="input w-full @error('city') input-error @enderror"
-               required>
+        <input type="text" id="city" wire:model.live.blur="city" placeholder="San Diego" class="input w-full @error('city') input-error @enderror" required>
         <label for="city">City</label>
         @error('city')
             <div class="label">
@@ -147,12 +110,7 @@
 
     <!-- State -->
     <div class="mb-6 floating-label-visible">
-        <input type="text"
-               id="state"
-               wire:model.live.blur="state"
-               placeholder="CA"
-               class="input w-full @error('state') input-error @enderror"
-               required>
+        <input type="text" id="state" wire:model.live.blur="state" placeholder="CA" class="input w-full @error('state') input-error @enderror" required>
         <label for="state">State/Province</label>
         @error('state')
             <div class="label">
@@ -163,12 +121,7 @@
 
     <!-- Zip Code -->
     <div class="mb-6 floating-label-visible">
-        <input type="text"
-               id="zip_code"
-               wire:model.live.blur="zip_code"
-               placeholder="92101"
-               class="input w-full @error('zip_code') input-error @enderror"
-               required>
+        <input type="text" id="zip_code" wire:model.live.blur="zip_code" placeholder="92101" class="input w-full @error('zip_code') input-error @enderror" required>
         <label for="zip_code">Zip/Postal Code</label>
         @error('zip_code')
             <div class="label">
@@ -180,12 +133,7 @@
 
 <!-- Country -->
 <div class="mb-6 floating-label-visible">
-    <input type="text"
-           id="country"
-           wire:model.live.blur="country"
-           placeholder="United States"
-           class="input w-full @error('country') input-error @enderror"
-           required>
+    <input type="text" id="country" wire:model.live.blur="country" placeholder="United States" class="input w-full @error('country') input-error @enderror" required>
     <label for="country">Country</label>
     @error('country')
         <div class="label">
@@ -202,8 +150,12 @@
     // gone). Queried here rather than passed in so both callers (registration
     // + profile Livewire forms) stay untouched; the component must remain
     // anonymous because $this below binds to the calling Livewire component.
-    $districtOptions = \App\Models\District::query()->orderBy('name')->get(['id', 'name']);
-    $fleetOptions = \App\Models\Fleet::query()->orderBy('fleet_number')->get(['id', 'fleet_number', 'fleet_name', 'district_id']);
+    $districtOptions = \App\Models\District::query()
+        ->orderBy('name')
+        ->get(['id', 'name']);
+    $fleetOptions = \App\Models\Fleet::query()
+        ->orderBy('fleet_number')
+        ->get(['id', 'fleet_number', 'fleet_name', 'district_id']);
     $noneDistrictId = \App\Models\District::noneId();
     $noneFleetId = \App\Models\Fleet::noneId();
 @endphp
@@ -212,18 +164,13 @@
     <!-- District -->
     <div class="mb-6 floating-label-visible @error('district_id') field-error @enderror">
         <div wire:ignore>
-            <select name="district_id"
-                    id="{{ $districtSelectId }}"
-                    class="select w-full"
-                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+            <select name="district_id" id="{{ $districtSelectId }}" class="select w-full" data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
                 {{-- empty value = cleared district (combobox clear gesture):
                      deliberately allowed so users who don't know their
                      district can search across ALL fleets --}}
-                <option value="" @selected(! $this->district_id)>Select district...</option>
+                <option value="" @selected(!$this->district_id)>Select district...</option>
                 @foreach ($districtOptions as $district)
-                    <option value="{{ $district->id }}"
-                            @selected($this->district_id == $district->id)
-                            @if ($district->id === $noneDistrictId) data-none @endif>
+                    <option value="{{ $district->id }}" @selected($this->district_id == $district->id) @if ($district->id === $noneDistrictId) data-none @endif>
                         {{ $district->name }}
                     </option>
                 @endforeach
@@ -247,17 +194,11 @@
     <!-- Fleet -->
     <div class="mb-6 floating-label-visible @error('fleet_id') field-error @enderror">
         <div wire:ignore>
-            <select name="fleet_id"
-                    id="{{ $fleetSelectId }}"
-                    class="select w-full"
-                    data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
+            <select name="fleet_id" id="{{ $fleetSelectId }}" class="select w-full" data-is-profile="{{ request()->routeIs('profile') ? 'true' : 'false' }}">
                 <option value="">Select fleet...</option>
                 @foreach ($fleetOptions as $fleet)
-                    <option value="{{ $fleet->id }}"
-                            @selected($this->fleet_id == $fleet->id)
-                            data-district-id="{{ $fleet->district_id }}"
-                            @if ($fleet->id === $noneFleetId) data-none @endif>
-                        {{ $fleet->id === $noneFleetId ? 'None' : 'Fleet '.$fleet->fleet_number.' - '.$fleet->fleet_name }}
+                    <option value="{{ $fleet->id }}" @selected($this->fleet_id == $fleet->id) data-district-id="{{ $fleet->district_id }}" @if ($fleet->id === $noneFleetId) data-none @endif>
+                        {{ $fleet->id === $noneFleetId ? 'None' : 'Fleet ' . $fleet->fleet_number . ' - ' . $fleet->fleet_name }}
                     </option>
                 @endforeach
             </select>
@@ -282,11 +223,7 @@
 
 <!-- Yacht Club -->
 <div class="mb-6 floating-label-visible">
-    <input type="text"
-           id="yacht_club"
-           wire:model.live.blur="yacht_club"
-           placeholder="e.g., San Diego Yacht Club"
-           class="input w-full @error('yacht_club') input-error @enderror">
+    <input type="text" id="yacht_club" wire:model.live.blur="yacht_club" placeholder="e.g., San Diego Yacht Club" class="input w-full @error('yacht_club') input-error @enderror">
     <label for="yacht_club">Yacht Club</label>
     @error('yacht_club')
         <div class="label">
@@ -294,4 +231,3 @@
         </div>
     @enderror
 </div>
-
