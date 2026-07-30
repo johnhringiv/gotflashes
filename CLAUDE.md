@@ -20,8 +20,8 @@ composer dev                      # Runs: Laravel server, queue worker, Pail log
 # Access at http://localhost:8000
 
 # Code quality (use before committing)
-composer check                    # Runs: Pint, PHPStan, ESLint, Stylelint
-composer fix                      # Auto-fixes: Pint, ESLint, Stylelint
+composer check                    # Runs: Pint, PHPStan, ESLint, Stylelint, blade-formatter check
+composer fix                      # Auto-fixes: Pint, ESLint, Stylelint, blade-formatter --write
 
 # Testing
 composer test                     # Runs PHPUnit test suite (with APP_ENV=testing)
@@ -357,7 +357,7 @@ gzipped built). When in doubt about what a class does, read its rule in
 - **PHP**: Laravel Pint (PSR-12) + PHPStan (level 5) via Larastan
 - **JavaScript**: ESLint with recommended rules
 - **CSS**: Stylelint (`stylelint-config-standard`; `.stylelintrc.json` relaxes only the cosmetic rules that fight app.css's compact one-declaration-per-line utility idiom and Tailwind-escaped class names — all error-catching rules stay on)
-- **Blade**: blade-formatter for template formatting
+- **Blade**: blade-formatter, ENFORCED — `npm run lint:blade` (`--check-formatted`) runs in the `lint` chain / `composer check` / pre-commit; `composer fix` rewrites via `fix:blade`. Config gotchas (`.bladeformatterrc.json`): `wrapLineLength` stays 999 because the formatter splits text nodes mid-phrase when wrapping (breaks `assertSee` on multi-word labels, and split text is never re-joined); `sortTailwindcssClasses` stays false (Tailwind sort order is meaningless against hand-authored CSS and breaks class-string assertions)
 
 ### PHPStan Configuration
 - Level 5 static analysis
