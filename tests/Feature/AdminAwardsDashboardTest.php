@@ -52,6 +52,30 @@ class AdminAwardsDashboardTest extends TestCase
             ->assertSee('10'); // Award tier
     }
 
+    public function test_dashboard_joins_address_lines_without_stray_whitespace(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $user = User::factory()->create([
+            'address_line1' => '123 Main St',
+            'address_line2' => 'Apt 4B',
+        ]);
+        for ($i = 1; $i <= 10; $i++) {
+            Flash::factory()->create([
+                'user_id' => $user->id,
+                'date' => now()->startOfYear()->addDays($i),
+                'activity_type' => 'sailing',
+            ]);
+        }
+
+        // The comma-join must be built in PHP: an inline Blade @if here gets
+        // expanded by blade-formatter, whose indentation renders as a stray
+        // space before the comma ("123 Main St , Apt 4B").
+        Livewire::actingAs($admin)
+            ->test('admin-awards-dashboard')
+            ->assertSee('123 Main St, Apt 4B');
+    }
+
     public function test_dashboard_shows_processing_awards(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

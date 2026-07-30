@@ -15,7 +15,7 @@
                         <span class="label-text font-semibold">Year</span>
                     </label>
                     <select wire:model.live="selectedYear" class="select">
-                        @foreach($availableYears as $year)
+                        @foreach ($availableYears as $year)
                             <option value="{{ $year }}">{{ $year }}</option>
                         @endforeach
                     </select>
@@ -28,11 +28,9 @@
                     </label>
                     {{-- data-allow-empty: "All Districts" is a pickable row in
                          the combobox, not just placeholder text --}}
-                    <select id="sailor-logs-district-select"
-                            class="select"
-                            data-allow-empty="true">
+                    <select id="sailor-logs-district-select" class="select" data-allow-empty="true">
                         <option value="">All Districts</option>
-                        @foreach($availableDistricts as $district)
+                        @foreach ($availableDistricts as $district)
                             <option value="{{ $district->id }}" {{ $selectedDistrict == $district->id ? 'selected' : '' }}>
                                 {{ $district->name }}
                             </option>
@@ -47,18 +45,12 @@
                     </label>
                     {{-- data-allow-empty: "All Fleets" is a pickable row in the
                          combobox, not just placeholder text --}}
-                    <select id="sailor-logs-fleet-select"
-                            class="select"
-                            data-allow-empty="true">
+                    <select id="sailor-logs-fleet-select" class="select" data-allow-empty="true">
                         <option value="">All Fleets</option>
-                        @foreach($availableFleets as $fleet)
-                            <option value="{{ $fleet->id }}"
-                                    {{ $selectedFleet == $fleet->id ? 'selected' : '' }}
-                                    data-fleet-number="{{ $fleet->fleet_number }}"
-                                    data-district-id="{{ $fleet->district_id ?? '' }}"
-                                    data-district-name="{{ $fleet->district_name ?? '' }}">
-                                {{ $fleet->fleet_number ? 'Fleet '.$fleet->fleet_number : 'None' }}
-                                @if(!$selectedDistrict && isset($fleet->district_name) && $fleet->fleet_number)
+                        @foreach ($availableFleets as $fleet)
+                            <option value="{{ $fleet->id }}" {{ $selectedFleet == $fleet->id ? 'selected' : '' }} data-fleet-number="{{ $fleet->fleet_number }}" data-district-id="{{ $fleet->district_id ?? '' }}" data-district-name="{{ $fleet->district_name ?? '' }}">
+                                {{ $fleet->fleet_number ? 'Fleet ' . $fleet->fleet_number : 'None' }}
+                                @if (!$selectedDistrict && isset($fleet->district_name) && $fleet->fleet_number)
                                     ({{ $fleet->district_name }})
                                 @endif
                             </option>
@@ -71,10 +63,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Search</span>
                     </label>
-                    <input type="text"
-                           wire:model.live.debounce.300ms="searchQuery"
-                           placeholder="Name or email..."
-                           class="input">
+                    <input type="text" wire:model.live.debounce.300ms="searchQuery" placeholder="Name or email..." class="input">
                 </div>
             </div>
         </div>
@@ -87,18 +76,14 @@
         </div>
 
         <div class="flex gap-2">
-            <button wire:click="clearFilters"
-                    class="btn btn-error btn-sm gap-2">
+            <button wire:click="clearFilters" class="btn btn-error btn-sm gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 Clear Filters
             </button>
 
-            <button wire:click="exportCsv"
-                    class="btn btn-primary btn-sm gap-2"
-                    wire:loading.attr="disabled"
-                    wire:target="exportCsv">
+            <button wire:click="exportCsv" class="btn btn-primary btn-sm gap-2" wire:loading.attr="disabled" wire:target="exportCsv">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -109,7 +94,7 @@
     </div>
 
     <!-- Flashes Table -->
-    @if($flashes->count() > 0)
+    @if ($flashes->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto">
             <table class="table">
                 <thead class="bg-base-300 border-b-2 border-base-content/20">
@@ -126,7 +111,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($flashes as $flash)
+                    @foreach ($flashes as $flash)
                         @php
                             $membership = $flash->user->membershipForYear($selectedYear);
                         @endphp
@@ -136,16 +121,16 @@
                                 <div class="font-semibold">{{ $flash->user->name }}</div>
                                 <div class="text-xs text-base-content/60">
                                     {{ $flash->user->email }}
-                                    @if($flash->user->email_verified_at)
+                                    @if ($flash->user->email_verified_at)
                                         <div class="tooltip tooltip-right" data-tip="Email verified">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block ml-1 text-success" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                             </svg>
                                         </div>
                                     @else
                                         <div class="tooltip tooltip-right" data-tip="Email not verified (no notification sent)">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block ml-1 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
                                         </div>
                                     @endif
@@ -153,15 +138,14 @@
                             </td>
                             <td>
                                 <span class="badge badge-sm
-                                    @if($flash->activity_type === 'sailing') badge-success
+                                    @if ($flash->activity_type === 'sailing') badge-success
                                     @elseif($flash->activity_type === 'maintenance') badge-warning
-                                    @else badge-info
-                                    @endif">
+                                    @else badge-info @endif">
                                     {{ ucfirst($flash->activity_type) }}
                                 </span>
                             </td>
                             <td class="text-sm">
-                                @if($flash->event_type)
+                                @if ($flash->event_type)
                                     {{ ucfirst(str_replace('_', ' ', $flash->event_type === 'leisure' ? 'Day Sailing' : $flash->event_type)) }}
                                 @else
                                     <span class="text-base-content/40">—</span>
@@ -181,7 +165,7 @@
         </div>
 
         <!-- Pagination -->
-        @if($flashes->hasPages())
+        @if ($flashes->hasPages())
             <div class="mt-6">
                 {{ $flashes->links('pagination::livewire-tailwind') }}
             </div>
@@ -195,7 +179,7 @@
                 </svg>
                 <h2 class="text-xl font-bold mt-4">No flash entries found</h2>
                 <p class="text-base-content/60 mt-2">
-                    @if($searchQuery || $selectedDistrict || $selectedFleet)
+                    @if ($searchQuery || $selectedDistrict || $selectedFleet)
                         Try adjusting your filters to see more results.
                     @else
                         There are no flash entries for {{ $selectedYear }}.

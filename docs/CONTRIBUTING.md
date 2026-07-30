@@ -82,7 +82,8 @@ The project uses automated pre-commit hooks via Husky. If checks fail, your comm
 - **PHP**: Laravel Pint (PSR-12) + PHPStan level 5
 - **JavaScript**: ESLint
 - **CSS**: Stylelint
-- **Testing**: PHPUnit (feature + unit) and Pest 4 browser tests
+- **Blade**: blade-formatter (`npm run lint:blade` gates; `composer fix` rewrites)
+- **Testing**: PHPUnit (feature + unit) and Pest 5 browser tests
 
 ### Testing
 
@@ -92,16 +93,32 @@ All new features and bug fixes require tests:
 # Run PHPUnit tests (feature + unit)
 php artisan test
 
-# Run browser tests (Pest 4 + Playwright)
+# Run browser tests (Pest 5 + Playwright)
 ./vendor/bin/pest tests/Browser
-./vendor/bin/pest tests/Browser --parallel    # ~40s with parallel
+./vendor/bin/pest tests/Browser --parallel    # much faster
 
 # Run a specific test
 php artisan test --filter=FlashTest
 ./vendor/bin/pest tests/Browser/Logbook/CreateTest.php
 ```
 
-PHPUnit tests use in-memory SQLite. Browser tests use Pest 4's in-process server with `LazilyRefreshDatabase`.
+PHPUnit tests use in-memory SQLite. Browser tests use the plugin's in-process server with `LazilyRefreshDatabase`.
+
+**Livewire forms in browser tests — use `fillLive()`, not instant `fill()`:**
+Livewire 4 runs `wire:model.live` syncs in parallel, and its stateless snapshot
+model means two overlapping field-sync requests can clobber each other: each
+request rehydrates the whole component from *its own* (possibly stale) snapshot
+and re-renders everything, so whichever response is morphed in last can wipe a
+field it never knew about. Real users never hit this (typing a field takes
+seconds; a round-trip takes fractions of one, so requests don't overlap), but
+Playwright's instant `fill()` fires every blur within milliseconds and flakes
+registration/profile tests non-deterministically. The `tests/Pest.php` helpers
+(`fillLive`, `settleLivewire`, `trackLivewireRequests`, `fillRegistrationForm`)
+serialize each field's sync — fill, blur, wait until no Livewire request is in
+flight — which is condition-based, not a sleep. Livewire's maintainers treat the
+race as a design limitation (livewire/livewire#8466), so this stays a
+test-fidelity fix; an app-side "latest-wins" interceptor is deliberately not
+built unless a real user report ever surfaces.
 
 **HTML validation (W3C):** `tests/Browser/HtmlValidation` posts each page's rendered
 DOM to a [validator.nu](https://validator.nu) instance. Start one locally so the

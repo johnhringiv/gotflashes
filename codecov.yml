@@ -1,0 +1,39 @@
+# Coverage reporting: one blended badge/overall number, with per-area
+# components (PHP vs JS) broken out in PR comments and statuses.
+# Flags: phpunit + browser (PHP, clover), vitest + browser-js (JS, lcov).
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+
+# Components give the PR comment a per-area table without splitting the badge.
+# JS statuses start informational — no baseline exists yet (issue #75).
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        informational: true
+  individual_components:
+    - component_id: php
+      name: PHP
+      paths:
+        - app/**
+        - routes/**
+        - database/**
+    - component_id: js
+      name: JavaScript
+      paths:
+        - resources/js/**
+
+# Carry forward each flag's last report when a commit's workflow only uploads
+# some flags — keeps the blended number stable instead of sawtoothing.
+flag_management:
+  default_rules:
+    carryforward: true
+
+comment:
+  layout: 'condensed_header, diff, components, flags'

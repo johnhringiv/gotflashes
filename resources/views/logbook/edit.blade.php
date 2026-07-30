@@ -12,7 +12,7 @@
                     'flash' => $flash,
                     'action' => route('flashes.update', $flash),
                     'method' => 'PUT',
-                    'submitText' => 'Update Activity'
+                    'submitText' => 'Update Activity',
                 ])
                 <div class="card-actions justify-between mt-4">
                     <a href="{{ route('flashes.index') }}" class="btn btn-ghost btn-sm">

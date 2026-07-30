@@ -119,10 +119,8 @@ public function currentMembership(): ?Member
 }
 ```
 
-> **Note:** `ExportController` currently joins memberships on an **exact** `members.year = flash year`
-> match (no carry-forward), so an exported flash in a year with no membership row shows as
-> unaffiliated. This differs from the leaderboard/`User` carry-forward behavior and is tracked
-> as a code inconsistency to reconcile.
+`ExportController` resolves each exported flash's affiliation through the same
+`User::membershipForYear()` carry-forward, so exports agree with the leaderboards.
 
 ### 7. Edge Cases
 
@@ -134,8 +132,7 @@ public function currentMembership(): ?Member
   new district/fleet. Prior years remain unchanged.
 
 **User queried for a year with no membership row:**
-- Carry-forward uses the most recent prior membership (leaderboards/`User`); export treats it
-  as unaffiliated (see note above).
+- Carry-forward uses the most recent prior membership (leaderboards, `User`, and export alike).
 
 **User deletes account:**
 - Membership records are cascade-deleted; historical leaderboard data no longer includes them.
@@ -149,8 +146,6 @@ public function currentMembership(): ?Member
 
 - **User model methods:** `members()` (HasMany), `membershipForYear(int $year)`,
   `currentMembership()` — see [§6](#6-carry-forward-resolution).
-- **Reconcile export resolution:** align `ExportController` with the carry-forward model used
-  elsewhere (see note in §6).
 - **Year-end snapshot job (not implemented):** a scheduled task could materialize next-year
   membership rows on Jan 1 instead of relying on query-time carry-forward. Not currently needed —
   carry-forward already produces correct results — but listed for awareness.

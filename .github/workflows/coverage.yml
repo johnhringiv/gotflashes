@@ -47,8 +47,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Build frontend assets
+      - name: Build frontend assets (Istanbul-instrumented for browser-JS coverage)
         run: npm run build
+        env:
+          COVERAGE: 'true'
 
       - name: Setup Laravel environment
         run: |
@@ -56,6 +58,9 @@ jobs:
           php artisan key:generate
           mkdir -p database/data && touch database/data/database.sqlite
           php artisan migrate --force
+
+      - name: Run Vitest with coverage
+        run: npm run test:coverage
 
       - name: Run PHPUnit tests with coverage
         run: |
@@ -69,13 +74,42 @@ jobs:
           ./vendor/bin/pest tests/Browser --parallel --coverage-clover=coverage-browser.xml
         env:
           APP_ENV: testing
+          COVERAGE: 'true'
           HTML_VALIDATOR_URL: http://localhost:8888
 
-      - name: Upload coverage to Codecov
+      - name: Merge browser-JS coverage snapshots
+        run: node scripts/merge-browser-coverage.mjs
+
+      # One upload per flag — a combined upload would stamp every flag onto
+      # every file, which breaks the per-flag/component breakdown on Codecov.
+      - name: Upload PHP coverage (phpunit)
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage-phpunit.xml,./coverage-browser.xml
-          flags: phpunit,browser
-          verbose: true
+          files: ./coverage-phpunit.xml
+          flags: phpunit
+          fail_ci_if_error: false
+
+      - name: Upload PHP coverage (browser)
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-browser.xml
+          flags: browser
+          fail_ci_if_error: false
+
+      - name: Upload JS coverage (vitest)
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: vitest
+          fail_ci_if_error: false
+
+      - name: Upload JS coverage (browser-js)
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-browser-js/lcov.info
+          flags: browser-js
           fail_ci_if_error: false

@@ -6,6 +6,14 @@ use Tests\TestCase;
 uses(TestCase::class)->in('Feature', 'Unit');
 uses(TestCase::class, LazilyRefreshDatabase::class)->in('Browser');
 
+// Coverage runs serve an Istanbul-instrumented bundle: every JS statement pays
+// a counter increment, so pages and Livewire round-trips are legitimately
+// slower. Widen the browser assertion-retry window there (default 5s) instead
+// of letting timing-tight tests flake; normal runs keep the strict default.
+if (env('COVERAGE') === 'true' || env('COVERAGE') === true) {
+    pest()->browser()->timeout(15_000);
+}
+
 /*
 |--------------------------------------------------------------------------
 | Browser test helpers — Livewire 4 request settling

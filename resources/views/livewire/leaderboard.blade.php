@@ -1,27 +1,21 @@
 <div>
     <!-- Tabs -->
     <div role="tablist" class="tabs mb-6 w-fit">
-        <button wire:click="switchTab('sailor')"
-                role="tab"
-                class="tab {{ $tab === 'sailor' ? 'tab-active' : '' }}">
+        <button wire:click="switchTab('sailor')" role="tab" class="tab {{ $tab === 'sailor' ? 'tab-active' : '' }}">
             Sailor
         </button>
-        <button wire:click="switchTab('fleet')"
-                role="tab"
-                class="tab {{ $tab === 'fleet' ? 'tab-active' : '' }}">
+        <button wire:click="switchTab('fleet')" role="tab" class="tab {{ $tab === 'fleet' ? 'tab-active' : '' }}">
             Fleet
         </button>
-        <button wire:click="switchTab('district')"
-                role="tab"
-                class="tab {{ $tab === 'district' ? 'tab-active' : '' }}">
+        <button wire:click="switchTab('district')" role="tab" class="tab {{ $tab === 'district' ? 'tab-active' : '' }}">
             District
         </button>
     </div>
 
-    @if($leaderboard->count() > 0)
+    @if ($leaderboard->count() > 0)
         <div class="card bg-base-100 shadow overflow-x-auto">
             <table class="table">
-                @if($tab === 'sailor')
+                @if ($tab === 'sailor')
                     <thead class="bg-base-300 border-b-2 border-base-content/20">
                         <tr>
                             <th class="text-center font-bold">Rank</th>
@@ -39,7 +33,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($leaderboard as $index => $user)
+                        @foreach ($leaderboard as $index => $user)
                             @php
                                 $isCurrentUser = auth()->check() && auth()->id() === $user->id;
                             @endphp
@@ -49,7 +43,7 @@
                                 </td>
                                 <td class="font-medium">
                                     {{ $user->name }}
-                                    @if($isCurrentUser)
+                                    @if ($isCurrentUser)
                                         <span class="badge badge-sm badge-primary ml-2">You</span>
                                     @endif
                                 </td>
@@ -57,7 +51,7 @@
                                     @php
                                         $district = $user->district_id ? \App\Models\District::find($user->district_id) : null;
                                     @endphp
-                                    {{ $district?->id === \App\Models\District::noneId() ? '—' : ($district?->name ?? '—') }}
+                                    {{ $district?->id === \App\Models\District::noneId() ? '—' : $district?->name ?? '—' }}
                                 </td>
                                 <td class="text-center">
                                     @php
@@ -90,7 +84,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($leaderboard as $index => $fleet)
+                        @foreach ($leaderboard as $index => $fleet)
                             @php
                                 $userFleet = auth()->check() ? auth()->user()->currentMembership()?->fleet_id : null;
                                 $isUserFleet = $userFleet && $userFleet === $fleet->id;
@@ -125,7 +119,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($leaderboard as $index => $district)
+                        @foreach ($leaderboard as $index => $district)
                             @php
                                 $userDistrict = auth()->check() ? auth()->user()->currentMembership()?->district_id : null;
                                 $isUserDistrict = $userDistrict && $userDistrict === $district->id;
@@ -149,7 +143,7 @@
         </div>
 
         <!-- Pagination -->
-        @if($leaderboard->hasPages())
+        @if ($leaderboard->hasPages())
             <div class="mt-6">
                 {{ $leaderboard->links('pagination::livewire-tailwind') }}
             </div>

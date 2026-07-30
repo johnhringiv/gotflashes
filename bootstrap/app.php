@@ -40,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
             'super_admin' => SuperAdminMiddleware::class,
         ]);
+
+        // The browser-JS coverage beacon (sendBeacon, no CSRF token) posts
+        // here during coverage runs; the route only exists in testing with
+        // COVERAGE=true, so this exclusion matches nothing in production.
+        $middleware->validateCsrfTokens(except: ['__coverage__']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // A stale CSRF token (session expired while a form sat open) would
