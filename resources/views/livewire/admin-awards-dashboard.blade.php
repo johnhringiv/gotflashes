@@ -136,9 +136,9 @@
                             </td>
                             <td class="text-sm">
                                 @if ($user->address_line1)
-                                    {{ $user->address_line1 }}@if ($user->address_line2)
-                                        , {{ $user->address_line2 }}
-                                    @endif
+                                    {{-- PHP-side join: an inline @if here renders a stray space
+                                         before the comma once blade-formatter expands it --}}
+                                    {{ implode(', ', array_filter([$user->address_line1, $user->address_line2])) }}
                                     <br>
                                     {{ $user->city }}, {{ $user->state }} {{ $user->zip_code }}
                                 @else
